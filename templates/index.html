@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ hall_name }} - Tableau de Bord{% endblock %}
+{% block page_title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="welcome-title">Bienvenue sur {{ hall_name }}</h1>
+                <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — Gérez vos événements avec élégance</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-lg">
+                    <i class="fas fa-plus me-2"></i>Nouvel Événement
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-gold-soft">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ events_this_month }}</span>
+                    <span class="stat-label">Événements ce mois</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success-soft">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ revenue_month | format_da }}</span>
+                    <span class="stat-label">Revenus ce mois</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info-soft">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total_clients }}</span>
+                    <span class="stat-label">Clients</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-purple-soft">
+                    <i class="fas fa-glass-cheers"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total_events }}</span>
+                    <span class="stat-label">Total Événements</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- Upcoming Events -->
+        <div class="col-lg-8">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Événements à venir</h5>
+                    <a href="{{ url_for('event_list') }}" class="btn btn-sm btn-outline-gold">Voir tout</a>
+                </div>
+                <div class="card-body-custom">
+                    {% if upcoming %}
+                    <div class="table-responsive">
+                        <table class="table-elegant">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Événement</th>
+                                    <th>Client</th>
+                                    <th>Lieu</th>
+                                    <th>Créneau</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in upcoming %}
+                                <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=event.id) }}'">
+                                    <td>
+                                        <strong>{{ event.event_date[:10] }}</strong>
+                                    </td>
+                                    <td>{{ event.title }}</td>
+                                    <td><a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="text-decoration-none">{{ event.client_name }}</a></td>
+                                    <td>{{ event.venue_name }}</td>
+                                    <td><span class="badge-slot">{{ event.time_slot }}</span></td>
+                                    <td>
+                                        <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
+                                            {{ event.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>Aucun événement à venir</p>
+                        <a href="{{ url_for('event_form') }}" class="btn btn-gold">Créer un événement</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments + Quick Actions -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-lg">
+                            <i class="fas fa-plus me-2"></i>Nouvel Événement
+                        </a>
+                        <a href="{{ url_for('calendar_view') }}" class="btn btn-outline-gold btn-lg">
+                            <i class="fas fa-calendar me-2"></i>Voir le Calendrier
+                        </a>
+                        <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-lg">
+                            <i class="fas fa-users me-2"></i>Liste des Clients
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements Récents</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if recent_payments %}
+                        {% for p in recent_payments %}
+                        <div class="payment-item">
+                            <div class="payment-info">
+                                <strong>{{ p.client_name }}</strong>
+                                <small class="text-muted d-block">{{ p.title }}</small>
+                                <small class="text-muted">{{ p.date[:10] }} · {{ p.method }}</small>
+                            </div>
+                            <div class="payment-amount">
+                                <span class="badge-amount">{{ p.amount | format_da }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state small">
+                            <i class="fas fa-receipt"></i>
+                            <p>Aucun paiement récent</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

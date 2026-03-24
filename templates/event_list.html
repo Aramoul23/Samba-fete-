@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Liste des Événements{% endblock %}
+{% block page_title %}Événements{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filters -->
+    <div class="card-custom mb-4">
+        <div class="card-body-custom">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label-elegant">Rechercher</label>
+                    <input type="text" name="q" class="form-input-elegant" placeholder="Titre, client..."
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Statut</label>
+                    <select name="status" class="form-input-elegant">
+                        <option value="">Tous</option>
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-gold w-100">
+                        <i class="fas fa-search me-1"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('event_list') }}" class="btn btn-outline-secondary w-100">
+                        Réinitialiser
+                    </a>
+                </div>
+                <div class="col-md-1">
+                    <a href="{{ url_for('event_form') }}" class="btn btn-gold w-100">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card-custom">
+        <div class="card-body-custom">
+            {% if events %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Événement</th>
+                            <th>Client</th>
+                            <th>Lieu</th>
+                            <th>Créneau</th>
+                            <th>Invités</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in events %}
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=e.id) }}'">
+                            <td><strong>{{ e.event_date[:10] }}</strong></td>
+                            <td>{{ e.title }}</td>
+                            <td>{{ e.client_name }}</td>
+                            <td>{{ e.venue_name }}</td>
+                            <td><span class="badge-slot">{{ e.time_slot }}</span></td>
+                            <td>{{ e.guests_men + e.guests_women }}</td>
+                            <td>{{ e.total_amount | format_da }}</td>
+                            <td>
+                                <span class="badge-status status-{{ e.status | replace(' ', '-') }}">
+                                    {{ e.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <p>Aucun événement trouvé</p>
+                <a href="{{ url_for('event_form') }}" class="btn btn-gold">Créer un événement</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

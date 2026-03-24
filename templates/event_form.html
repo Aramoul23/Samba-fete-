@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}{% if event %}Modifier{% else %}Nouvel{% endif %} Événement{% endblock %}
+{% block page_title %}{% if event %}Modifier l'Événement{% else %}Nouvel Événement{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <form method="POST" id="eventForm">
+        <div class="row g-4">
+            <!-- Event Details -->
+            <div class="col-lg-8">
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations de l'Événement</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label-elegant">Titre de l'événement *</label>
+                                <input type="text" name="title" class="form-input-elegant" required
+                                       value="{{ event.title if event else request.args.get('title', '') }}"
+                                       placeholder="Ex: Mariage Ahmed & Fatima">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Type d'événement</label>
+                                <select name="event_type" class="form-input-elegant">
+                                    {% for t in event_types %}
+                                    <option value="{{ t }}" {% if event and event.event_type == t %}selected{% endif %}>{{ t }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Date *</label>
+                                <input type="date" name="event_date" class="form-input-elegant" required
+                                       value="{{ event.event_date if event else request.args.get('date', '') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Créneau horaire</label>
+                                <select name="time_slot" class="form-input-elegant">
+                                    {% for s in time_slots %}
+                                    <option value="{{ s }}" {% if event and event.time_slot == s %}selected{% endif %}>{{ s }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Lieu</label>
+                                <select name="venue_id" class="form-input-elegant">
+                                    {% for v in venues %}
+                                    <option value="{{ v.id }}" {% if event and event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-elegant">Invités (Hommes)</label>
+                                <input type="number" name="guests_men" class="form-input-elegant"
+                                       value="{{ event.guests_men if event else 0 }}" min="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-elegant">Invités (Femmes)</label>
+                                <input type="number" name="guests_women" class="form-input-elegant"
+                                       value="{{ event.guests_women if event else 0 }}" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Statut</label>
+                                <select name="status" class="form-input-elegant">
+                                    {% for s in statuses %}
+                                    <option value="{{ s }}" {% if event and event.status == s %}selected{% endif %}>{{ s }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-elegant">Notes</label>
+                                <textarea name="notes" class="form-input-elegant" rows="3"
+                                          placeholder="Remarques, instructions spéciales...">{{ event.notes if event else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Info -->
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Informations Client</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Nom complet *</label>
+                                <input type="text" name="client_name" class="form-input-elegant" required
+                                       value="{{ client.name if client else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-elegant">Téléphone *</label>
+                                <input type="tel" name="client_phone" class="form-input-elegant" required
+                                       value="{{ client.phone if client else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-elegant">Téléphone 2</label>
+                                <input type="tel" name="client_phone2" class="form-input-elegant"
+                                       value="{{ client.phone2 if client else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Email</label>
+                                <input type="email" name="client_email" class="form-input-elegant"
+                                       value="{{ client.email if client else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Adresse</label>
+                                <input type="text" name="client_address" class="form-input-elegant"
+                                       value="{{ client.address if client else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Lines -->
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Détail des Prestations</h5>
+                        <button type="button" class="btn btn-sm btn-outline-gold" onclick="addLine()">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </button>
+                    </div>
+                    <div class="card-body-custom">
+                        <div id="linesContainer">
+                            {% if event_lines %}
+                                {% for line in event_lines %}
+                                <div class="line-item row g-2 mb-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" name="line_desc[]" class="form-input-elegant"
+                                               placeholder="Description" value="{{ line.description }}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" name="line_amount[]" class="form-input-elegant"
+                                               placeholder="Montant" value="{{ line.amount }}" step="0.01">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="line_is_cost[]" value="{{ loop.index0 }}"
+                                                   class="form-check-input" {% if line.is_cost %}checked{% endif %}>
+                                            <label class="form-check-label small">Coût</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                            <div class="line-item row g-2 mb-2 align-items-center">
+                                <div class="col-md-5">
+                                    <input type="text" name="line_desc[]" class="form-input-elegant" placeholder="Description">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" name="line_amount[]" class="form-input-elegant" placeholder="Montant" step="0.01">
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="line_is_cost[]" value="0" class="form-check-input">
+                                        <label class="form-check-label small">Coût</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Pricing Summary -->
+                <div class="card-custom mb-4 sticky-sidebar">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Facturation</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label-elegant">Montant Total</label>
+                                <div class="input-group">
+                                    <input type="number" name="total_amount" class="form-input-elegant"
+                                           value="{{ event.total_amount if event else 0 }}" step="100">
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-elegant">Acompte requis (min. 20,000 DA)</label>
+                                <div class="input-group">
+                                    <input type="number" name="deposit_required" class="form-input-elegant"
+                                           value="{{ event.deposit_required if event else 20000 }}" step="100" min="20000">
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-gold btn-lg">
+                        <i class="fas fa-save me-2"></i>
+                        {% if event %}Enregistrer{% else %}Créer l'Événement{% endif %}
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Annuler</a>
+                </div>
+
+                {% if event %}
+                <div class="mt-4">
+                    <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-trash me-2"></i>Supprimer l'événement
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addLine() {
+    const container = document.getElementById('linesContainer');
+    const div = document.createElement('div');
+    div.className = 'line-item row g-2 mb-2 align-items-center';
+    div.innerHTML = `
+        <div class="col-md-5">
+            <input type="text" name="line_desc[]" class="form-input-elegant" placeholder="Description">
+        </div>
+        <div class="col-md-3">
+            <input type="number" name="line_amount[]" class="form-input-elegant" placeholder="Montant" step="0.01">
+        </div>
+        <div class="col-md-2">
+            <div class="form-check">
+                <input type="checkbox" name="line_is_cost[]" value="${container.children.length}" class="form-check-input">
+                <label class="form-check-label small">Coût</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>`;
+    container.appendChild(div);
+}
+
+function removeLine(btn) {
+    const container = document.getElementById('linesContainer');
+    if (container.children.length > 1) {
+        btn.closest('.line-item').remove();
+    }
+}
+</script>
+{% endblock %}

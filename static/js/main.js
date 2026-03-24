@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════════
+   Samba Fête — Main JavaScript
+   ═══════════════════════════════════════════════════════ */
+
+// ─── Sidebar Toggle (Mobile) ────────────────────────
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar) {
+        sidebar.classList.toggle('open');
+        if (overlay) {
+            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        }
+    }
+}
+
+// ─── Auto-dismiss alerts ─────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert-dismissible');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+
+    // Format currency inputs
+    const currencyInputs = document.querySelectorAll('input[name="total_amount"], input[name="deposit_required"], input[name="amount"], input[name^="line_amount"]');
+    currencyInputs.forEach(function(input) {
+        input.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = Math.round(parseFloat(this.value) || 0);
+            }
+        });
+    });
+
+    // Form validation for deposit
+    const depositInput = document.querySelector('input[name="deposit_required"]');
+    if (depositInput) {
+        depositInput.addEventListener('change', function() {
+            if (parseFloat(this.value) < 20000) {
+                this.value = 20000;
+                showToast('L\'acompte minimum est de 20,000 DA', 'warning');
+            }
+        });
+    }
+});
+
+// ─── Toast Notifications ─────────────────────────────
+function showToast(message, type) {
+    const container = document.getElementById('toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast-item toast-${type}`;
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function createToastContainer() {
+    const div = document.createElement('div');
+    div.id = 'toast-container';
+    div.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+    document.body.appendChild(div);
+    return div;
+}

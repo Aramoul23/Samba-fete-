@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} - Détails{% endblock %}
+{% block page_title %}Détails de l'Événement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Event Header -->
+    <div class="event-header-bar mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="event-title">{{ event.title }}</h2>
+                <div class="event-meta">
+                    <span><i class="fas fa-calendar me-1"></i>{{ event.event_date[:10] }}</span>
+                    <span class="ms-3"><i class="fas fa-clock me-1"></i>{{ event.time_slot }}</span>
+                    <span class="ms-3"><i class="fas fa-map-marker-alt me-1"></i>{{ event.venue_name }}</span>
+                    <span class="ms-3">
+                        <span class="badge-status status-{{ event.status | replace(' ', '-') }}">{{ event.status }}</span>
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-outline-gold me-2" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>Imprimer Contrat
+                </a>
+                <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-gold">
+                    <i class="fas fa-edit me-2"></i>Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Event Details -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Détails</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">Type</div>
+                            <div class="detail-value">{{ event.event_type }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Lieu</div>
+                            <div class="detail-value">{{ event.venue_name }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Créneau</div>
+                            <div class="detail-value">{{ event.time_slot }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Invités Hommes</div>
+                            <div class="detail-value">{{ event.guests_men }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Invités Femmes</div>
+                            <div class="detail-value">{{ event.guests_women }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Total Invités</div>
+                            <div class="detail-value">{{ event.guests_men + event.guests_women }}</div>
+                        </div>
+                        {% if event.notes %}
+                        <div class="col-12">
+                            <div class="detail-label">Notes</div>
+                            <div class="detail-value">{{ event.notes }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Info -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Client</h5>
+                    <a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="btn btn-sm btn-outline-gold">
+                        Voir profil
+                    </a>
+                </div>
+                <div class="card-body-custom">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Nom</div>
+                            <div class="detail-value">{{ event.client_name }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="detail-label">Téléphone</div>
+                            <div class="detail-value">
+                                <a href="tel:{{ event.phone }}" class="text-decoration-none">{{ event.phone }}</a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="detail-label">Téléphone 2</div>
+                            <div class="detail-value">{{ event.phone2 or '-' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">{{ event.email or '-' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Adresse</div>
+                            <div class="detail-value">{{ event.address or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prestations -->
+            {% if event_lines %}
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Prestations</h5>
+                </div>
+                <div class="card-body-custom">
+                    <table class="table-elegant">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-center">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in event_lines %}
+                            <tr>
+                                <td>{{ line.description }}</td>
+                                <td class="text-end">{{ line.amount | format_da }}</td>
+                                <td class="text-center">
+                                    {% if line.is_cost %}
+                                    <span class="badge bg-danger">Coût</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Revenu</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Payments -->
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if payments %}
+                    <div class="table-responsive mb-4">
+                        <table class="table-elegant">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Méthode</th>
+                                    <th>Type</th>
+                                    <th>Référence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in payments %}
+                                <tr>
+                                    <td>{{ p.date[:10] }}</td>
+                                    <td><strong>{{ p.amount | format_da }}</strong></td>
+                                    <td>{{ p.method }}</td>
+                                    <td>
+                                        <span class="badge {% if p.payment_type == 'acompte' %}bg-warning{% elif p.payment_type == 'solde' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            {{ p.payment_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ p.reference or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Add Payment Form -->
+                    <div class="add-payment-form">
+                        <h6 class="mb-3">Ajouter un Paiement</h6>
+                        <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label-elegant">Montant</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="amount" class="form-input-elegant" step="100" required>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Méthode</label>
+                                    <select name="method" class="form-input-elegant">
+                                        <option value="espèces">Espèces</option>
+                                        <option value="chèque">Chèque</option>
+                                        <option value="virement">Virement</option>
+                                        <option value="carte">Carte</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Type</label>
+                                    <select name="payment_type" class="form-input-elegant">
+                                        <option value="acompte">Acompte</option>
+                                        <option value="solde">Solde</option>
+                                        <option value="autre">Autre</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label-elegant">Référence</label>
+                                    <input type="text" name="reference" class="form-input-elegant">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-gold btn-sm w-100">
+                                        <i class="fas fa-plus"></i> Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Payment Summary -->
+        <div class="col-lg-4">
+            <div class="card-custom sticky-sidebar">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Résumé Financier</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Montant Total</span>
+                            <strong>{{ event.total_amount | format_da }}</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Acompte Requis</span>
+                            <strong>{{ event.deposit_required | format_da }}</strong>
+                        </div>
+                        <hr>
+                        <div class="summary-row">
+                            <span>Acompte Payé</span>
+                            <strong class="text-success">{{ deposit | format_da }}</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Total Payé</span>
+                            <strong class="text-success">{{ total_paid | format_da }}</strong>
+                        </div>
+                        <hr>
+                        <div class="summary-row total-row">
+                            <span>Reste à Payer</span>
+                            <strong class="{% if event.total_amount - total_paid > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ (event.total_amount - total_paid) | format_da }}
+                            </strong>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
+                        <div class="mt-3">
+                            <div class="progress-label">
+                                <span>Progression</span>
+                                <span>{{ "%.0f"|format(pct) }}%</span>
+                            </div>
+                            <div class="progress payment-progress">
+                                <div class="progress-bar bg-gold" style="width: {{ pct }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Deposit Check -->
+                        {% if deposit >= event.deposit_required %}
+                        <div class="alert alert-success mt-3 mb-0 small">
+                            <i class="fas fa-check-circle me-1"></i> Acompte validé
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning mt-3 mb-0 small">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Acompte insuffisant ({{ deposit | format_da }} / {{ event.deposit_required | format_da }})
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Contract Button -->
+                    <div class="mt-4 d-grid">
+                        <a href="{{ url_for('generate_contract', event_id=event.id) }}"
+                           class="btn btn-outline-gold btn-lg" target="_blank">
+                            <i class="fas fa-file-pdf me-2"></i>Imprimer Contrat
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

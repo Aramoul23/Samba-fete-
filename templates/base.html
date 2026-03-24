@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Samba Fête{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">
+                <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Samba Fête" style="width: 80px; height: 80px; object-fit: contain; border-radius: 12px;">
+            </div>
+            <h2 class="brand-name">Samba Fête</h2>
+            <p class="brand-tagline">Gestion d'Événements</p>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="fas fa-th-large"></i> <span>Tableau de Bord</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('calendar_view') }}" class="nav-link {% if request.endpoint == 'calendar_view' %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i> <span>Calendrier</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('event_list') }}" class="nav-link {% if request.endpoint == 'event_list' %}active{% endif %}">
+                    <i class="fas fa-list-ul"></i> <span>Événements</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('client_list') }}" class="nav-link {% if request.endpoint == 'client_list' or request.endpoint == 'client_detail' %}active{% endif %}">
+                    <i class="fas fa-users"></i> <span>Clients</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('event_form') }}" class="nav-link {% if request.endpoint == 'event_form' %}active{% endif %}">
+                    <i class="fas fa-plus-circle"></i> <span>Nouvel Événement</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('settings') }}" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i> <span>Paramètres</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <nav class="topbar">
+            <button class="btn-toggle-sidebar d-lg-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-title">
+                {% block page_title %}Tableau de Bord{% endblock %}
+            </div>
+            <div class="topbar-actions">
+                <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-sm me-2">
+                    <i class="fas fa-users"></i>
+                </a>
+                <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-sm">
+                    <i class="fas fa-plus"></i> Nouvel Événement
+                </a>
+            </div>
+        </nav>
+
+        <!-- Flash Messages -->
+        <div class="container-fluid px-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

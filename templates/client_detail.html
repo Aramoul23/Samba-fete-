@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} - Profil Client{% endblock %}
+{% block page_title %}Profil Client{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Client Header -->
+    <div class="event-header-bar mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user-circle fa-3x me-3" style="color: var(--gold);"></i>
+                    <div>
+                        <h2 class="event-title mb-0">{{ client.name }}</h2>
+                        <div class="event-meta">
+                            <span><i class="fas fa-phone me-1"></i>{{ client.phone }}</span>
+                            {% if client.phone2 %}
+                            <span class="ms-3"><i class="fas fa-phone me-1"></i>{{ client.phone2 }}</span>
+                            {% endif %}
+                            {% if client.email %}
+                            <span class="ms-3"><i class="fas fa-envelope me-1"></i>{{ client.email }}</span>
+                            {% endif %}
+                        </div>
+                        {% if client.address %}
+                        <div class="event-meta">
+                            <span><i class="fas fa-map-marker-alt me-1"></i>{{ client.address }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('event_form') }}" class="btn btn-gold">
+                    <i class="fas fa-plus me-2"></i>Nouvel Événement
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-gold-soft">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ events | length }}</span>
+                    <span class="stat-label">Événements</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info-soft">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total_owed | format_da }}</span>
+                    <span class="stat-label">Total Facturé</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success-soft">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total_paid | format_da }}</span>
+                    <span class="stat-label">Total Payé</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                {% set remaining = total_owed - total_paid %}
+                <div class="stat-icon {% if remaining > 0 %}bg-danger-soft{% else %}bg-success-soft{% endif %}">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ remaining | format_da }}
+                    </span>
+                    <span class="stat-label">Reste à Recevoir</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Historique des Événements</h5>
+            <a href="{{ url_for('event_form') }}" class="btn btn-sm btn-outline-gold">
+                <i class="fas fa-plus me-1"></i>Nouveau
+            </a>
+        </div>
+        <div class="card-body-custom">
+            {% if events %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Événement</th>
+                            <th>Type</th>
+                            <th>Lieu</th>
+                            <th>Montant</th>
+                            <th>Payé</th>
+                            <th>Reste</th>
+                            <th>Statut</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ev in events %}
+                        {% set ev_paid = event_payments[ev.id]['total_paid'] %}
+                        {% set ev_remaining = ev.total_amount - ev_paid %}
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ev.id) }}'">
+                            <td><strong>{{ ev.event_date[:10] }}</strong></td>
+                            <td>{{ ev.title }}</td>
+                            <td>{{ ev.event_type }}</td>
+                            <td>{{ ev.venue_name }}</td>
+                            <td>{{ ev.total_amount | format_da }}</td>
+                            <td class="text-success">{{ ev_paid | format_da }}</td>
+                            <td class="{% if ev_remaining > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ ev_remaining | format_da }}
+                            </td>
+                            <td>
+                                <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
+                                    {{ ev.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('generate_contract', event_id=ev.id) }}"
+                                   class="btn btn-sm btn-outline-gold" target="_blank" title="Contrat PDF"
+                                   onclick="event.stopPropagation()">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- Payment rows for this event -->
+                        {% if event_payments[ev.id].payments %}
+                        <tr class="payment-sub-row">
+                            <td colspan="9" class="p-0">
+                                <div class="payment-history-mini">
+                                    <table class="table table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th colspan="4" class="ps-3" style="font-size: 0.8rem; color: var(--gold);">
+                                                    <i class="fas fa-receipt me-1"></i>Paiements — {{ ev.title }}
+                                                </th>
+                                            </tr>
+                                            <tr style="font-size: 0.75rem;">
+                                                <th class="ps-3">Date</th>
+                                                <th>Montant</th>
+                                                <th>Méthode</th>
+                                                <th>Réf.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody style="font-size: 0.8rem;">
+                                            {% for p in event_payments[ev.id].payments %}
+                                            <tr>
+                                                <td class="ps-3">{{ p.date[:10] }}</td>
+                                                <td>{{ p.amount | format_da }}</td>
+                                                <td>{{ p.method }}</td>
+                                                <td>{{ p.reference or '—' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <p>Aucun événement pour ce client</p>
+                <a href="{{ url_for('event_form') }}" class="btn btn-gold">Créer un événement</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
