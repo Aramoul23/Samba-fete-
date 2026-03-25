@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Samba Fête</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C5A55A;
+            --gold-light: #D4BA7A;
+            --gold-dark: #A8893A;
+            --dark: #1a1a2e;
+            --dark2: #16213e;
+            --purple: #6C63FF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+        }
+        
+        .login-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(197, 165, 90, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--gold);
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-title {
+            color: #fff;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-subtitle {
+            color: var(--gold-light);
+            font-size: 0.9rem;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-body {
+            padding: 35px 30px;
+        }
+        
+        .form-floating-custom {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .form-floating-custom label {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 0.9rem;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            background: #fff;
+            padding: 0 4px;
+        }
+        
+        .form-floating-custom input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-floating-custom input:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(197, 165, 90, 0.1);
+        }
+        
+        .form-floating-custom input:focus + label,
+        .form-floating-custom input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 0.75rem;
+            color: var(--gold-dark);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(197, 165, 90, 0.4);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .alert-danger {
+            background: #fff5f5;
+            color: #c53030;
+            border-left: 4px solid #fc8181;
+        }
+        
+        .alert-warning {
+            background: #fffbeb;
+            color: #b7791f;
+            border-left: 4px solid #ecc94b;
+        }
+        
+        .alert-success {
+            background: #f0fff4;
+            color: #276749;
+            border-left: 4px solid #68d391;
+        }
+        
+        .alert-info {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            border-left: 4px solid #63b3ed;
+        }
+        
+        .login-footer {
+            text-align: center;
+            padding: 20px 30px;
+            border-top: 1px solid #f0f0f0;
+            color: #999;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 480px) {
+            .login-header {
+                padding: 30px 20px;
+            }
+            .login-body {
+                padding: 25px 20px;
+            }
+            .login-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Samba Fête" class="login-logo" onerror="this.style.display='none'">
+                <h1 class="login-title">Samba Fête</h1>
+                <p class="login-subtitle">Système de Gestion d'Événements</p>
+            </div>
+            
+            <div class="login-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-custom">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST">
+                    <div class="form-floating-custom">
+                        <input type="text" id="username" name="username" placeholder=" " required autofocus autocomplete="username">
+                        <label for="username"><i class="fas fa-user me-1"></i> Nom d'utilisateur</label>
+                    </div>
+                    
+                    <div class="form-floating-custom">
+                        <input type="password" id="password" name="password" placeholder=" " required autocomplete="current-password">
+                        <label for="password"><i class="fas fa-lock me-1"></i> Mot de passe</label>
+                    </div>
+                    
+                    <button type="submit" class="btn-login">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </button>
+                </form>
+            </div>
+            
+            <div class="login-footer">
+                Samba Fête &copy; {{ now().year if now is defined else '2025' }} &mdash; Tous droits réservés
+            </div>
+        </div>
+    </div>
+</body>
+</html>

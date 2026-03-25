@@ -2,11 +2,33 @@ import os
 import psycopg2
 import psycopg2.extras
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
 def is_postgres():
     return DATABASE_URL.startswith('postgresql://')
+
+class User(UserMixin):
+    """User model for Flask-Login."""
+    def __init__(self, id, username, password_hash, role, is_active=1):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+        self.role = role
+        self._is_active = bool(is_active)
+    
+    @property
+    def is_active(self):
+        return self._is_active
+    
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class DB:
     """Database wrapper that works with both SQLite and PostgreSQL."""
@@ -163,6 +185,14 @@ def init_db():
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'manager',
+                is_active INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         """
         for sql in sqls.split(';'):
             sql = sql.strip()
@@ -244,6 +274,14 @@ def init_db():
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'manager',
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT DEFAULT (datetime('now','localtime'))
+            );
         """)
     
     # Insert default data if empty
@@ -273,7 +311,92 @@ def init_db():
                 INSERT INTO settings (key, value) VALUES ('hall_name', 'Samba Fête');
             """)
     
+    # Create default admin user if users table is empty
+    user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()['cnt']
+    if user_count == 0:
+        admin_hash = generate_password_hash('admin123')
+        if is_postgres():
+            db.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                      ('admin', admin_hash, 'admin'))
+        else:
+            db.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                      ('admin', admin_hash, 'admin'))
+        print("Created default admin user (admin/admin123)")
+    
     db.conn.commit()
+
+def get_user_by_id(user_id):
+    """Get user by ID for Flask-Login."""
+    db = get_db()
+    row = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    db.close()
+    if row:
+        return User(row['id'], row['username'], row['password_hash'], row['role'], row['is_active'])
+    return None
+
+def get_user_by_username(username):
+    """Get user by username."""
+    db = get_db()
+    row = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+    db.close()
+    if row:
+        return User(row['id'], row['username'], row['password_hash'], row['role'], row['is_active'])
+    return None
+
+def get_all_users():
+    """Get all users."""
+    db = get_db()
+    users = db.execute("SELECT id, username, role, is_active, created_at FROM users ORDER BY id").fetchall()
+    db.close()
+    return users
+
+def create_user(username, password, role='manager'):
+    """Create a new user."""
+    db = get_db()
+    password_hash = generate_password_hash(password)
+    if is_postgres():
+        db.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                  (username, password_hash, role))
+    else:
+        db.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                  (username, password_hash, role))
+    db.commit()
+    db.close()
+
+def update_user(user_id, username=None, password=None, role=None, is_active=None):
+    """Update user fields."""
+    db = get_db()
+    updates = []
+    params = []
+    
+    if username:
+        updates.append("username=?")
+        params.append(username)
+    if password:
+        updates.append("password_hash=?")
+        params.append(generate_password_hash(password))
+    if role:
+        updates.append("role=?")
+        params.append(role)
+    if is_active is not None:
+        updates.append("is_active=?")
+        params.append(1 if is_active else 0)
+    
+    if updates:
+        params.append(user_id)
+        sql = f"UPDATE users SET {', '.join(updates)} WHERE id=?"
+        if is_postgres():
+            sql = sql.replace('?', '%s')
+        db.execute(sql, params)
+        db.commit()
+    db.close()
+
+def delete_user(user_id):
+    """Delete a user."""
+    db = get_db()
+    db.execute("DELETE FROM users WHERE id=?", (user_id,))
+    db.commit()
+    db.close()
 
 def _executescript_pg(conn, sql):
     for statement in sql.split(';'):

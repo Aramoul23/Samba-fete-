@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
-from models import get_db, init_db, get_setting, set_setting
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from models import get_db, init_db, get_setting, set_setting, get_user_by_id, get_user_by_username
+from models import get_all_users, create_user, update_user, delete_user
 from datetime import datetime, date, timedelta
 from contract_generator import generate_contract_pdf
 from receipt_generator import generate_receipt_html
@@ -11,6 +13,27 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
+
+# ─── Flask-Login Setup ─────────────────────────────────────────────
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Veuillez vous connecter pour accéder à cette page.'
+login_manager.login_message_category = 'warning'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return get_user_by_id(user_id)
+
+# ─── Role helpers ──────────────────────────────────────────────────
+def is_admin():
+    return current_user.is_authenticated and current_user.role == 'admin'
+
+def can_delete():
+    return is_admin()
+
+def can_export():
+    return True  # All authenticated users can export
 
 # ─── Helpers ────────────────────────────────────────────────────────
 TIME_SLOTS = ['Déjeuner', 'Après-midi', 'Dîner']
@@ -125,8 +148,40 @@ def ensure_default_data():
     db.close()
     print("Default data check complete.")
 
+# ─── Login/Logout Routes ──────────────────────────────────────────
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        user = get_user_by_username(username)
+        if user and user.check_password(password):
+            if not user.is_active:
+                flash("Ce compte est désactivé", "danger")
+                return render_template('login.html')
+            login_user(user, remember=True)
+            next_page = request.args.get('next')
+            flash(f"Bienvenue, {user.username}!", "success")
+            return redirect(next_page or url_for('index'))
+        else:
+            flash("Nom d'utilisateur ou mot de passe incorrect", "danger")
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("Vous avez été déconnecté", "info")
+    return redirect(url_for('login'))
+
 # ─── Dashboard ──────────────────────────────────────────────────────
 @app.route('/')
+@login_required
 def index():
     db = get_db()
     today = date.today()
@@ -276,6 +331,7 @@ def index():
 
 # ─── Calendar ────────────────────────────────────────────────────────
 @app.route('/calendrier')
+@login_required
 def calendar_view():
     db = get_db()
     year = request.args.get('year', date.today().year, type=int)
@@ -336,7 +392,9 @@ DEFAULT_SERVICES = {
 }
 
 @app.route('/evenement/nouveau', methods=['GET', 'POST'])
+@login_required
 @app.route('/evenement/<int:event_id>/modifier', methods=['GET', 'POST'])
+@login_required
 def event_form(event_id=None):
     db = get_db()
     event = None
@@ -502,6 +560,7 @@ def event_form(event_id=None):
                            statuses=EVENT_STATUSES, event_id=event_id)
 
 @app.route('/evenement/<int:event_id>')
+@login_required
 def event_detail(event_id):
     db = get_db()
     event = db.execute(
@@ -586,6 +645,7 @@ def event_detail(event_id):
                            adjusted_profit=adjusted_profit, today_str=date.today().isoformat())
 
 @app.route('/evenement/<int:event_id>/paiement', methods=['POST'])
+@login_required
 def add_payment(event_id):
     try:
         db = get_db()
@@ -611,6 +671,7 @@ def add_payment(event_id):
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/paiement/<int:payment_id>/rembourser', methods=['POST'])
+@login_required
 def refund_payment(event_id, payment_id):
     """Mark a payment as refunded (audit trail - never delete)."""
     try:
@@ -644,6 +705,7 @@ def refund_payment(event_id, payment_id):
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/statut', methods=['POST'])
+@login_required
 def update_event_status(event_id):
     """Update event status with proper flow."""
     try:
@@ -682,6 +744,7 @@ def update_event_status(event_id):
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/supprimer', methods=['POST'])
+@login_required
 def delete_event(event_id):
     try:
         db = get_db()
@@ -697,6 +760,7 @@ def delete_event(event_id):
     return redirect(url_for('index'))
 
 @app.route('/evenement/<int:event_id>/depense', methods=['POST'])
+@login_required
 def add_event_expense(event_id):
     """Add expenses linked to an event - handles multiple categories."""
     try:
@@ -744,6 +808,7 @@ def add_event_expense(event_id):
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/depense/<int:expense_id>/supprimer', methods=['POST'])
+@login_required
 def delete_expense(expense_id):
     """Delete an expense."""
     try:
@@ -765,6 +830,7 @@ def delete_expense(expense_id):
     return redirect(url_for('expenses'))
 
 @app.route('/evenements')
+@login_required
 def event_list():
     db = get_db()
     status_filter = request.args.get('status', '')
@@ -789,6 +855,7 @@ def event_list():
 
 # ─── Financial Reports ──────────────────────────────────────────────
 @app.route('/finances')
+@login_required
 def financials():
     db = get_db()
     
@@ -927,6 +994,7 @@ def financials():
 
 # ─── Clients ─────────────────────────────────────────────────────────
 @app.route('/clients')
+@login_required
 def client_list():
     db = get_db()
     search = request.args.get('q', '').strip()
@@ -948,6 +1016,7 @@ def client_list():
     return render_template('client_list.html', clients=clients, search=search)
 
 @app.route('/client/<int:client_id>')
+@login_required
 def client_detail(client_id):
     db = get_db()
     client = db.execute("SELECT * FROM clients WHERE id=?", (client_id,)).fetchone()
@@ -1014,6 +1083,7 @@ def client_detail(client_id):
 EXPENSE_CATEGORIES = ['Serveurs', 'Nettoyeurs', 'Sécurité', 'Autre']
 
 @app.route('/depenses', methods=['GET'])
+@login_required
 def expenses():
     """Expense list with filters."""
     db = get_db()
@@ -1080,6 +1150,7 @@ def expenses():
                            today_str=date.today().isoformat())
 
 @app.route('/depenses/ajouter', methods=['POST'])
+@login_required
 def add_expense():
     """Add a new expense."""
     try:
@@ -1122,6 +1193,7 @@ def add_expense():
 
 # ─── Accounting Dashboard ───────────────────────────────────────────
 @app.route('/comptabilite')
+@login_required
 def accounting():
     """Accounting dashboard with P&L."""
     db = get_db()
@@ -1216,6 +1288,7 @@ def accounting():
 
 # ─── Contract PDF ────────────────────────────────────────────────────
 @app.route('/evenement/<int:event_id>/contrat')
+@login_required
 def generate_contract(event_id):
     db = get_db()
     event = db.execute(
@@ -1253,6 +1326,7 @@ def generate_contract(event_id):
 
 # ─── Receipt ─────────────────────────────────────────────────────────
 @app.route('/evenement/<int:event_id>/recu/<int:payment_id>')
+@login_required
 def generate_receipt(event_id, payment_id):
     db = get_db()
     event = db.execute(
@@ -1293,6 +1367,7 @@ def generate_receipt(event_id, payment_id):
 
 # ─── Settings ────────────────────────────────────────────────────────
 @app.route('/parametres', methods=['GET', 'POST'])
+@login_required
 def settings():
     db = get_db()
     if request.method == 'POST':
@@ -1330,6 +1405,7 @@ def settings():
                            hall_name=hall_name, currency=currency)
 
 @app.route('/parametres/lieu/<int:venue_id>/supprimer', methods=['POST'])
+@login_required
 def delete_venue(venue_id):
     db = get_db()
     count = db.execute("SELECT COUNT(*) as c FROM events WHERE venue_id=?", (venue_id,)).fetchone()['c']
@@ -1342,8 +1418,95 @@ def delete_venue(venue_id):
     db.close()
     return redirect(url_for('settings'))
 
+# ─── User Management (Admin Only) ──────────────────────────────────
+@app.route('/parametres/utilisateurs', methods=['GET'])
+@login_required
+def users():
+    if not is_admin():
+        flash("Accès réservé aux administrateurs", "danger")
+        return redirect(url_for('index'))
+    
+    users_list = get_all_users()
+    return render_template('users.html', users=users_list, current_user=current_user)
+
+@app.route('/parametres/utilisateurs/ajouter', methods=['POST'])
+@login_required
+def add_user():
+    if not is_admin():
+        flash("Accès réservé aux administrateurs", "danger")
+        return redirect(url_for('index'))
+    
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+    role = request.form.get('role', 'manager')
+    
+    if not username or not password:
+        flash("Nom d'utilisateur et mot de passe requis", "danger")
+        return redirect(url_for('users'))
+    
+    if role not in ('admin', 'manager'):
+        flash("Rôle invalide", "danger")
+        return redirect(url_for('users'))
+    
+    # Check if username exists
+    existing = get_user_by_username(username)
+    if existing:
+        flash(f"Le nom d'utilisateur '{username}' existe déjà", "danger")
+        return redirect(url_for('users'))
+    
+    create_user(username, password, role)
+    flash(f"Utilisateur '{username}' créé avec succès", "success")
+    return redirect(url_for('users'))
+
+@app.route('/parametres/utilisateurs/<int:user_id>/modifier', methods=['POST'])
+@login_required
+def edit_user(user_id):
+    if not is_admin():
+        flash("Accès réservé aux administrateurs", "danger")
+        return redirect(url_for('index'))
+    
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+    role = request.form.get('role', 'manager')
+    is_active = request.form.get('is_active', '1') == '1'
+    
+    if not username:
+        flash("Le nom d'utilisateur est requis", "danger")
+        return redirect(url_for('users'))
+    
+    if role not in ('admin', 'manager'):
+        flash("Rôle invalide", "danger")
+        return redirect(url_for('users'))
+    
+    # Check if another user has this username
+    existing = get_user_by_username(username)
+    if existing and existing.id != user_id:
+        flash(f"Le nom d'utilisateur '{username}' est déjà utilisé", "danger")
+        return redirect(url_for('users'))
+    
+    update_user(user_id, username=username, password=password if password else None, 
+                role=role, is_active=is_active)
+    flash("Utilisateur mis à jour", "success")
+    return redirect(url_for('users'))
+
+@app.route('/parametres/utilisateurs/<int:user_id>/supprimer', methods=['POST'])
+@login_required
+def delete_user_route(user_id):
+    if not is_admin():
+        flash("Accès réservé aux administrateurs", "danger")
+        return redirect(url_for('index'))
+    
+    if user_id == current_user.id:
+        flash("Vous ne pouvez pas supprimer votre propre compte", "danger")
+        return redirect(url_for('users'))
+    
+    delete_user(user_id)
+    flash("Utilisateur supprimé", "success")
+    return redirect(url_for('users'))
+
 # ─── API endpoints ───────────────────────────────────────────────────
 @app.route('/api/calendar-events')
+@login_required
 def api_calendar_events():
     db = get_db()
     year = request.args.get('year', date.today().year, type=int)
@@ -1370,6 +1533,7 @@ def api_calendar_events():
 
 # ─── Export Endpoints ───────────────────────────────────────────────
 @app.route('/export/events.ods')
+@login_required
 def export_events():
     """Export events to ODS format."""
     db = get_db()
@@ -1405,6 +1569,7 @@ def export_events():
 
 
 @app.route('/export/clients.ods')
+@login_required
 def export_clients():
     """Export clients to ODS format."""
     db = get_db()
@@ -1436,6 +1601,7 @@ def export_clients():
 
 
 @app.route('/export/payments.ods')
+@login_required
 def export_payments():
     """Export payments to ODS format."""
     db = get_db()
@@ -1460,6 +1626,7 @@ def export_payments():
 
 
 @app.route('/export/finances.ods')
+@login_required
 def export_finances():
     """Export financial report to ODS format."""
     db = get_db()
@@ -1522,6 +1689,7 @@ def export_finances():
 
 
 @app.route('/export/expenses.ods')
+@login_required
 def export_expenses():
     """Export expenses to ODS format."""
     db = get_db()
@@ -1557,6 +1725,7 @@ def export_expenses():
 
 
 @app.route('/export/pl.ods')
+@login_required
 def export_pl():
     """Export Profit & Loss report to ODS format."""
     db = get_db()

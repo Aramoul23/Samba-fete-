@@ -71,11 +71,20 @@
         </ul>
 
         <div class="sidebar-footer">
+            {% if current_user.is_authenticated %}
             <li class="nav-item" style="list-style: none;">
                 <a href="{{ url_for('settings') }}" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
                     <i class="fas fa-cog"></i> <span>Paramètres</span>
                 </a>
             </li>
+            {% if current_user.role == 'admin' %}
+            <li class="nav-item" style="list-style: none;">
+                <a href="{{ url_for('users') }}" class="nav-link {% if request.endpoint == 'users' %}active{% endif %}">
+                    <i class="fas fa-users-cog"></i> <span>Utilisateurs</span>
+                </a>
+            </li>
+            {% endif %}
+            {% endif %}
             <div class="sidebar-footer-text" style="margin-top: 12px;">Samba Fête &copy; {{ now().year if now is defined else '2025' }}</div>
         </div>
     </nav>
@@ -91,6 +100,19 @@
                 {% block page_title %}Tableau de Bord{% endblock %}
             </div>
             <div class="topbar-actions">
+                {% if current_user.is_authenticated %}
+                <div class="dropdown d-none d-sm-inline-block me-2">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                        <span class="badge bg-{% if current_user.role == 'admin' %}danger{% else %}secondary{% endif %} ms-1" style="font-size: 0.65rem;">{{ current_user.role }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text text-muted small">{{ current_user.username }} ({{ current_user.role }})</span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                    </ul>
+                </div>
+                {% endif %}
                 <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-sm" title="Clients">
                     <i class="fas fa-users"></i>
                 </a>
