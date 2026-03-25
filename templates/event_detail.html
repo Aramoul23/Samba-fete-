@@ -19,10 +19,10 @@
                 </div>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-outline-gold me-2" target="_blank">
-                    <i class="fas fa-file-pdf me-1"></i>Contrat
+                <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-primary me-2" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>Imprimer Contrat
                 </a>
-                <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-primary">
+                <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-outline-gold">
                     <i class="fas fa-edit me-2"></i>Modifier
                 </a>
             </div>
@@ -161,11 +161,15 @@
                                     <th>Montant</th>
                                     <th>Méthode</th>
                                     <th>Type</th>
+                                    <th>Reste après</th>
                                     <th>Référence</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% set running = namespace(total=event.total_amount) %}
                                 {% for p in payments %}
+                                {% set after = running.total - p.amount %}
                                 <tr>
                                     <td>{{ p.date[:10] }}</td>
                                     <td style="font-weight: 600; font-variant-numeric: tabular-nums;">{{ p.amount | format_da }}</td>
@@ -179,8 +183,18 @@
                                         <span class="badge-slot">{{ p.payment_type }}</span>
                                         {% endif %}
                                     </td>
+                                    <td style="font-variant-numeric: tabular-nums; {% if after <= 0 %}color: var(--success); font-weight: 700;{% endif %}">
+                                        {{ (after if after > 0 else 0) | format_da }}
+                                    </td>
                                     <td>{{ p.reference or '—' }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=p.id) }}"
+                                           class="btn btn-sm btn-outline-gold" target="_blank" title="Imprimer Reçu">
+                                            <i class="fas fa-print me-1"></i>Reçu
+                                        </a>
+                                    </td>
                                 </tr>
+                                {% set running.total = after %}
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -290,12 +304,18 @@
                         {% endif %}
                     </div>
 
-                    <!-- Contract Button -->
-                    <div class="mt-4 d-grid">
+                    <!-- Contract & Receipt Buttons -->
+                    <div class="mt-4 d-grid gap-2">
                         <a href="{{ url_for('generate_contract', event_id=event.id) }}"
                            class="btn btn-outline-gold btn-lg" target="_blank">
                             <i class="fas fa-file-pdf me-2"></i>Imprimer Contrat
                         </a>
+                        {% if payments %}
+                        <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=payments[0].id) }}"
+                           class="btn btn-primary btn-lg" target="_blank">
+                            <i class="fas fa-print me-2"></i>Dernier Reçu
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

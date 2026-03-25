@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from models import get_db, init_db, get_setting, set_setting
 from datetime import datetime, date, timedelta
 from contract_generator import generate_contract_pdf
+from receipt_generator import generate_receipt_html
 import calendar
 
 app = Flask(__name__)
@@ -490,6 +491,50 @@ def generate_contract(event_id):
     response.headers['Content-Type'] = 'application/pdf'
     safe_title = event['title'].replace(' ', '_')[:30]
     response.headers['Content-Disposition'] = f'inline; filename=contrat_{safe_title}_{event_id}.pdf'
+    return response
+
+# ─── Receipt (Reçu de Paiement) ─────────────────────────────────────
+@app.route('/evenement/<int:event_id>/recu/<int:payment_id>')
+def generate_receipt(event_id, payment_id):
+    db = get_db()
+    event = db.execute(
+        "SELECT e.*, c.name as client_name, c.phone, c.address, "
+        "v.name as venue_name FROM events e "
+        "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+        "WHERE e.id=?", (event_id,)).fetchone()
+
+    if not event:
+        flash("Événement introuvable", "danger")
+        db.close()
+        return redirect(url_for('index'))
+
+    payment = db.execute("SELECT * FROM payments WHERE id=? AND event_id=?",
+                         (payment_id, event_id)).fetchone()
+    if not payment:
+        flash("Paiement introuvable", "danger")
+        db.close()
+        return redirect(url_for('event_detail', event_id=event_id))
+
+    # Calculate totals for the receipt
+    total_paid_before = db.execute(
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND date < ?",
+        (event_id, payment['date'])).fetchone()['s']
+    # Include current payment for "déjà payé"
+    total_paid_after = total_paid_before + payment['amount']
+
+    remaining = event['total_amount'] - total_paid_after
+
+    # Receipt number
+    receipt_no = f"{payment['date'][:4]}-{payment_id:04d}"
+
+    db.close()
+
+    html = generate_receipt_html(
+        dict(event), dict(payment), total_paid_before, total_paid_after,
+        remaining, receipt_no
+    )
+    response = make_response(html)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
     return response
 
 # ─── Settings ────────────────────────────────────────────────────────
