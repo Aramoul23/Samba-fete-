@@ -33,9 +33,16 @@
                     </a>
                 </div>
                 <div class="col-md-1">
-                    <a href="{{ url_for('event_form') }}" class="btn btn-primary w-100">
-                        <i class="fas fa-plus"></i>
-                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('export_events', status=status_filter, q=search) }}">
+                                <i class="fas fa-file-excel me-2"></i>Exporter en ODS
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </form>
         </div>
@@ -43,6 +50,12 @@
 
     <!-- Events Table -->
     <div class="card-custom">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Liste des Événements</h5>
+            <a href="{{ url_for('event_form') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>Nouvel Événement
+            </a>
+        </div>
         <div class="card-body-custom" style="padding: 0;">
             {% if events %}
             <div class="table-responsive">

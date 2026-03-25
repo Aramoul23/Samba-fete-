@@ -23,6 +23,11 @@
                         Réinitialiser
                     </a>
                 </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('export_clients', q=search) }}" class="btn btn-success w-100">
+                        <i class="fas fa-download me-1"></i> Exporter ODS
+                    </a>
+                </div>
             </form>
         </div>
     </div>
@@ -37,10 +42,10 @@
                     <div class="card-body-custom">
                         <div class="d-flex align-items-start mb-3">
                             <div class="client-avatar me-3">
-                                <i class="fas fa-user-circle fa-3x" style="color: var(--blue);"></i>
+                                <i class="fas fa-user-circle fa-3x" style="color: var(--primary);"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <h5 class="mb-1 text-dark">{{ c.name }}</h5>
+                                <h5 class="mb-1" style="color: var(--text); font-weight: 600;">{{ c.name }}</h5>
                                 <small class="text-muted">
                                     <i class="fas fa-phone me-1"></i>{{ c.phone }}
                                 </small>
@@ -61,14 +66,14 @@
                             </div>
                             <div class="col-4">
                                 <div class="stat-mini">
-                                    <span class="stat-mini-value">{{ c.total_owed | format_da }}</span>
+                                    <span class="stat-mini-value" style="font-size: 0.8125rem;">{{ c.total_owed | format_da }}</span>
                                     <span class="stat-mini-label">Total</span>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="stat-mini">
                                     {% set remaining = c.total_owed - c.total_paid %}
-                                    <span class="stat-mini-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    <span class="stat-mini-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size: 0.8125rem;">
                                         {{ remaining | format_da }}
                                     </span>
                                     <span class="stat-mini-label">Reste</span>
@@ -87,6 +92,9 @@
             <div class="empty-state">
                 <i class="fas fa-users"></i>
                 <p>Aucun client trouvé</p>
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Créer un événement
+                </a>
             </div>
         </div>
     </div>

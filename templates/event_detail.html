@@ -17,15 +17,69 @@
                         <span class="badge-status status-{{ event.status | replace(' ', '-') }}">{{ event.status }}</span>
                     </span>
                 </div>
+                {% if needs_confirmation %}
+                <div class="alert alert-warning mt-3 mb-0" style="background: rgba(255,209,102,0.2); border: 1px solid var(--warning); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.8125rem;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>Attention:</strong> Cet événement est en attente depuis plus de 48h. Confirmez ou contactez le client.
+                </div>
+                {% endif %}
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-primary me-2" target="_blank">
-                    <i class="fas fa-file-pdf me-1"></i>Imprimer Contrat
+                    <i class="fas fa-file-pdf me-1"></i>Contrat
                 </a>
                 <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-outline-gold">
                     <i class="fas fa-edit me-2"></i>Modifier
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- Status Change Buttons -->
+    <div class="card-custom mb-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Changer le Statut</h5>
+        </div>
+        <div class="card-body-custom">
+            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if event.status != 'confirmé' %}
+                        <button type="submit" name="status" value="confirmé" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Confirmer
+                        </button>
+                        {% endif %}
+                        
+                        {% if event.status != 'changé de date' %}
+                        <button type="button" class="btn btn-warning" onclick="showDateChangeModal()" style="background: var(--warning); color: #2d3436; border: none;">
+                            <i class="fas fa-calendar-alt me-1"></i>Changé de date
+                        </button>
+                        {% endif %}
+                        
+                        {% if event.status != 'terminé' %}
+                        <button type="submit" name="status" value="terminé" class="btn btn-secondary">
+                            <i class="fas fa-check-double me-1"></i>Terminé
+                        </button>
+                        {% endif %}
+                        
+                        {% if event.status != 'en attente' %}
+                        <button type="submit" name="status" value="en attente" class="btn btn-outline-gold">
+                            <i class="fas fa-clock me-1"></i>Remettre en attente
+                        </button>
+                        {% endif %}
+                        
+                        {% if event.status != 'annulé' %}
+                        <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
+                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement?')">
+                            <i class="fas fa-times me-1"></i>Annuler
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Hidden date input for date change -->
+                <input type="hidden" name="new_date" id="newDateInput">
+            </form>
         </div>
     </div>
 
@@ -61,12 +115,12 @@
                         </div>
                         <div class="col-md-4">
                             <div class="detail-label">Total Invités</div>
-                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 700; color: var(--blue);">{{ event.guests_men + event.guests_women }}</div>
+                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 700; color: var(--primary);">{{ event.guests_men + event.guests_women }}</div>
                         </div>
                         {% if event.notes %}
                         <div class="col-12">
                             <div class="detail-label">Notes</div>
-                            <div class="detail-value" style="background: var(--bg); padding: 12px 16px; border-radius: var(--radius-sm); margin-top: 4px;">{{ event.notes }}</div>
+                            <div class="detail-value" style="background: var(--bg); padding: 14px 18px; border-radius: var(--radius-md); margin-top: 6px; border: 1px solid var(--border-light);">{{ event.notes }}</div>
                         </div>
                         {% endif %}
                     </div>
@@ -85,7 +139,7 @@
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="detail-label">Nom</div>
-                            <div class="detail-value">{{ event.client_name }}</div>
+                            <div class="detail-value" style="font-weight: 600;">{{ event.client_name }}</div>
                         </div>
                         <div class="col-md-3">
                             <div class="detail-label">Téléphone</div>
@@ -129,7 +183,7 @@
                         <tbody>
                             {% for line in event_lines %}
                             <tr>
-                                <td>{{ line.description }}</td>
+                                <td style="font-weight: 500;">{{ line.description }}</td>
                                 <td class="text-end" style="font-weight: 600; font-variant-numeric: tabular-nums;">{{ line.amount | format_da }}</td>
                                 <td class="text-center">
                                     {% if line.is_cost %}
@@ -140,6 +194,15 @@
                                 </td>
                             </tr>
                             {% endfor %}
+                            <tr style="background: var(--bg);">
+                                <td style="font-weight: 700;">Bénéfice Net</td>
+                                <td class="text-end" style="font-weight: 700; font-size: 1.0625rem; {% if profit > 0 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                                    {{ profit | format_da }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge-slot">Revenue - Coûts</span>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -161,40 +224,55 @@
                                     <th>Montant</th>
                                     <th>Méthode</th>
                                     <th>Type</th>
-                                    <th>Reste après</th>
                                     <th>Référence</th>
+                                    <th>Statut</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% set running = namespace(total=event.total_amount) %}
                                 {% for p in payments %}
-                                {% set after = running.total - p.amount %}
-                                <tr>
+                                <tr {% if p.is_refunded %}style="opacity: 0.6;"{% endif %}>
                                     <td>{{ p.date[:10] }}</td>
-                                    <td style="font-weight: 600; font-variant-numeric: tabular-nums;">{{ p.amount | format_da }}</td>
+                                    <td style="font-weight: 600; font-variant-numeric: tabular-nums;">
+                                        {% if p.is_refunded %}<del>{% endif %}
+                                        {{ p.amount | format_da }}
+                                        {% if p.is_refunded %}</del>{% endif %}
+                                    </td>
                                     <td>{{ p.method }}</td>
                                     <td>
                                         {% if p.payment_type == 'acompte' %}
                                         <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Acompte</span>
                                         {% elif p.payment_type == 'solde' %}
-                                        <span class="badge-slot" style="background: var(--info-soft); color: var(--blue-dark);">Solde</span>
+                                        <span class="badge-slot" style="background: var(--info-soft); color: var(--primary-dark);">Solde</span>
                                         {% else %}
                                         <span class="badge-slot">{{ p.payment_type }}</span>
                                         {% endif %}
                                     </td>
-                                    <td style="font-variant-numeric: tabular-nums; {% if after <= 0 %}color: var(--success); font-weight: 700;{% endif %}">
-                                        {{ (after if after > 0 else 0) | format_da }}
-                                    </td>
                                     <td>{{ p.reference or '—' }}</td>
+                                    <td>
+                                        {% if p.is_refunded %}
+                                        <span class="badge-status" style="background: var(--danger); font-size: 0.65rem;">
+                                            <i class="fas fa-undo me-1"></i>Remboursé
+                                        </span>
+                                        {% else %}
+                                        <span class="badge-status status-confirmé">Validé</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-center">
+                                        {% if not p.is_refunded %}
                                         <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=p.id) }}"
-                                           class="btn btn-sm btn-outline-gold" target="_blank" title="Imprimer Reçu">
-                                            <i class="fas fa-print me-1"></i>Reçu
+                                           class="btn btn-sm btn-outline-gold me-1" target="_blank" title="Reçu">
+                                            <i class="fas fa-print"></i>
                                         </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                onclick="showRefundModal({{ p.id }}, {{ p.amount }})" title="Rembourser">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        {% else %}
+                                        <span class="text-muted" style="font-size: 0.75rem;">{{ p.refund_reason or 'Remboursé' }}</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
-                                {% set running.total = after %}
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -206,7 +284,7 @@
                         <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter un Paiement</h6>
                         <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}">
                             <div class="row g-2 align-items-end">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label-elegant">Montant</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" name="amount" class="form-input-elegant" step="100" required>
@@ -230,12 +308,16 @@
                                         <option value="autre">Autre</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label-elegant">Référence</label>
                                     <input type="text" name="reference" class="form-input-elegant">
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <label class="form-label-elegant">Notes</label>
+                                    <input type="text" name="notes" class="form-input-elegant" placeholder="Optionnel">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
                                         <i class="fas fa-plus"></i> Ajouter
                                     </button>
                                 </div>
@@ -262,16 +344,18 @@
                             <span>Acompte Requis</span>
                             <strong style="font-variant-numeric: tabular-nums;">{{ event.deposit_required | format_da }}</strong>
                         </div>
-                        <hr style="border-color: var(--border-light); margin: 8px 0;">
-                        <div class="summary-row">
-                            <span>Acompte Payé</span>
-                            <strong class="text-success" style="font-variant-numeric: tabular-nums;">{{ deposit | format_da }}</strong>
-                        </div>
+                        <hr style="border-color: var(--border-light); margin: 10px 0;">
                         <div class="summary-row">
                             <span>Total Payé</span>
                             <strong class="text-success" style="font-variant-numeric: tabular-nums;">{{ total_paid | format_da }}</strong>
                         </div>
-                        <hr style="border-color: var(--border-light); margin: 8px 0;">
+                        {% if total_refunded > 0 %}
+                        <div class="summary-row">
+                            <span>Remboursé</span>
+                            <strong class="text-danger" style="font-variant-numeric: tabular-nums;">{{ total_refunded | format_da }}</strong>
+                        </div>
+                        {% endif %}
+                        <hr style="border-color: var(--border-light); margin: 10px 0;">
                         <div class="summary-row total-row">
                             <span>Reste à Payer</span>
                             <strong class="{% if event.total_amount - total_paid > 0 %}text-danger{% else %}text-success{% endif %}" style="font-variant-numeric: tabular-nums;">
@@ -279,12 +363,32 @@
                             </strong>
                         </div>
 
+                        <!-- Profit Section -->
+                        <hr style="border-color: var(--border-light); margin: 14px 0;">
+                        <div style="background: var(--bg); border-radius: var(--radius-md); padding: 14px; margin-top: 8px;">
+                            <div class="d-flex justify-content-between mb-2" style="font-size: 0.8125rem;">
+                                <span class="text-muted">Revenus (Prestations)</span>
+                                <strong class="text-success">{{ total_revenue | format_da }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" style="font-size: 0.8125rem;">
+                                <span class="text-muted">Coûts</span>
+                                <strong class="text-danger">{{ total_costs | format_da }}</strong>
+                            </div>
+                            <hr style="margin: 8px 0;">
+                            <div class="d-flex justify-content-between" style="font-size: 0.9375rem;">
+                                <strong>Bénéfice Net</strong>
+                                <strong style="color: {% if profit > 0 %}var(--success){% else %}var(--danger){% endif %};">
+                                    {{ profit | format_da }}
+                                </strong>
+                            </div>
+                        </div>
+
                         <!-- Progress Bar -->
                         {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
                         <div class="mt-4">
                             <div class="progress-label">
                                 <span>Progression paiement</span>
-                                <span style="font-weight: 600;">{{ "%.0f"|format(pct) }}%</span>
+                                <span style="font-weight: 700;">{{ "%.0f"|format(pct) }}%</span>
                             </div>
                             <div class="progress payment-progress">
                                 <div class="progress-bar bg-gold" style="width: {{ pct }}%"></div>
@@ -307,12 +411,12 @@
                     <!-- Contract & Receipt Buttons -->
                     <div class="mt-4 d-grid gap-2">
                         <a href="{{ url_for('generate_contract', event_id=event.id) }}"
-                           class="btn btn-outline-gold btn-lg" target="_blank">
+                           class="btn btn-primary btn-lg" target="_blank">
                             <i class="fas fa-file-pdf me-2"></i>Imprimer Contrat
                         </a>
                         {% if payments %}
                         <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=payments[0].id) }}"
-                           class="btn btn-primary btn-lg" target="_blank">
+                           class="btn btn-outline-gold btn-lg" target="_blank">
                             <i class="fas fa-print me-2"></i>Dernier Reçu
                         </a>
                         {% endif %}
@@ -322,4 +426,92 @@
         </div>
     </div>
 </div>
+
+<!-- Date Change Modal -->
+<div class="modal fade" id="dateChangeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--warning), #f0c040); color: #2d3436;">
+                <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Changer la Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Sélectionnez la nouvelle date pour cet événement:</p>
+                <input type="date" id="newDateInputModal" class="form-input-elegant" min="{{ today_str }}">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" onclick="confirmDateChange()" style="background: var(--warning); color: #2d3436; border: none;">
+                    <i class="fas fa-check me-1"></i>Confirmer le changement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--danger), #dc3545); color: white;">
+                <h5 class="modal-title"><i class="fas fa-undo me-2"></i>Rembourser le Paiement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="refundForm">
+                <div class="modal-body">
+                    <p>Montant à rembourser: <strong id="refundAmount"></strong></p>
+                    <p class="text-muted small">Ce paiement sera marqué comme remboursé (pas supprimé) pour garder une trace comptable.</p>
+                    <div class="mb-3">
+                        <label class="form-label-elegant">Motif du remboursement</label>
+                        <textarea name="refund_reason" class="form-input-elegant" rows="2" placeholder="Raison du remboursement..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-undo me-1"></i>Confirmer le remboursement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showDateChangeModal() {
+    new bootstrap.Modal(document.getElementById('dateChangeModal')).show();
+}
+
+function confirmDateChange() {
+    const newDate = document.getElementById('newDateInputModal').value;
+    if (!newDate) {
+        alert('Veuillez sélectionner une date');
+        return;
+    }
+    document.getElementById('newDateInput').value = newDate;
+    
+    // Create a hidden input for status
+    const form = document.getElementById('statusForm');
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = 'changé de date';
+    form.appendChild(statusInput);
+    
+    form.submit();
+}
+
+function showRefundModal(paymentId, amount) {
+    document.getElementById('refundAmount').textContent = formatDA(amount);
+    document.getElementById('refundForm').action = `{{ url_for('event_detail', event_id=event.id) }}`.replace('event_detail', 'refund_payment').replace('{{ event.id }}', {{ event.id }}) + '/' + paymentId + '/rembourser';
+    new bootstrap.Modal(document.getElementById('refundModal')).show();
+}
+
+function formatDA(amount) {
+    return new Intl.NumberFormat('fr-DZ').format(amount) + ' DA';
+}
+</script>
 {% endblock %}

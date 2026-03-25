@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Rapports Financiers{% endblock %}
+{% block page_title %}Rapports Financiers{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Period Filter -->
+    <div class="card-custom mb-4">
+        <div class="card-body-custom">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Date début</label>
+                    <input type="date" name="start_date" class="form-input-elegant" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Date fin</label>
+                    <input type="date" name="end_date" class="form-input-elegant" value="{{ end_date }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('financials') }}" class="btn btn-outline-secondary me-2">Réinitialiser</a>
+                    <div class="dropdown d-inline">
+                        <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Exporter
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('export_finances', start_date=start_date, end_date=end_date) }}">
+                                <i class="fas fa-file-excel me-2"></i>Finances (ODS)
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('export_payments', start_date=start_date, end_date=end_date) }}">
+                                <i class="fas fa-file-excel me-2"></i>Paiements (ODS)
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success-soft">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_revenue | format_da }}</span>
+                    <span class="stat-label">Revenus Totaux</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning-soft">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_outstanding | format_da }}</span>
+                    <span class="stat-label">Soldes Impayés</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger-soft">
+                    <i class="fas fa-undo"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_refunded | format_da }}</span>
+                    <span class="stat-label">Remboursements</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-soft">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_profit | format_da }}</span>
+                    <span class="stat-label">Bénéfice Net</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Revenue by Event Type -->
+        <div class="col-lg-6">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Revenus par Type d'Événement</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if revenue_by_type %}
+                    <table class="table-elegant">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th class="text-end">Revenus</th>
+                                <th class="text-end">Événements</th>
+                                <th class="text-end">Moyenne</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in revenue_by_type %}
+                            <tr>
+                                <td style="font-weight: 500;">{{ row.event_type }}</td>
+                                <td class="text-end" style="font-weight: 600;">{{ row.revenue | format_da }}</td>
+                                <td class="text-end">{{ row.count }}</td>
+                                <td class="text-end">{{ (row.revenue / row.count if row.count else 0) | format_da }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state small">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>Aucune donnée pour cette période</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Clients -->
+        <div class="col-lg-6">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Clients par Revenus</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if top_clients %}
+                    <table class="table-elegant">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Client</th>
+                                <th class="text-end">Total Facturé</th>
+                                <th class="text-end">Total Payé</th>
+                                <th class="text-end">Reste</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in top_clients %}
+                            <tr class="clickable-row" onclick="window.location='{{ url_for('client_detail', client_id=c.id) }}'">
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td style="font-weight: 500;">{{ c.name }}</td>
+                                <td class="text-end">{{ c.total_billed | format_da }}</td>
+                                <td class="text-end text-success">{{ c.total_paid | format_da }}</td>
+                                <td class="text-end {% if c.total_remaining > 0 %}text-danger{% endif %}">
+                                    {{ c.total_remaining | format_da }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state small">
+                        <i class="fas fa-users"></i>
+                        <p>Aucune donnée pour cette période</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Timeline -->
+    <div class="card-custom mt-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des Paiements</h5>
+            <span class="text-muted" style="font-size: 0.8125rem;">{{ payments | length }} paiements</span>
+        </div>
+        <div class="card-body-custom" style="padding: 0;">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Événement</th>
+                            <th>Client</th>
+                            <th class="text-end">Montant</th>
+                            <th>Méthode</th>
+                            <th>Type</th>
+                            <th>Référence</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                        <tr {% if p.is_refunded %}style="opacity: 0.6;"{% endif %}>
+                            <td><strong>{{ p.date[:10] }}</strong></td>
+                            <td>
+                                <a href="{{ url_for('event_detail', event_id=p.event_id) }}" class="text-decoration-none">
+                                    {{ p.title }}
+                                </a>
+                            </td>
+                            <td>{{ p.client_name }}</td>
+                            <td class="text-end" style="font-weight: 600; font-variant-numeric: tabular-nums;">
+                                {% if p.is_refunded %}<del>{% endif %}
+                                {{ p.amount | format_da }}
+                                {% if p.is_refunded %}</del>{% endif %}
+                            </td>
+                            <td>{{ p.method }}</td>
+                            <td>
+                                <span class="badge-slot">{{ p.payment_type }}</span>
+                            </td>
+                            <td>{{ p.reference or '—' }}</td>
+                            <td>
+                                {% if p.is_refunded %}
+                                <span class="badge-status" style="background: var(--danger);">
+                                    <i class="fas fa-undo me-1"></i>Remboursé
+                                </span>
+                                {% else %}
+                                <span class="badge-status status-confirmé">Validé</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <p>Aucun paiement trouvé pour cette période</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Event Financial Summary -->
+    <div class="card-custom mt-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Résumé Financier par Événement</h5>
+        </div>
+        <div class="card-body-custom" style="padding: 0;">
+            {% if event_financials %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Événement</th>
+                            <th>Client</th>
+                            <th>Type</th>
+                            <th class="text-end">Revenus</th>
+                            <th class="text-end">Coûts</th>
+                            <th class="text-end">Bénéfice</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Reste</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ef in event_financials %}
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ef.id) }}'">
+                            <td><strong>{{ ef.event_date[:10] }}</strong></td>
+                            <td style="font-weight: 500;">{{ ef.title }}</td>
+                            <td>{{ ef.client_name }}</td>
+                            <td>{{ ef.event_type }}</td>
+                            <td class="text-end text-success">{{ ef.total_revenue | format_da }}</td>
+                            <td class="text-end text-danger">{{ ef.total_costs | format_da }}</td>
+                            <td class="text-end" style="font-weight: 700; {% if ef.profit > 0 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                                {{ ef.profit | format_da }}
+                            </td>
+                            <td class="text-end">{{ ef.total_paid | format_da }}</td>
+                            <td class="text-end {% if ef.remaining > 0 %}text-danger{% endif %}">
+                                {{ ef.remaining | format_da }}
+                            </td>
+                            <td>
+                                <span class="badge-status status-{{ ef.status | replace(' ', '-') }}">
+                                    {{ ef.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-invoice"></i>
+                <p>Aucun événement trouvé pour cette période</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

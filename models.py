@@ -43,11 +43,12 @@ def init_db():
             time_slot TEXT NOT NULL,
             guests_men INTEGER DEFAULT 0,
             guests_women INTEGER DEFAULT 0,
-            status TEXT DEFAULT 'confirmé',
+            status TEXT DEFAULT 'en attente',
             notes TEXT,
             total_amount REAL DEFAULT 0,
             deposit_required REAL DEFAULT 20000,
             created_at TEXT DEFAULT (datetime('now','localtime')),
+            updated_at TEXT DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (client_id) REFERENCES clients(id),
             FOREIGN KEY (venue_id) REFERENCES venues(id),
             FOREIGN KEY (venue_id2) REFERENCES venues(id)
@@ -70,6 +71,25 @@ def init_db():
             method TEXT DEFAULT 'espèces',
             payment_type TEXT DEFAULT 'acompte',
             reference TEXT,
+            is_refunded INTEGER DEFAULT 0,
+            refund_date TEXT,
+            refund_reason TEXT,
+            notes TEXT,
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            expense_date TEXT NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT,
+            amount REAL NOT NULL,
+            vendor TEXT,
+            event_id INTEGER,
+            method TEXT DEFAULT 'espèces',
+            reference TEXT,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (event_id) REFERENCES events(id)
         );
 
@@ -78,6 +98,21 @@ def init_db():
             value TEXT NOT NULL
         );
     ''')
+
+    # Migration: Add updated_at column if it doesn't exist
+    try:
+        cur.execute("SELECT updated_at FROM events LIMIT 1")
+    except sqlite3.OperationalError:
+        cur.execute("ALTER TABLE events ADD COLUMN updated_at TEXT DEFAULT (datetime('now','localtime'))")
+
+    # Migration: Add refund columns to payments if they don't exist
+    try:
+        cur.execute("SELECT is_refunded FROM payments LIMIT 1")
+    except sqlite3.OperationalError:
+        cur.execute("ALTER TABLE payments ADD COLUMN is_refunded INTEGER DEFAULT 0")
+        cur.execute("ALTER TABLE payments ADD COLUMN refund_date TEXT")
+        cur.execute("ALTER TABLE payments ADD COLUMN refund_reason TEXT")
+        cur.execute("ALTER TABLE payments ADD COLUMN notes TEXT")
 
     # Seed default venues
     cur.execute("SELECT COUNT(*) FROM venues")

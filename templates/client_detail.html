@@ -9,7 +9,9 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-user-circle fa-3x me-3" style="color: var(--blue);"></i>
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; margin-right: 16px;">
+                        <i class="fas fa-user fa-2x" style="color: white;"></i>
+                    </div>
                     <div>
                         <h2 class="event-title mb-0">{{ client.name }}</h2>
                         <div class="event-meta">
@@ -41,7 +43,7 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="stat-card">
-                <div class="stat-icon bg-gold-soft">
+                <div class="stat-icon bg-blue-soft">
                     <i class="fas fa-calendar-check"></i>
                 </div>
                 <div class="stat-info">
@@ -56,7 +58,7 @@
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_owed | format_da }}</span>
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_owed | format_da }}</span>
                     <span class="stat-label">Total Facturé</span>
                 </div>
             </div>
@@ -67,7 +69,7 @@
                     <i class="fas fa-coins"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_paid | format_da }}</span>
+                    <span class="stat-value" style="font-size: 1.25rem;">{{ total_paid | format_da }}</span>
                     <span class="stat-label">Total Payé</span>
                 </div>
             </div>
@@ -79,7 +81,7 @@
                     <i class="fas fa-balance-scale"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}">
+                    <span class="stat-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size: 1.25rem;">
                         {{ remaining | format_da }}
                     </span>
                     <span class="stat-label">Reste à Recevoir</span>
@@ -88,11 +90,54 @@
         </div>
     </div>
 
+    <!-- Payment Timeline -->
+    {% if all_payments %}
+    <div class="card-custom mb-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des Paiements</h5>
+            <span class="text-muted" style="font-size: 0.8125rem;">{{ all_payments | length }} paiements</span>
+        </div>
+        <div class="card-body-custom">
+            <div class="payment-timeline">
+                {% for p in all_payments %}
+                <div class="timeline-item {% if p.is_refunded %}refunded{% endif %}">
+                    <div class="timeline-marker {% if p.is_refunded %}refunded{% elif p.payment_type == 'acompte' %}deposit{% elif p.payment_type == 'solde' %}final{% endif %}"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong style="font-size: 0.9375rem;">{{ p.amount | format_da }}</strong>
+                                <span class="badge-slot ms-2">{{ p.payment_type }}</span>
+                                {% if p.is_refunded %}
+                                <span class="badge-status ms-2" style="background: var(--danger); font-size: 0.65rem;">Remboursé</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ p.date[:10] }}</small>
+                        </div>
+                        <div class="mt-1" style="font-size: 0.8125rem; color: var(--text-secondary);">
+                            <span>{{ p.method }}</span>
+                            {% if p.reference %}
+                            <span class="ms-2">· Réf: {{ p.reference }}</span>
+                            {% endif %}
+                            <span class="ms-2">· <a href="{{ url_for('event_detail', event_id=p.event_id) }}">{{ p.event_title }}</a></span>
+                        </div>
+                        {% if p.is_refunded and p.refund_reason %}
+                        <div class="mt-1" style="font-size: 0.75rem; color: var(--danger);">
+                            <i class="fas fa-info-circle me-1"></i>Motif: {{ p.refund_reason }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Events List -->
     <div class="card-custom">
         <div class="card-header-custom">
             <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Historique des Événements</h5>
-            <a href="{{ url_for('event_form') }}" class="btn btn-sm btn-outline-gold">
+            <a href="{{ url_for('event_form') }}" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus me-1"></i>Nouveau
             </a>
         </div>
@@ -106,26 +151,31 @@
                             <th>Événement</th>
                             <th>Type</th>
                             <th>Lieu</th>
-                            <th>Montant</th>
-                            <th>Payé</th>
-                            <th>Reste</th>
+                            <th class="text-end">Revenus</th>
+                            <th class="text-end">Coûts</th>
+                            <th class="text-end">Bénéfice</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Reste</th>
                             <th>Statut</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for ev in events %}
-                        {% set ev_paid = event_payments[ev.id]['total_paid'] %}
-                        {% set ev_remaining = ev.total_amount - ev_paid %}
+                        {% set ev_data = event_financials[ev.id] %}
                         <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ev.id) }}'">
                             <td><strong>{{ ev.event_date[:10] }}</strong></td>
-                            <td>{{ ev.title }}</td>
+                            <td style="font-weight: 500;">{{ ev.title }}</td>
                             <td>{{ ev.event_type }}</td>
                             <td>{{ ev.venue_name }}</td>
-                            <td>{{ ev.total_amount | format_da }}</td>
-                            <td class="text-success">{{ ev_paid | format_da }}</td>
-                            <td class="{% if ev_remaining > 0 %}text-danger{% else %}text-success{% endif %}">
-                                {{ ev_remaining | format_da }}
+                            <td class="text-end text-success" style="font-variant-numeric: tabular-nums;">{{ ev_data.revenue | format_da }}</td>
+                            <td class="text-end text-danger" style="font-variant-numeric: tabular-nums;">{{ ev_data.costs | format_da }}</td>
+                            <td class="text-end" style="font-weight: 700; font-variant-numeric: tabular-nums; {% if ev_data.profit > 0 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                                {{ ev_data.profit | format_da }}
+                            </td>
+                            <td class="text-end text-success" style="font-variant-numeric: tabular-nums;">{{ ev_data.paid | format_da }}</td>
+                            <td class="text-end {% if ev_data.remaining > 0 %}text-danger{% endif %}" style="font-variant-numeric: tabular-nums;">
+                                {{ ev_data.remaining | format_da }}
                             </td>
                             <td>
                                 <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
@@ -140,41 +190,6 @@
                                 </a>
                             </td>
                         </tr>
-
-                        <!-- Payment rows for this event -->
-                        {% if event_payments[ev.id].payments %}
-                        <tr class="payment-sub-row">
-                            <td colspan="9" class="p-0">
-                                <div class="payment-history-mini">
-                                    <table class="table table-sm mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th colspan="4" class="ps-3" style="font-size: 0.8rem; color: var(--blue);">
-                                                    <i class="fas fa-receipt me-1"></i>Paiements — {{ ev.title }}
-                                                </th>
-                                            </tr>
-                                            <tr style="font-size: 0.75rem;">
-                                                <th class="ps-3">Date</th>
-                                                <th>Montant</th>
-                                                <th>Méthode</th>
-                                                <th>Réf.</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody style="font-size: 0.8rem;">
-                                            {% for p in event_payments[ev.id].payments %}
-                                            <tr>
-                                                <td class="ps-3">{{ p.date[:10] }}</td>
-                                                <td>{{ p.amount | format_da }}</td>
-                                                <td>{{ p.method }}</td>
-                                                <td>{{ p.reference or '—' }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
@@ -183,10 +198,79 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <p>Aucun événement pour ce client</p>
-                <a href="{{ url_for('event_form') }}" class="btn btn-primary">Créer un événement</a>
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Créer un événement
+                </a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+/* Timeline Styles */
+.payment-timeline {
+    position: relative;
+    padding-left: 24px;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 12px 0 12px 24px;
+    border-left: 2px solid var(--border-light);
+}
+
+.timeline-item:last-child {
+    border-left-color: transparent;
+}
+
+.timeline-item.refunded {
+    opacity: 0.7;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid var(--bg-elevated);
+    box-shadow: 0 0 0 2px var(--success);
+}
+
+.timeline-marker.deposit {
+    background: var(--warning);
+    box-shadow: 0 0 0 2px var(--warning);
+}
+
+.timeline-marker.final {
+    background: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.timeline-marker.refunded {
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--danger);
+}
+
+.timeline-content {
+    background: var(--bg);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    transition: all var(--duration) var(--ease-out);
+}
+
+.timeline-content:hover {
+    border-color: var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+.timeline-item.refunded .timeline-content {
+    background: var(--danger-soft);
+    border-color: rgba(239, 71, 111, 0.2);
+}
+</style>
 {% endblock %}

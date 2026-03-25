@@ -165,7 +165,7 @@
                                                id="service_location" name="service_location" checked disabled>
                                         <label class="form-check-label fw-bold" for="service_location">
                                             Location de la salle
-                                            <span class="badge bg-primary ms-2">Requis</span>
+                                            <span class="badge bg-primary ms-2" style="font-size: 0.65rem;">Requis</span>
                                         </label>
                                     </div>
                                     <div class="input-group" style="width: 150px;">
@@ -299,7 +299,7 @@
                             </div>
 
                             <!-- Autre (Custom) -->
-                            <div class="service-item" style="background: #f8f9fa;">
+                            <div class="service-item" style="background: var(--bg);">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="form-check">
                                         <input type="checkbox" class="form-check-input service-checkbox"
@@ -428,10 +428,10 @@
                             </div>
                             <div id="availCalDays" class="avail-cal-grid"></div>
                         </div>
-                        <div class="avail-cal-legend mt-2">
-                            <span class="legend-item"><span class="legend-dot legend-green"></span> Disponible</span>
-                            <span class="legend-item"><span class="legend-dot legend-yellow"></span> En attente</span>
-                            <span class="legend-item"><span class="legend-dot legend-red"></span> Occupé</span>
+                        <div class="avail-cal-legend mt-3">
+                            <span class="legend-item"><span class="legend-dot" style="background: var(--success); width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span> Disponible</span>
+                            <span class="legend-item"><span class="legend-dot" style="background: var(--warning); width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span> En attente</span>
+                            <span class="legend-item"><span class="legend-dot" style="background: var(--danger); width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span> Occupé</span>
                         </div>
                     </div>
                 </div>
@@ -496,7 +496,7 @@
 <script>
 // Service checkbox toggle - enable/disable price inputs
 document.querySelectorAll('.service-checkbox').forEach(checkbox => {
-    if (checkbox.id === 'service_location') return; // Location is always enabled
+    if (checkbox.id === 'service_location') return;
 
     checkbox.addEventListener('change', function() {
         const serviceId = this.id.replace('service_', '');
@@ -546,8 +546,8 @@ function removeLine(btn) {
 
 // ─── Availability Calendar ──────────────────────────────────────
 let availCalYear = new Date().getFullYear();
-let availCalMonth = new Date().getMonth() + 1; // 1-12
-let availCalEvents = {}; // { 'YYYY-MM-DD': status }
+let availCalMonth = new Date().getMonth() + 1;
+let availCalEvents = {};
 const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -577,15 +577,14 @@ function renderAvailCalendar() {
     container.innerHTML = '';
 
     const firstDay = new Date(availCalYear, availCalMonth - 1, 1);
-    let startDow = firstDay.getDay(); // 0=Sun
-    startDow = startDow === 0 ? 6 : startDow - 1; // Convert to Mon=0
+    let startDow = firstDay.getDay();
+    startDow = startDow === 0 ? 6 : startDow - 1;
 
     const daysInMonth = new Date(availCalYear, availCalMonth, 0).getDate();
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     const selectedDate = document.querySelector('input[name="event_date"]').value;
 
-    // Empty cells before first day
     for (let i = 0; i < startDow; i++) {
         const el = document.createElement('div');
         el.className = 'avail-cal-day empty';
@@ -618,7 +617,6 @@ function renderAvailCalendar() {
 
         el.addEventListener('click', () => {
             document.querySelector('input[name="event_date"]').value = dateStr;
-            // Remove previous selection
             container.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
             el.classList.add('selected');
         });
@@ -639,7 +637,6 @@ function availCalNext() {
     loadAvailCalendar();
 }
 
-// Sync calendar when date input changes manually
 document.querySelector('input[name="event_date"]').addEventListener('change', function() {
     const parts = this.value.split('-');
     if (parts.length === 3) {
@@ -655,17 +652,13 @@ document.querySelector('input[name="event_date"]').addEventListener('change', fu
     }
 });
 
-// Load calendar on page ready
 loadAvailCalendar();
 
 function calculateServicesTotal() {
     let total = 0;
-
-    // Location de la salle (always included)
     const locationPrice = parseFloat(document.getElementById('price_location').value) || 0;
     total += locationPrice;
 
-    // Other services
     const services = [
         { checkbox: 'service_individuel', price: 'price_individuel' },
         { checkbox: 'service_cafe', price: 'price_cafe' },
@@ -685,7 +678,6 @@ function calculateServicesTotal() {
         }
     });
 
-    // Add custom lines
     const amounts = document.querySelectorAll('input[name="line_amount[]"]');
     const costs = document.querySelectorAll('input[name="line_is_cost[]"]');
 
@@ -702,128 +694,4 @@ function calculateServicesTotal() {
     document.getElementById('totalAmountInput').value = Math.max(0, total).toFixed(0);
 }
 </script>
-
-<style>
-.service-item {
-    padding: 12px 15px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background: white;
-}
-
-.service-item:hover {
-    border-color: #C9A84C;
-    background: #fffdf5;
-}
-
-.service-required {
-    background: #e8f4fd !important;
-    border-color: #0d6efd !important;
-}
-
-.services-grid {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.form-check-input:checked {
-    background-color: #C9A84C;
-    border-color: #C9A84C;
-}
-
-/* Availability Calendar */
-.avail-calendar {
-    font-size: 0.85rem;
-}
-.avail-cal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-.avail-cal-header span {
-    font-size: 0.95rem;
-}
-.avail-cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    text-align: center;
-}
-.avail-cal-dayname {
-    font-weight: 600;
-    font-size: 0.7rem;
-    color: #666;
-    padding: 2px 0;
-}
-.avail-cal-day {
-    width: 100%;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    border: 2px solid transparent;
-}
-.avail-cal-day:hover {
-    transform: scale(1.15);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-.avail-cal-day.selected {
-    border-color: #333 !important;
-    box-shadow: 0 0 0 2px rgba(51,51,51,0.3);
-}
-.avail-cal-day.empty {
-    cursor: default;
-}
-.avail-cal-day.empty:hover {
-    transform: none;
-    box-shadow: none;
-}
-.avail-cal-day.past {
-    opacity: 0.5;
-}
-.avail-cal-day.available {
-    background: #d4edda;
-    color: #155724;
-}
-.avail-cal-day.pending {
-    background: #fff3cd;
-    color: #856404;
-}
-.avail-cal-day.booked {
-    background: #f8d7da;
-    color: #721c24;
-}
-.avail-cal-day.neutral {
-    background: #e9ecef;
-    color: #495057;
-}
-.avail-cal-legend {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 0.7rem;
-    color: #666;
-}
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-.legend-green { background: #28a745; }
-.legend-yellow { background: #ffc107; }
-.legend-red { background: #dc3545; }
-</style>
 {% endblock %}
