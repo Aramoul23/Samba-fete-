@@ -14,6 +14,19 @@ class DB:
     def __init__(self, conn, is_pg):
         self.conn = conn
         self.is_pg = is_pg
+        self._lastrowid = None
+    
+    @property
+    def lastrowid(self):
+        """Return the last inserted row ID."""
+        if self._lastrowid:
+            return self._lastrowid
+        cur = self.conn.cursor()
+        if self.is_pg:
+            cur.execute("SELECT LASTVAL()")
+        else:
+            cur.execute("SELECT LAST_INSERT_ROWID()")
+        return cur.fetchone()[0]
     
     def execute(self, sql, params=None):
         """Execute SQL and return self for chaining."""
@@ -26,6 +39,16 @@ class DB:
         else:
             cur.execute(sql)
         self._cur = cur
+        # Store lastrowid for INSERT statements
+        if sql.strip().upper().startswith('INSERT'):
+            if self.is_pg:
+                cur.execute("SELECT LASTVAL()")
+            else:
+                pass  # SQLite will use LAST_INSERT_ROWID() via property
+            try:
+                self._lastrowid = cur.fetchone()[0] if self.is_pg else None
+            except:
+                self._lastrowid = None
         return self
     
     def fetchone(self):

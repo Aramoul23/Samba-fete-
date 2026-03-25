@@ -2618,3 +2618,176 @@ select.form-input-elegant {
         margin: 0 !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SERVICE PRICE INPUTS — Beautiful Styling
+   ═══════════════════════════════════════════════════════════════ */
+
+.service-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.service-item:hover {
+    background: #f1f3f5;
+    border-color: #dee2e6;
+}
+
+.service-item .input-group {
+    width: 130px !important;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.service-item .form-control-sm {
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    border: 1.5px solid #dee2e6;
+    border-radius: 8px 0 0 8px;
+    background: #fff;
+}
+
+.service-item .form-control-sm:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+    outline: none;
+}
+
+.service-item .form-control-sm:disabled {
+    background: #e9ecef;
+    color: #868e96;
+    cursor: not-allowed;
+}
+
+.service-item .input-group-text {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #667eea;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1.5px solid #dee2e6;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+}
+
+.service-item .form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+}
+
+.service-item .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.service-item .form-check-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+/* Location price - special styling for the required field */
+.service-item:has(.form-check-input:disabled) {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+    border-color: #ffc9c9;
+}
+
+.service-item:has(.form-check-input:disabled) .form-control-sm {
+    background: #fff;
+    color: #e03131;
+    font-weight: 700;
+}
+
+/* Total calculator button */
+.btn-calculate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-calculate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    color: #fff;
+}
+
+/* Mobile improvements */
+@media (max-width: 767.98px) {
+    .service-item {
+        padding: 10px 14px;
+    }
+    
+    .service-item .input-group {
+        width: 110px !important;
+    }
+    
+    .service-item .form-control-sm {
+        padding: 10px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    .service-item .form-check-label {
+        font-size: 13px;
+    }
+}
+
+/* Lignes supplémentaires (Devis) */
+.line-item-row {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+
+.line-item-row .form-control {
+    border-radius: 8px;
+    border: 1.5px solid #dee2e6;
+}
+
+.line-item-row .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 162, 234, 0.15);
+}
+
+.btn-add-line {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 12px;
+    color: #667eea;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-add-line:hover {
+    background: #e7f5ff;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-remove-line {
+    background: #fff5f5;
+    color: #e03131;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.btn-remove-line:hover {
+    background: #ffe3e3;
+}
