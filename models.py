@@ -151,8 +151,11 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
                 category TEXT NOT NULL,
+                description TEXT DEFAULT '',
                 amount NUMERIC DEFAULT 0,
                 expense_date TEXT DEFAULT CURRENT_DATE::TEXT,
+                method TEXT DEFAULT 'espèces',
+                reference TEXT,
                 notes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -228,8 +231,11 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 event_id INTEGER,
                 category TEXT NOT NULL,
+                description TEXT DEFAULT '',
                 amount REAL DEFAULT 0,
                 expense_date TEXT DEFAULT (date('now','localtime')),
+                method TEXT DEFAULT 'espèces',
+                reference TEXT,
                 notes TEXT,
                 created_at TEXT DEFAULT (datetime('now','localtime')),
                 FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
