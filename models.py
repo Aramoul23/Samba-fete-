@@ -71,7 +71,6 @@ def init_db():
     db = get_db()
     
     if is_postgres():
-        db.conn.cursor().executescript = lambda sql: _executescript_pg(db.conn, sql)
         sqls = """
             CREATE TABLE IF NOT EXISTS venues (
                 id SERIAL PRIMARY KEY,
