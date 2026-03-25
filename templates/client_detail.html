@@ -9,7 +9,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-user-circle fa-3x me-3" style="color: var(--gold);"></i>
+                    <i class="fas fa-user-circle fa-3x me-3" style="color: var(--blue);"></i>
                     <div>
                         <h2 class="event-title mb-0">{{ client.name }}</h2>
                         <div class="event-meta">
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('event_form') }}" class="btn btn-gold">
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Nouvel Événement
                 </a>
             </div>
@@ -149,7 +149,7 @@
                                     <table class="table table-sm mb-0">
                                         <thead>
                                             <tr>
-                                                <th colspan="4" class="ps-3" style="font-size: 0.8rem; color: var(--gold);">
+                                                <th colspan="4" class="ps-3" style="font-size: 0.8rem; color: var(--blue);">
                                                     <i class="fas fa-receipt me-1"></i>Paiements — {{ ev.title }}
                                                 </th>
                                             </tr>
@@ -183,7 +183,7 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <p>Aucun événement pour ce client</p>
-                <a href="{{ url_for('event_form') }}" class="btn btn-gold">Créer un événement</a>
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary">Créer un événement</a>
             </div>
             {% endif %}
         </div>

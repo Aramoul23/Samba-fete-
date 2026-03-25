@@ -20,9 +20,21 @@
                     <i class="fas fa-chevron-right"></i>
                 </a>
             </div>
+
+            <!-- Venue Filter -->
+            <div class="d-flex align-items-center gap-3">
+                <select class="form-input-elegant" style="width: auto; min-width: 180px;" onchange="filterVenue(this.value)">
+                    <option value="">Tous les lieux</option>
+                    {% for v in venues %}
+                    <option value="{{ v.id }}">{{ v.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Legend -->
             <div class="calendar-legend">
-                <span class="legend-item"><span class="legend-dot free"></span> Libre</span>
-                <span class="legend-item"><span class="legend-dot booked"></span> Réservé</span>
+                <span class="legend-item"><span class="legend-dot free"></span> Disponible</span>
+                <span class="legend-item"><span class="legend-dot booked"></span> Occupé</span>
                 <span class="legend-item"><span class="legend-dot partial"></span> Partiel</span>
             </div>
         </div>
@@ -77,12 +89,12 @@
             <div class="modal-content modal-gold">
                 <div class="modal-header">
                     <h5 class="modal-title" id="dayDetailTitle">Détails du jour</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="dayDetailBody">
                 </div>
                 <div class="modal-footer" id="dayDetailFooter">
-                    <a href="#" id="dayAddEventBtn" class="btn btn-gold">
+                    <a href="#" id="dayAddEventBtn" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Ajouter un événement
                     </a>
                 </div>
@@ -111,7 +123,7 @@ function showDayDetail(dateStr) {
         body.innerHTML = `
             <div class="text-center py-4">
                 <i class="fas fa-check-circle fa-3x mb-3" style="color: var(--success);"></i>
-                <p class="text-muted">Ce jour est libre</p>
+                <p class="text-muted">Ce jour est disponible</p>
             </div>`;
     } else {
         let html = '';
@@ -134,6 +146,11 @@ function showDayDetail(dateStr) {
 
     addBtn.href = `/evenement/nouveau?date=${dateStr}`;
     new bootstrap.Modal(document.getElementById('dayDetailModal')).show();
+}
+
+function filterVenue(venueId) {
+    // Venue filter functionality
+    console.log('Filter by venue:', venueId);
 }
 </script>
 {% endblock %}

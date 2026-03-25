@@ -12,7 +12,7 @@
                 <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — Gérez vos événements avec élégance</p>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-lg">
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg">
                     <i class="fas fa-plus me-2"></i>Nouvel Événement
                 </a>
             </div>
@@ -23,7 +23,7 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="stat-card">
-                <div class="stat-icon bg-gold-soft">
+                <div class="stat-icon bg-blue-soft">
                     <i class="fas fa-calendar-check"></i>
                 </div>
                 <div class="stat-info">
@@ -114,7 +114,7 @@
                     <div class="empty-state">
                         <i class="fas fa-calendar-plus"></i>
                         <p>Aucun événement à venir</p>
-                        <a href="{{ url_for('event_form') }}" class="btn btn-gold">
+                        <a href="{{ url_for('event_form') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Créer un événement
                         </a>
                     </div>
@@ -132,7 +132,7 @@
                 </div>
                 <div class="card-body-custom">
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-lg">
+                        <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-plus me-2"></i>Nouvel Événement
                         </a>
                         <a href="{{ url_for('calendar_view') }}" class="btn btn-outline-gold btn-lg">

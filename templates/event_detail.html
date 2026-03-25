@@ -22,7 +22,7 @@
                 <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-outline-gold me-2" target="_blank">
                     <i class="fas fa-file-pdf me-1"></i>Contrat
                 </a>
-                <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-gold">
+                <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-primary">
                     <i class="fas fa-edit me-2"></i>Modifier
                 </a>
             </div>
@@ -61,7 +61,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="detail-label">Total Invités</div>
-                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 700; color: var(--gold-dark);">{{ event.guests_men + event.guests_women }}</div>
+                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 700; color: var(--blue);">{{ event.guests_men + event.guests_women }}</div>
                         </div>
                         {% if event.notes %}
                         <div class="col-12">
@@ -172,9 +172,9 @@
                                     <td>{{ p.method }}</td>
                                     <td>
                                         {% if p.payment_type == 'acompte' %}
-                                        <span class="badge-slot" style="background: var(--warning-soft); color: #92400e;">Acompte</span>
+                                        <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Acompte</span>
                                         {% elif p.payment_type == 'solde' %}
-                                        <span class="badge-slot" style="background: var(--info-soft); color: #1e40af;">Solde</span>
+                                        <span class="badge-slot" style="background: var(--info-soft); color: var(--blue-dark);">Solde</span>
                                         {% else %}
                                         <span class="badge-slot">{{ p.payment_type }}</span>
                                         {% endif %}
@@ -221,7 +221,7 @@
                                     <input type="text" name="reference" class="form-input-elegant">
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="submit" class="btn btn-gold btn-sm w-100">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">
                                         <i class="fas fa-plus"></i> Ajouter
                                     </button>
                                 </div>
