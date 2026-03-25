@@ -1373,9 +1373,10 @@ def export_finances():
     ).fetchone()['s']
     
     total_outstanding = db.execute(
-        "SELECT COALESCE(SUM(e.total_amount - "
-        "  COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.event_id=e.id AND p.is_refunded=0), 0)"
-        "), 0) as s FROM events e "
+        "SELECT COALESCE(SUM(e.total_amount - COALESCE(p.paid_total, 0)), 0) as s "
+        "FROM events e "
+        "LEFT JOIN (SELECT event_id, SUM(amount) as paid_total FROM payments WHERE is_refunded=0 GROUP BY event_id) p "
+        "ON p.event_id = e.id "
         "WHERE e.event_date BETWEEN ? AND ? AND e.status NOT IN ('annulé', 'terminé')",
         (start_date, end_date)
     ).fetchone()['s']
