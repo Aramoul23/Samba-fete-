@@ -214,7 +214,7 @@ def index():
     revenue_month = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (first_day.isoformat(), last_day.isoformat())).fetchone()['s']
 
     upcoming = db.execute(
@@ -230,7 +230,7 @@ def index():
         "SELECT p.*, e.title, c.name as client_name FROM payments p "
         "JOIN events e ON p.event_id=e.id JOIN clients c ON e.client_id=c.id "
         "WHERE p.is_refunded=0 "
-        "ORDER BY p.payment_date DESC LIMIT 5").fetchall()
+        "ORDER BY p.date DESC LIMIT 5").fetchall()
 
     # --- V2 Dashboard Data ---
     # Last month revenue for % change comparison
@@ -245,7 +245,7 @@ def index():
     last_month_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (prev_first.isoformat(), prev_last.isoformat())).fetchone()['s']
     
     # This month expenses
@@ -297,7 +297,7 @@ def index():
         m_rev = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
             "JOIN events e ON p.event_id=e.id "
-            "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+            "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
             (m_first.isoformat(), m_last.isoformat())).fetchone()['s']
         
         m_exp = db.execute(
@@ -585,7 +585,7 @@ def event_detail(event_id):
 
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
     payments = db.execute(
-        "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC", 
+        "SELECT * FROM payments WHERE event_id=? ORDER BY date DESC", 
         (event_id,)
     ).fetchall()
     
@@ -871,7 +871,7 @@ def financials():
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -887,7 +887,7 @@ def financials():
     # Total refunded
     total_refunded = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE payment_date BETWEEN ? AND ? AND is_refunded=1",
+        "WHERE date BETWEEN ? AND ? AND is_refunded=1",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -927,8 +927,8 @@ def financials():
         "FROM payments p "
         "JOIN events e ON p.event_id = e.id "
         "JOIN clients c ON e.client_id = c.id "
-        "WHERE p.payment_date BETWEEN ? AND ? "
-        "ORDER BY p.payment_date DESC",
+        "WHERE p.date BETWEEN ? AND ? "
+        "ORDER BY p.date DESC",
         (start_date, end_date)
     ).fetchall()
     
@@ -1043,7 +1043,7 @@ def client_detail(client_id):
         "FROM payments p "
         "JOIN events e ON p.event_id=e.id "
         "WHERE e.client_id=? "
-        "ORDER BY p.payment_date DESC",
+        "ORDER BY p.date DESC",
         (client_id,)).fetchall()
 
     # Detailed financials per event
@@ -1111,21 +1111,23 @@ def expenses():
     # This month's expenses
     today = date.today()
     month_start = today.replace(day=1).isoformat()
-    month_expenses = db.execute(
+    month_expenses_raw = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM expenses WHERE expense_date >= ?",
         (month_start,)
     ).fetchone()['s']
+    month_expenses = float(month_expenses_raw or 0)
     
     # Average expense
     avg_expense = total_expenses / len(expenses) if expenses else 0
     
-    # Expenses by category
-    expenses_by_category = db.execute(
+    # Expenses by category — ensure floats for template division
+    expenses_by_category_raw = db.execute(
         "SELECT category, SUM(amount) as total, COUNT(*) as count "
         "FROM expenses WHERE expense_date >= ? AND expense_date <= ? "
         "GROUP BY category ORDER BY total DESC",
         (start_date, end_date)
     ).fetchall()
+    expenses_by_category = [{'category': r['category'], 'total': float(r['total'] or 0), 'count': r['count']} for r in expenses_by_category_raw]
     
     # Recent events for dropdown
     recent_events = db.execute(
@@ -1195,30 +1197,35 @@ def accounting():
     end_date = request.args.get('end_date', date.today().isoformat())
     
     # Total income (payments received in period)
-    total_income = db.execute(
+    total_income_raw = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
+    total_income = float(total_income_raw or 0)
     
-    # Total expenses
-    total_expenses = db.execute(
+    total_expenses_raw = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM expenses "
         "WHERE expense_date BETWEEN ? AND ?",
         (start_date, end_date)
     ).fetchone()['s']
+    total_expenses = float(total_expenses_raw or 0)
     
-    # Net profit
-    net_profit = float(total_income) - float(total_expenses)
-    profit_margin = (net_profit / float(total_income) * 100) if total_income > 0 else 0
+    # Net profit — ensure all values are float to avoid Decimal/float TypeError
+    total_income = float(total_income or 0)
+    total_expenses = float(total_expenses or 0)
+    net_profit = total_income - total_expenses
+    profit_margin = (net_profit / total_income * 100) if total_income > 0 else 0
     
     # Expenses by category
-    expenses_by_category = db.execute(
+    expenses_by_category_raw = db.execute(
         "SELECT category, SUM(amount) as total, COUNT(*) as count "
         "FROM expenses WHERE expense_date BETWEEN ? AND ? "
         "GROUP BY category ORDER BY total DESC",
         (start_date, end_date)
     ).fetchall()
+    # Convert all values to float to avoid Decimal/float TypeError in templates
+    expenses_by_category = [{'category': r['category'], 'total': float(r['total'] or 0), 'count': r['count']} for r in expenses_by_category_raw]
     
     # Monthly P&L (last 12 months or within date range)
     monthly_pl = []
@@ -1235,21 +1242,23 @@ def accounting():
         month_end_str = month_end.strftime('%Y-%m-%d')
         
         # Income for this month
-        month_income = db.execute(
+        month_income_raw = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
+            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
+        month_income = float(month_income_raw or 0)
         
         # Expenses for this month
-        month_expenses = db.execute(
+        month_expenses_raw = db.execute(
             "SELECT COALESCE(SUM(amount),0) as s FROM expenses "
             "WHERE expense_date >= ? AND expense_date <= ?",
             (month_start, month_end_str)
         ).fetchone()['s']
+        month_expenses = float(month_expenses_raw or 0)
         
-        month_profit = float(month_income) - float(month_expenses)
-        month_margin = (month_profit / float(month_income) * 100) if month_income > 0 else 0
+        month_profit = month_income - month_expenses
+        month_margin = (month_profit / month_income * 100) if month_income > 0 else 0
         
         monthly_pl.append({
             'month': month_start[:7],
@@ -1295,7 +1304,7 @@ def generate_contract(event_id):
         flash("Événement introuvable", "danger")
         return redirect(url_for('index'))
 
-    payments = db.execute("SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY payment_date DESC", (event_id,)).fetchall()
+    payments = db.execute("SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY date DESC", (event_id,)).fetchall()
     total_paid = db.execute("SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
                            (event_id,)).fetchone()['s']
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
@@ -1335,13 +1344,13 @@ def generate_receipt(event_id, payment_id):
         flash("Paiement introuvable", "danger")
         return redirect(url_for('event_detail', event_id=event_id))
 
-    payment_date_str = str(payment['payment_date'])[:19]
+    date_str = str(payment['date'])[:19]
     total_paid_before = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_date < ? AND is_refunded=0",
-        (event_id, payment_date_str)).fetchone()['s']
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND date < ? AND is_refunded=0",
+        (event_id, date_str)).fetchone()['s']
     total_paid_after = float(total_paid_before) + float(payment['amount'])
     remaining = round(float(event['total_amount']) - total_paid_after, 2)
-    receipt_no = f"{payment_date_str[:4]}-{payment_id:04d}"
+    receipt_no = f"{date_str[:4]}-{payment_id:04d}"
 
 
     html = generate_receipt_html(
@@ -1601,12 +1610,12 @@ def export_payments():
     )
     params = []
     if start_date:
-        query += " AND p.payment_date >= ?"
+        query += " AND p.date >= ?"
         params.append(start_date)
     if end_date:
-        query += " AND p.payment_date <= ?"
+        query += " AND p.date <= ?"
         params.append(end_date + ' 23:59:59')
-    query += " ORDER BY p.payment_date DESC"
+    query += " ORDER BY p.date DESC"
     
     payments = db.execute(query, params).fetchall()
     
@@ -1647,7 +1656,7 @@ def export_finances():
     # Summary stats
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -1741,7 +1750,7 @@ def export_pl():
         
         month_income = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
+            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
         
