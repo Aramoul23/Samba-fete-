@@ -51,7 +51,7 @@ def check_pending_events():
     ).fetchall()
     
     db.close()
-    return [dict(e) for e in pending_old]
+    return [ pending_old]
 
 def get_event_financials(event_id):
     """Get complete financial data for an event."""
@@ -242,7 +242,7 @@ def index():
     # Upcoming events with revenue
     upcoming_with_revenue = []
     for ev in upcoming:
-        ev_dict = dict(ev)
+        ev_dict = ev
         ev_rev = db.execute(
             "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
             (ev['id'],)).fetchone()['s']
@@ -305,7 +305,7 @@ def calendar_view():
         d = b['event_date']
         if d not in booked_dict:
             booked_dict[d] = []
-        booked_dict[d].append(dict(b))
+        booked_dict[d].append(b)
 
     cal = calendar.Calendar(firstweekday=0)
     weeks = cal.monthdayscalendar(year, month)
@@ -356,9 +356,9 @@ def event_form(event_id=None):
         predefined_names = [v['name'] for v in DEFAULT_SERVICES.values()] + ['Autre']
         for line in all_lines:
             if line['description'] in predefined_names:
-                event_lines.append(dict(line))
+                event_lines.append(line)
             else:
-                custom_lines.append(dict(line))
+                custom_lines.append(line)
 
     venues = db.execute("SELECT * FROM venues WHERE is_active=1").fetchall()
 
@@ -879,7 +879,7 @@ def financials():
     # Calculate totals for each event
     event_financials_list = []
     for ef in event_financials:
-        ef_dict = dict(ef)
+        ef_dict = ef
         ef_dict['profit'] = ef_dict['total_revenue'] - ef_dict['total_costs']
         ef_dict['remaining'] = ef_dict['total_amount'] - ef_dict['total_paid']
         event_financials_list.append(ef_dict)
@@ -1060,15 +1060,15 @@ def expenses():
     db.close()
     
     return render_template('expenses.html',
-                           expenses=[dict(e) for e in expenses],
+                           expenses=[ expenses],
                            start_date=start_date, end_date=end_date,
                            category_filter=category_filter,
                            categories=EXPENSE_CATEGORIES,
                            total_expenses=total_expenses,
                            expenses_this_month=float(month_expenses),
                            avg_expense=avg_expense,
-                           expenses_by_category=[dict(c) for c in expenses_by_category],
-                           recent_events=[dict(e) for e in recent_events],
+                           expenses_by_category=[ expenses_by_category],
+                           recent_events=[ recent_events],
                            today_str=date.today().isoformat())
 
 @app.route('/depenses/ajouter', methods=['POST'])
@@ -1203,7 +1203,7 @@ def accounting():
                            total_expenses=float(total_expenses),
                            net_profit=net_profit,
                            profit_margin=profit_margin,
-                           expenses_by_category=[dict(c) for c in expenses_by_category],
+                           expenses_by_category=[ expenses_by_category],
                            monthly_pl=monthly_pl)
 
 # ─── Contract PDF ────────────────────────────────────────────────────
@@ -1231,10 +1231,10 @@ def generate_contract(event_id):
     db.close()
 
     pdf_bytes = generate_contract_pdf(
-        dict(event),
-        [dict(p) for p in payments],
+        event,
+        [ payments],
         total_paid,
-        [dict(l) for l in event_lines]
+        [ event_lines]
     )
 
     response = make_response(pdf_bytes)
@@ -1275,7 +1275,7 @@ def generate_receipt(event_id, payment_id):
     db.close()
 
     html = generate_receipt_html(
-        dict(event), dict(payment), total_paid_before, total_paid_after,
+        event, payment, total_paid_before, total_paid_after,
         remaining, receipt_no
     )
     response = make_response(html)
@@ -1358,7 +1358,7 @@ def api_calendar_events():
         "ORDER BY e.event_date",
         (first, last)).fetchall()
 
-    result = [dict(e) for e in events]
+    result = [ events]
     db.close()
     return jsonify(result)
 
@@ -1390,7 +1390,7 @@ def export_events():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_events_ods([dict(e) for e in events], export_date)
+    ods_content = export_events_ods([ events], export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1421,7 +1421,7 @@ def export_clients():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_clients_ods([dict(c) for c in clients], export_date)
+    ods_content = export_clients_ods([ clients], export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1445,7 +1445,7 @@ def export_payments():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_payments_ods([dict(p) for p in payments], export_date)
+    ods_content = export_payments_ods([ payments], export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1504,7 +1504,7 @@ def export_finances():
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_financials_ods(
-        [dict(ef) for ef in event_financials], 
+        [ event_financials], 
         summary_stats, 
         export_date
     )
@@ -1542,7 +1542,7 @@ def export_expenses():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_expenses_ods([dict(e) for e in expenses], export_date)
+    ods_content = export_expenses_ods([ expenses], export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
