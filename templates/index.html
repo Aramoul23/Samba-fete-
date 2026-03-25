@@ -19,88 +19,82 @@
         </div>
     </div>
 
-    <!-- Stats Cards - 6 per row -->
-    <div class="row g-3 mb-4">
-        <!-- Revenus ce mois -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card stat-gradient-blue">
-                <div class="stat-icon bg-blue-soft">
+    <!-- Stats Cards - 3 columns desktop, 2 tablet, 1 mobile -->
+    <div class="stats-grid mb-4">
+        <!-- Revenus ce mois — Blue -->
+        <div class="stat-card-gradient stat-gradient-blue">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-coins"></i>
                 </div>
-                <div class="stat-info">
-                    <span class="stat-value">{{ revenue_month | format_da }}</span>
-                    <span class="stat-label">Revenus ce mois</span>
-                    <span class="stat-trend {% if revenue_pct_change >= 0 %}up{% else %}down{% endif %}">
-                        <i class="fas fa-arrow-{% if revenue_pct_change >= 0 %}up{% else %}down{% endif %}"></i>
-                        {{ "%.1f"|format(revenue_pct_change|abs) }}%
-                    </span>
-                </div>
+                <span class="stat-trend-pill {% if revenue_pct_change >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                    <i class="fas fa-arrow-{% if revenue_pct_change >= 0 %}up{% else %}down{% endif %}"></i>
+                    {{ "%.1f"|format(revenue_pct_change|abs) }}%
+                </span>
             </div>
+            <div class="stat-card-number">{{ revenue_month | format_da }}</div>
+            <div class="stat-card-label">Revenus ce mois</div>
         </div>
-        <!-- Événements ce mois -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card">
-                <div class="stat-icon bg-purple-soft">
+        <!-- Événements ce mois — Green -->
+        <div class="stat-card-gradient stat-gradient-green">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-calendar-check"></i>
                 </div>
-                <div class="stat-info">
-                    <span class="stat-value">{{ events_this_month }}</span>
-                    <span class="stat-label">Événements ce mois</span>
-                </div>
             </div>
+            <div class="stat-card-number">{{ events_this_month }}</div>
+            <div class="stat-card-label">Événements ce mois</div>
         </div>
-        <!-- Dépenses ce mois -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card">
-                <div class="stat-icon bg-danger-soft">
+        <!-- Dépenses ce mois — Red -->
+        <div class="stat-card-gradient stat-gradient-red">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-receipt"></i>
                 </div>
-                <div class="stat-info">
-                    <span class="stat-value">{{ month_expenses | format_da }}</span>
-                    <span class="stat-label">Dépenses ce mois</span>
-                </div>
             </div>
+            <div class="stat-card-number">{{ month_expenses | format_da }}</div>
+            <div class="stat-card-label">Dépenses ce mois</div>
         </div>
-        <!-- Profit ce mois -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card">
-                <div class="stat-icon {% if month_profit >= 0 %}bg-success-soft{% else %}bg-danger-soft{% endif %}">
+        <!-- Profit ce mois — Green/Red -->
+        <div class="stat-card-gradient {% if month_profit >= 0 %}stat-gradient-success{% else %}stat-gradient-danger{% endif %}">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <div class="stat-info">
-                    <span class="stat-value" style="color: {% if month_profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">{{ month_profit | format_da }}</span>
-                    <span class="stat-label">Profit ce mois</span>
-                </div>
             </div>
+            <div class="stat-card-number">{{ month_profit | format_da }}</div>
+            <div class="stat-card-label">Profit ce mois</div>
         </div>
-        <!-- En attente -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card">
-                <div class="stat-icon bg-warning-soft">
+        <!-- En attente — Orange -->
+        <div class="stat-card-gradient stat-gradient-orange">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-clock"></i>
                 </div>
-                <div class="stat-info">
-                    <span class="stat-value">{{ pending_count }}</span>
-                    <span class="stat-label">En attente</span>
-                </div>
             </div>
+            <div class="stat-card-number">{{ pending_count }}</div>
+            <div class="stat-card-label">En attente</div>
         </div>
-        <!-- Prochain événement -->
-        <div class="col-6 col-lg-2">
-            <div class="stat-card">
-                <div class="stat-icon bg-teal-soft">
+        <!-- Prochain événement — Purple -->
+        <div class="stat-card-gradient stat-gradient-purple">
+            <div class="stat-card-decoration"></div>
+            <div class="stat-card-top">
+                <div class="stat-icon-circle">
                     <i class="fas fa-star"></i>
                 </div>
-                <div class="stat-info">
-                    {% if next_event %}
-                    <span class="stat-value" style="font-size: 1.1rem;">{{ next_event.event_date[:10] }}</span>
-                    <span class="stat-label">{{ next_event.client_name }}</span>
-                    {% else %}
-                    <span class="stat-value">—</span>
-                    <span class="stat-label">Prochain événement</span>
-                    {% endif %}
-                </div>
             </div>
+            {% if next_event %}
+            <div class="stat-card-number stat-card-number-sm">{{ next_event.event_date[:10] }}</div>
+            <div class="stat-card-label">{{ next_event.client_name }}</div>
+            {% else %}
+            <div class="stat-card-number">—</div>
+            <div class="stat-card-label">Prochain événement</div>
+            {% endif %}
         </div>
     </div>
 
