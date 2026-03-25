@@ -3,83 +3,221 @@
 {% block page_title %}Tableau de Bord{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid px-0">
     <!-- Welcome Banner -->
     <div class="welcome-banner mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1 class="welcome-title">Bienvenue sur {{ hall_name }}</h1>
+                <h1 class="welcome-title">
+                    <i class="fas fa-hand-sparkles me-2"></i>Bienvenue sur {{ hall_name }}
+                </h1>
                 <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — Gérez vos événements avec élégance</p>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg">
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg welcome-cta">
                     <i class="fas fa-plus me-2"></i>Nouvel Événement
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- ═══ Top Stats Cards ═══ -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+        <!-- Revenus ce mois -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-blue">
                 <div class="stat-icon bg-blue-soft">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="stat-info">
-                    <span class="stat-value">{{ events_this_month }}</span>
-                    <span class="stat-label">Événements ce mois</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-success-soft">
                     <i class="fas fa-coins"></i>
                 </div>
                 <div class="stat-info">
                     <span class="stat-value">{{ revenue_month | format_da }}</span>
                     <span class="stat-label">Revenus ce mois</span>
+                    {% if revenue_change > 0 %}
+                    <span class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> +{{ revenue_change }}%
+                    </span>
+                    {% elif revenue_change < 0 %}
+                    <span class="stat-trend down">
+                        <i class="fas fa-arrow-down"></i> {{ revenue_change }}%
+                    </span>
+                    {% else %}
+                    <span class="stat-trend neutral">
+                        <i class="fas fa-minus"></i> 0%
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="stat-sparkle">
+                    <svg width="80" height="40" viewBox="0 0 80 40">
+                        <polyline fill="none" stroke="rgba(67,97,238,0.2)" stroke-width="2" points="0,30 15,25 30,28 45,15 60,20 75,10"/>
+                    </svg>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-info-soft">
-                    <i class="fas fa-users"></i>
+
+        <!-- Événements ce mois -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-green">
+                <div class="stat-icon bg-success-soft">
+                    <i class="fas fa-calendar-check"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_clients }}</span>
-                    <span class="stat-label">Clients</span>
+                    <span class="stat-value">{{ events_this_month }}</span>
+                    <span class="stat-label">Événements ce mois</span>
+                    <span class="stat-sub">sur le mois en cours</span>
+                </div>
+                <div class="stat-sparkle">
+                    <svg width="80" height="40" viewBox="0 0 80 40">
+                        <polyline fill="none" stroke="rgba(0,184,148,0.2)" stroke-width="2" points="0,35 15,30 30,25 45,20 60,15 75,10"/>
+                    </svg>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+
+        <!-- En attente -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-orange">
+                <div class="stat-icon bg-warning-soft">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ pending_count }}</span>
+                    <span class="stat-label">En attente</span>
+                    <span class="stat-sub">confirmations pending</span>
+                </div>
+                <div class="stat-sparkle">
+                    <svg width="80" height="40" viewBox="0 0 80 40">
+                        <polyline fill="none" stroke="rgba(253,203,110,0.3)" stroke-width="2" points="0,20 15,22 30,18 45,25 60,20 75,22"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prochaine semaine -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-card-purple">
                 <div class="stat-icon bg-purple-soft">
-                    <i class="fas fa-glass-cheers"></i>
+                    <i class="fas fa-calendar-week"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_events }}</span>
-                    <span class="stat-label">Total Événements</span>
+                    <span class="stat-value">{{ next_week_events }}</span>
+                    <span class="stat-label">Prochaine semaine</span>
+                    <span class="stat-sub">événements à venir</span>
+                </div>
+                <div class="stat-sparkle">
+                    <svg width="80" height="40" viewBox="0 0 80 40">
+                        <polyline fill="none" stroke="rgba(108,92,231,0.2)" stroke-width="2" points="0,30 15,28 30,22 45,26 60,18 75,15"/>
+                    </svg>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Row -->
+    <!-- ═══ Charts Row ═══ -->
+    <div class="row g-4 mb-4">
+        <!-- Monthly Revenue Chart -->
+        <div class="col-lg-8">
+            <div class="card-custom no-hover chart-card">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Revenus Mensuels
+                    </h5>
+                    <span class="chart-period-badge">6 derniers mois</span>
+                </div>
+                <div class="card-body-custom chart-body">
+                    <canvas id="revenueChart" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Types Pie Chart -->
+        <div class="col-lg-4">
+            <div class="card-custom no-hover chart-card">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Types d'Événements
+                    </h5>
+                </div>
+                <div class="card-body-custom chart-body">
+                    <canvas id="eventTypeChart" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Status Breakdown Mini Bar ═══ -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom no-hover">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-simple me-2"></i>Répartition par Statut
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="status-bar-container">
+                        {% set total_all = status_counts.get('confirmé',0) + status_counts.get('en attente',0) + status_counts.get('annulé',0) + status_counts.get('terminé',0) %}
+                        {% if total_all > 0 %}
+                        <div class="status-bar-visual">
+                            {% if status_counts.get('confirmé',0) > 0 %}
+                            <div class="status-bar-segment confirmed"
+                                 style="width: {{ (status_counts['confirmé'] / total_all * 100) | round(1) }}%"
+                                 title="Confirmé: {{ status_counts['confirmé'] }}">
+                                <span>{{ status_counts['confirmé'] }}</span>
+                            </div>
+                            {% endif %}
+                            {% if status_counts.get('en attente',0) > 0 %}
+                            <div class="status-bar-segment pending"
+                                 style="width: {{ (status_counts['en attente'] / total_all * 100) | round(1) }}%"
+                                 title="En attente: {{ status_counts['en attente'] }}">
+                                <span>{{ status_counts['en attente'] }}</span>
+                            </div>
+                            {% endif %}
+                            {% if status_counts.get('terminé',0) > 0 %}
+                            <div class="status-bar-segment completed"
+                                 style="width: {{ (status_counts['terminé'] / total_all * 100) | round(1) }}%"
+                                 title="Terminé: {{ status_counts['terminé'] }}">
+                                <span>{{ status_counts['terminé'] }}</span>
+                            </div>
+                            {% endif %}
+                            {% if status_counts.get('annulé',0) > 0 %}
+                            <div class="status-bar-segment cancelled"
+                                 style="width: {{ (status_counts['annulé'] / total_all * 100) | round(1) }}%"
+                                 title="Annulé: {{ status_counts['annulé'] }}">
+                                <span>{{ status_counts['annulé'] }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="status-bar-legend">
+                            <div class="legend-item"><span class="legend-dot confirmed"></span> Confirmé ({{ status_counts.get('confirmé',0) }})</div>
+                            <div class="legend-item"><span class="legend-dot pending"></span> En attente ({{ status_counts.get('en attente',0) }})</div>
+                            <div class="legend-item"><span class="legend-dot completed"></span> Terminé ({{ status_counts.get('terminé',0) }})</div>
+                            <div class="legend-item"><span class="legend-dot cancelled"></span> Annulé ({{ status_counts.get('annulé',0) }})</div>
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-chart-simple fa-2x mb-2 d-block"></i>
+                            Aucune donnée disponible
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Lists Row ═══ -->
     <div class="row g-4">
-        <!-- Upcoming Events -->
+        <!-- Événements à venir -->
         <div class="col-lg-8">
             <div class="card-custom no-hover">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Événements à venir</h5>
                     <a href="{{ url_for('event_list') }}" class="btn btn-sm btn-outline-gold">Voir tout</a>
                 </div>
-                <div class="card-body-custom">
+                <div class="card-body-custom p-0">
                     {% if upcoming %}
                     <div class="table-responsive">
-                        <table class="table-elegant">
+                        <table class="table-elegant table-modern">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -94,11 +232,21 @@
                                 {% for event in upcoming %}
                                 <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=event.id) }}'">
                                     <td>
-                                        <strong>{{ event.event_date[:10] }}</strong>
+                                        <div class="date-cell">
+                                            <span class="date-day">{{ event.event_date[:10] }}</span>
+                                        </div>
                                     </td>
-                                    <td>{{ event.title }}</td>
-                                    <td><a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="text-decoration-none">{{ event.client_name }}</a></td>
-                                    <td>{{ event.venue_name }}</td>
+                                    <td>
+                                        <strong class="event-name-cell">{{ event.title }}</strong>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="text-decoration-none client-link">
+                                            <i class="fas fa-user-circle me-1 text-muted"></i>{{ event.client_name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="venue-tag"><i class="fas fa-map-marker-alt me-1"></i>{{ event.venue_name }}</span>
+                                    </td>
                                     <td><span class="badge-slot">{{ event.time_slot }}</span></td>
                                     <td>
                                         <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
@@ -112,7 +260,9 @@
                     </div>
                     {% else %}
                     <div class="empty-state">
-                        <i class="fas fa-calendar-plus"></i>
+                        <div class="empty-icon">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
                         <p>Aucun événement à venir</p>
                         <a href="{{ url_for('event_form') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Créer un événement
@@ -123,23 +273,32 @@
             </div>
         </div>
 
-        <!-- Recent Payments + Quick Actions -->
+        <!-- Right Sidebar: Quick Actions + Recent Payments -->
         <div class="col-lg-4">
             <!-- Quick Actions -->
-            <div class="card-custom mb-4 no-hover">
+            <div class="card-custom mb-4 no-hover quick-actions-card">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
                 </div>
                 <div class="card-body-custom">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-plus me-2"></i>Nouvel Événement
+                    <div class="quick-actions-grid">
+                        <a href="{{ url_for('event_form') }}" class="quick-action-btn primary-action">
+                            <div class="qa-icon"><i class="fas fa-plus"></i></div>
+                            <span>Nouvel Événement</span>
                         </a>
-                        <a href="{{ url_for('calendar_view') }}" class="btn btn-outline-gold btn-lg">
-                            <i class="fas fa-calendar me-2"></i>Voir le Calendrier
+                        <a href="{{ url_for('calendar_view') }}" class="quick-action-btn">
+                            <div class="qa-icon cal-icon"><i class="fas fa-calendar-alt"></i></div>
+                            <span>Voir Calendrier</span>
                         </a>
-                        <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-lg">
-                            <i class="fas fa-users me-2"></i>Liste des Clients
+                        {% if has_pending %}
+                        <a href="{{ url_for('event_list', status='en attente') }}" class="quick-action-btn contract-action">
+                            <div class="qa-icon doc-icon"><i class="fas fa-file-contract"></i></div>
+                            <span>Générer Contrat</span>
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('client_list') }}" class="quick-action-btn">
+                            <div class="qa-icon user-icon"><i class="fas fa-users"></i></div>
+                            <span>Clients</span>
                         </a>
                     </div>
                 </div>
@@ -150,14 +309,17 @@
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements Récents</h5>
                 </div>
-                <div class="card-body-custom">
+                <div class="card-body-custom p-0">
                     {% if recent_payments %}
                         {% for p in recent_payments %}
-                        <div class="payment-item">
+                        <div class="payment-item {% if loop.last %}no-border{% endif %}">
                             <div class="payment-info">
-                                <strong>{{ p.client_name }}</strong>
-                                <small class="text-muted d-block">{{ p.title }}</small>
-                                <small class="text-muted">{{ p.date[:10] }} · {{ p.method }}</small>
+                                <div class="payment-client-name">{{ p.client_name }}</div>
+                                <small class="text-muted d-block payment-event-title">{{ p.title }}</small>
+                                <div class="payment-meta">
+                                    <span class="payment-date"><i class="far fa-calendar me-1"></i>{{ p.date[:10] }}</span>
+                                    <span class="payment-method-badge">{{ p.method }}</span>
+                                </div>
                             </div>
                             <div class="payment-amount">
                                 <span class="badge-amount">{{ p.amount | format_da }}</span>
@@ -175,4 +337,136 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ─── Monthly Revenue Bar Chart ───
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueLabels = {{ monthly_revenue_labels | safe }};
+    const revenueData = {{ monthly_revenue_data | safe }};
+
+    const revenueGradient = revenueCtx.createLinearGradient(0, 0, 0, 280);
+    revenueGradient.addColorStop(0, 'rgba(67, 97, 238, 0.85)');
+    revenueGradient.addColorStop(1, 'rgba(67, 97, 238, 0.55)');
+
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: 'Revenus (DA)',
+                data: revenueData,
+                backgroundColor: revenueGradient,
+                borderColor: 'rgba(67, 97, 238, 1)',
+                borderWidth: 1,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#2c3e50',
+                    titleFont: { family: 'Inter', size: 13, weight: '600' },
+                    bodyFont: { family: 'Inter', size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(ctx) {
+                            return new Intl.NumberFormat('fr-DZ').format(ctx.parsed.y) + ' DA';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.04)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#b2bec3',
+                        callback: function(value) {
+                            if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                            return value;
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 12, weight: '500' },
+                        color: '#636e72'
+                    }
+                }
+            }
+        }
+    });
+
+    // ─── Event Types Doughnut Chart ───
+    const typeCtx = document.getElementById('eventTypeChart').getContext('2d');
+    const typeLabels = {{ event_type_labels | safe }};
+    const typeData = {{ event_type_data | safe }};
+
+    const typeColors = [
+        '#4361ee', '#00b894', '#fdcb6e', '#e74c3c', '#6c5ce7',
+        '#00cec9', '#e17055', '#74b9ff'
+    ];
+
+    new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                data: typeData,
+                backgroundColor: typeColors.slice(0, typeLabels.length),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Inter', size: 12, weight: '500' },
+                        color: '#2d3436',
+                        padding: 16,
+                        usePointStyle: true,
+                        pointStyleWidth: 10
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#2c3e50',
+                    titleFont: { family: 'Inter', size: 13, weight: '600' },
+                    bodyFont: { family: 'Inter', size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(ctx) {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = Math.round(ctx.parsed / total * 100);
+                            return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

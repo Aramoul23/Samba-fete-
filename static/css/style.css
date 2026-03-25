@@ -1478,6 +1478,345 @@ select.form-input-elegant {
     border-color: var(--blue-light);
 }
 
+/* ═══════════════════════════════════════════════════════
+   Professional Dashboard Enhancements
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Enhanced Stat Cards ──────────────────────────── */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-blue .stat-value { color: var(--blue); }
+.stat-card-green .stat-value { color: var(--success); }
+.stat-card-orange .stat-value { color: #e17055; }
+.stat-card-purple .stat-value { color: var(--purple); }
+
+.stat-sparkle {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.stat-sub {
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+    display: block;
+    margin-top: 2px;
+}
+
+.stat-trend.neutral {
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+}
+
+/* ─── Chart Cards ──────────────────────────────────── */
+.chart-card {
+    border-radius: var(--radius-lg);
+}
+
+.chart-body {
+    padding: 20px 22px 22px;
+}
+
+.chart-period-badge {
+    background: var(--blue-soft);
+    color: var(--blue);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+}
+
+/* ─── Status Bar ───────────────────────────────────── */
+.status-bar-visual {
+    display: flex;
+    height: 36px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    gap: 3px;
+}
+
+.status-bar-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s var(--ease-out);
+    min-width: 32px;
+}
+
+.status-bar-segment:hover {
+    filter: brightness(1.1);
+    transform: scaleY(1.1);
+}
+
+.status-bar-segment.confirmed { background: var(--success); }
+.status-bar-segment.pending { background: var(--warning); color: #2d3436; }
+.status-bar-segment.completed { background: #636e72; }
+.status-bar-segment.cancelled { background: var(--danger); }
+
+.status-bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 14px;
+}
+
+.status-bar-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.status-bar-legend .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+.status-bar-legend .legend-dot.confirmed { background: var(--success); }
+.status-bar-legend .legend-dot.pending { background: var(--warning); }
+.status-bar-legend .legend-dot.completed { background: #636e72; }
+.status-bar-legend .legend-dot.cancelled { background: var(--danger); }
+
+/* ─── Quick Actions Grid ───────────────────────────── */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 18px 12px;
+    background: var(--bg);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s var(--ease-out);
+    text-align: center;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+    color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-action-btn .qa-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: var(--blue-soft);
+    color: var(--blue);
+    transition: all 0.2s var(--ease-out);
+}
+
+.quick-action-btn.primary-action {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--white);
+}
+
+.quick-action-btn.primary-action:hover {
+    background: var(--blue-dark);
+    border-color: var(--blue-dark);
+    color: var(--white);
+}
+
+.quick-action-btn.primary-action .qa-icon {
+    background: rgba(255,255,255,0.2);
+    color: var(--white);
+}
+
+.quick-action-btn.contract-action .qa-icon.doc-icon {
+    background: rgba(253, 203, 110, 0.15);
+    color: #e17055;
+}
+
+.quick-action-btn .cal-icon {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.quick-action-btn .user-icon {
+    background: var(--purple-soft);
+    color: var(--purple);
+}
+
+/* ─── Enhanced Payment Items ───────────────────────── */
+.payment-item {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payment-item.no-border {
+    border-bottom: none;
+}
+
+.payment-client-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.payment-event-title {
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
+.payment-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.payment-date {
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+}
+
+.payment-method-badge {
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.payment-amount .badge-amount {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ─── Enhanced Table ───────────────────────────────── */
+.table-modern thead th {
+    background: var(--bg);
+    font-size: 0.6875rem;
+    padding: 14px 18px;
+}
+
+.table-modern tbody td {
+    padding: 16px 18px;
+}
+
+.date-cell .date-day {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.event-name-cell {
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.client-link {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.client-link:hover {
+    color: var(--blue);
+}
+
+.venue-tag {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.venue-tag i {
+    color: var(--blue);
+    font-size: 0.75rem;
+}
+
+/* ─── Enhanced Empty State ─────────────────────────── */
+.empty-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-xl);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.empty-icon i {
+    font-size: 1.75rem;
+    color: var(--border);
+    margin: 0;
+}
+
+/* ─── Welcome CTA Button ───────────────────────────── */
+.welcome-cta {
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-blue);
+    transition: all 0.25s var(--ease-out);
+}
+
+.welcome-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.35);
+}
+
+/* ─── Mobile Responsiveness ────────────────────────── */
+@media (max-width: 991.98px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .stat-sparkle {
+        display: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-bar-legend {
+        gap: 12px;
+    }
+
+    .payment-item {
+        padding: 14px 16px;
+    }
+}
+
 .client-avatar {
     width: 48px;
     height: 48px;

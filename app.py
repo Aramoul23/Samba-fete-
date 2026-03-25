@@ -4,6 +4,7 @@ from datetime import datetime, date, timedelta
 from contract_generator import generate_contract_pdf
 from receipt_generator import generate_receipt_html
 import calendar
+import json
 
 app = Flask(__name__)
 app.secret_key = 'samba-fete-secret-key-2024'
@@ -15,6 +16,7 @@ EVENT_STATUSES = ['confirmé', 'en attente', 'annulé', 'terminé']
 PAYMENT_METHODS = ['espèces', 'chèque', 'virement', 'carte']
 MONTH_NAMES_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+MONTH_NAMES_SHORT = ['', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 
 def format_da(amount):
     try:
@@ -35,41 +37,134 @@ def index():
     else:
         last_day = today.replace(month=today.month+1, day=1) - timedelta(days=1)
 
-    # Stats
-    events_this_month = db.execute(
-        "SELECT COUNT(*) as c FROM events WHERE event_date BETWEEN ? AND ? AND status != 'annulé'",
-        (first_day.isoformat(), last_day.isoformat())).fetchone()['c']
+    # Previous month for comparison
+    if today.month == 1:
+        prev_first = today.replace(year=today.year-1, month=12, day=1)
+        prev_last = today.replace(year=today.year-1, month=12, day=31)
+    else:
+        prev_first = today.replace(month=today.month-1, day=1)
+        if today.month - 1 == 12:
+            prev_last = today.replace(year=today.year-1, month=12, day=31)
+        else:
+            prev_last = today.replace(month=today.month, day=1) - timedelta(days=1)
 
+    # Revenue this month
     revenue_month = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM payments p JOIN events e ON p.event_id=e.id "
         "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé'",
         (first_day.isoformat(), last_day.isoformat())).fetchone()['s']
 
+    # Revenue last month
+    revenue_prev_month = db.execute(
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments p JOIN events e ON p.event_id=e.id "
+        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé'",
+        (prev_first.isoformat(), prev_last.isoformat())).fetchone()['s']
+
+    # Revenue change percentage
+    if revenue_prev_month > 0:
+        revenue_change = round(((revenue_month - revenue_prev_month) / revenue_prev_month) * 100, 1)
+    elif revenue_month > 0:
+        revenue_change = 100.0
+    else:
+        revenue_change = 0.0
+
+    # Events this month
+    events_this_month = db.execute(
+        "SELECT COUNT(*) as c FROM events WHERE event_date BETWEEN ? AND ? AND status != 'annulé'",
+        (first_day.isoformat(), last_day.isoformat())).fetchone()['c']
+
+    # Pending events count
+    pending_count = db.execute(
+        "SELECT COUNT(*) as c FROM events WHERE status = 'en attente' AND event_date >= ?",
+        (today.isoformat(),)).fetchone()['c']
+
+    # Events next 7 days
+    next_week = today + timedelta(days=7)
+    next_week_events = db.execute(
+        "SELECT COUNT(*) as c FROM events WHERE event_date BETWEEN ? AND ? AND status != 'annulé'",
+        (today.isoformat(), next_week.isoformat())).fetchone()['c']
+
+    # Upcoming 5 events
     upcoming = db.execute(
         "SELECT e.*, c.name as client_name, v.name as venue_name FROM events e "
         "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
         "WHERE e.event_date >= ? AND e.status != 'annulé' ORDER BY e.event_date ASC LIMIT 5",
         (today.isoformat(),)).fetchall()
 
-    total_clients = db.execute("SELECT COUNT(*) as c FROM clients").fetchone()['c']
-    total_events = db.execute("SELECT COUNT(*) as c FROM events WHERE status != 'annulé'").fetchone()['c']
-
-    # Recent payments
+    # Recent payments (5)
     recent_payments = db.execute(
         "SELECT p.*, e.title, c.name as client_name FROM payments p "
         "JOIN events e ON p.event_id=e.id JOIN clients c ON e.client_id=c.id "
         "ORDER BY p.date DESC LIMIT 5").fetchall()
 
+    # ─── Chart Data: Monthly Revenue (last 6 months) ───
+    monthly_revenue_labels = []
+    monthly_revenue_data = []
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        first = f"{y}-{m:02d}-01"
+        if m == 12:
+            last = f"{y+1}-01-01"
+        else:
+            last = f"{y}-{m+1:02d}-01"
+        rev = db.execute(
+            "SELECT COALESCE(SUM(amount),0) as s FROM payments p JOIN events e ON p.event_id=e.id "
+            "WHERE p.date >= ? AND p.date < ? AND e.status != 'annulé'",
+            (first, last)).fetchone()['s']
+        monthly_revenue_labels.append(MONTH_NAMES_SHORT[m])
+        monthly_revenue_data.append(float(rev))
+
+    # ─── Chart Data: Event Types breakdown ───
+    event_type_labels = []
+    event_type_data = []
+    for et in EVENT_TYPES:
+        count = db.execute(
+            "SELECT COUNT(*) as c FROM events WHERE event_type=? AND status != 'annulé'",
+            (et,)).fetchone()['c']
+        if count > 0:
+            event_type_labels.append(et)
+            event_type_data.append(count)
+
+    # ─── Events by status for mini chart ───
+    status_counts = {}
+    for st in EVENT_STATUSES:
+        c = db.execute("SELECT COUNT(*) as c FROM events WHERE status=?", (st,)).fetchone()['c']
+        status_counts[st] = c
+
+    total_clients = db.execute("SELECT COUNT(*) as c FROM clients").fetchone()['c']
+    total_events = db.execute("SELECT COUNT(*) as c FROM events WHERE status != 'annulé'").fetchone()['c']
+
     hall_name = get_setting('hall_name', 'Samba Fête')
     currency = get_setting('currency', 'DA')
 
+    # Check if there are pending events for contract generation button
+    has_pending = pending_count > 0
+
     db.close()
-    return render_template('index.html', events_this_month=events_this_month,
-                           revenue_month=revenue_month, upcoming=upcoming,
-                           total_clients=total_clients, total_events=total_events,
-                           recent_payments=recent_payments, today=today,
-                           hall_name=hall_name, currency=currency,
-                           month_name=MONTH_NAMES_FR[today.month])
+    return render_template('index.html',
+                           events_this_month=events_this_month,
+                           revenue_month=revenue_month,
+                           revenue_change=revenue_change,
+                           pending_count=pending_count,
+                           next_week_events=next_week_events,
+                           upcoming=upcoming,
+                           total_clients=total_clients,
+                           total_events=total_events,
+                           recent_payments=recent_payments,
+                           today=today,
+                           hall_name=hall_name,
+                           currency=currency,
+                           month_name=MONTH_NAMES_FR[today.month],
+                           monthly_revenue_labels=json.dumps(monthly_revenue_labels),
+                           monthly_revenue_data=json.dumps(monthly_revenue_data),
+                           event_type_labels=json.dumps(event_type_labels),
+                           event_type_data=json.dumps(event_type_data),
+                           status_counts=status_counts,
+                           has_pending=has_pending)
 
 # ─── Calendar ────────────────────────────────────────────────────────
 @app.route('/calendrier')
