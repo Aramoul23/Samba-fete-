@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response, g
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import get_db, init_db, get_setting, set_setting, get_user_by_id, get_user_by_username
 from models import get_all_users, create_user, update_user, delete_user
@@ -12,7 +12,7 @@ import io
 import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
+app.secret_key = os.environ.get('SECRET_KEY', 'samba-fete-2026-secret-key-change-in-production')
 
 # ─── Flask-Login Setup ─────────────────────────────────────────────
 login_manager = LoginManager()
@@ -34,6 +34,20 @@ def can_delete():
 
 def can_export():
     return True  # All authenticated users can export
+
+# ─── Database Connection Management ────────────────────────────────
+@app.teardown_appcontext
+def close_db_connection(exception):
+    """Close database connection at end of request."""
+    db = getattr(g, '_database', None)
+    if db is not None:
+
+def get_db_connection():
+    """Get database connection with automatic cleanup."""
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = get_db()
+    return db
 
 # ─── Helpers ────────────────────────────────────────────────────────
 TIME_SLOTS = ['Déjeuner', 'Après-midi', 'Dîner']
@@ -59,7 +73,7 @@ app.jinja_env.filters['format_da'] = format_da
 
 def check_pending_events():
     """Check for events that have been 'en attente' for more than 48 hours."""
-    db = get_db()
+    db = get_db_connection()
     now = datetime.now()
     threshold = (now - timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
     future_date = (date.today() + timedelta(days=30)).isoformat()
@@ -73,12 +87,11 @@ def check_pending_events():
         (today, future_date, threshold)
     ).fetchall()
     
-    db.close()
     return pending_old
 
 def get_event_financials(event_id):
     """Get complete financial data for an event."""
-    db = get_db()
+    db = get_db_connection()
     
     # Get revenue lines (income)
     revenue_lines = db.execute(
@@ -108,20 +121,19 @@ def get_event_financials(event_id):
     event = db.execute("SELECT total_amount FROM events WHERE id=?", (event_id,)).fetchone()
     event_total = event['total_amount'] if event else 0
     
-    db.close()
     
     return {
         'revenue': float(revenue_lines),
         'costs': float(cost_lines),
         'profit': float(revenue_lines) - float(cost_lines),
         'paid': float(total_paid),
-        'remaining': float(event_total) - float(total_paid),
+        'remaining': round(float(event_total) - float(total_paid), 2),
         'refunded': float(total_refunded)
     }
 
 def ensure_default_data():
     """Ensure database has default venues and settings."""
-    db = get_db()
+    db = get_db_connection()
     
     venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()['c']
     
@@ -145,7 +157,6 @@ def ensure_default_data():
     if 'deposit_min' not in existing_keys:
         set_setting('deposit_min', '20000')
     
-    db.close()
     print("Default data check complete.")
 
 # ─── Login/Logout Routes ──────────────────────────────────────────
@@ -183,7 +194,7 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    db = get_db()
+    db = get_db_connection()
     today = date.today()
     first_day = today.replace(day=1)
     if today.month == 12:
@@ -308,7 +319,6 @@ def index():
     currency = get_setting('currency', 'DA')
     pending_needs_attention = check_pending_events()
 
-    db.close()
     return render_template('index.html', events_this_month=events_this_month,
                            revenue_month=revenue_month, upcoming=upcoming,
                            total_clients=total_clients, total_events=total_events,
@@ -333,7 +343,7 @@ def index():
 @app.route('/calendrier')
 @login_required
 def calendar_view():
-    db = get_db()
+    db = get_db_connection()
     year = request.args.get('year', date.today().year, type=int)
     month = request.args.get('month', date.today().month, type=int)
 
@@ -370,7 +380,6 @@ def calendar_view():
     venues = db.execute("SELECT * FROM venues WHERE is_active=1").fetchall()
     pending_needs_attention = check_pending_events()
     
-    db.close()
 
     return render_template('calendar.html', year=year, month=month,
                            month_name=MONTH_NAMES_FR[month],
@@ -395,7 +404,7 @@ DEFAULT_SERVICES = {
 @app.route('/evenement/<int:event_id>/modifier', methods=['GET', 'POST'])
 @login_required
 def event_form(event_id=None):
-    db = get_db()
+    db = get_db_connection()
     event = None
     client = None
     event_lines = []
@@ -405,7 +414,6 @@ def event_form(event_id=None):
         event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
         if not event:
             flash("Événement introuvable", "danger")
-            db.close()
             return redirect(url_for('index'))
         client = db.execute("SELECT * FROM clients WHERE id=?", (event['client_id'],)).fetchone()
         all_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
@@ -479,7 +487,6 @@ def event_form(event_id=None):
         if errors:
             for e in errors:
                 flash(e, 'danger')
-            db.close()
             return render_template('event_form.html', event=event, client=client,
                                    event_lines=event_lines, custom_lines=custom_lines, venues=venues,
                                    time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
@@ -548,11 +555,9 @@ def event_form(event_id=None):
                           (event_id, desc.strip(), amount, is_cost))
 
         db.commit()
-        db.close()
         flash("Événement enregistré avec succès!", "success")
         return redirect(url_for('event_detail', event_id=event_id))
 
-    db.close()
     return render_template('event_form.html', event=event, client=client,
                            event_lines=event_lines, custom_lines=custom_lines, venues=venues,
                            time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
@@ -561,7 +566,7 @@ def event_form(event_id=None):
 @app.route('/evenement/<int:event_id>')
 @login_required
 def event_detail(event_id):
-    db = get_db()
+    db = get_db_connection()
     event = db.execute(
         "SELECT e.*, c.name as client_name, c.id as client_id, c.phone, c.phone2, c.email, c.address, "
         "v.name as venue_name, v.capacity_men, v.capacity_women, "
@@ -571,7 +576,6 @@ def event_detail(event_id):
         "WHERE e.id=?", (event_id,)).fetchone()
     if not event:
         flash("Événement introuvable", "danger")
-        db.close()
         return redirect(url_for('index'))
 
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
@@ -620,7 +624,7 @@ def event_detail(event_id):
     ).fetchone()['s']
 
     # Adjusted profit = revenue - costs - expenses
-    adjusted_profit = profit - float(total_expenses)
+    adjusted_profit = round(profit - float(total_expenses), 2)
 
     # Check if event is pending for more than 48h
     needs_confirmation = False
@@ -634,7 +638,6 @@ def event_detail(event_id):
         except (ValueError, TypeError):
             pass
 
-    db.close()
     return render_template('event_detail.html', event=event, event_lines=event_lines,
                            payments=payments, total_paid=total_paid, deposit=deposit,
                            total_refunded=total_refunded, total_revenue=total_revenue,
@@ -647,7 +650,7 @@ def event_detail(event_id):
 @login_required
 def add_payment(event_id):
     try:
-        db = get_db()
+        db = get_db_connection()
         data = request.form
         amount = data.get('amount', 0, type=float)
         method = data.get('method', 'espèces')
@@ -664,7 +667,6 @@ def add_payment(event_id):
             )
             db.commit()
             flash("Paiement enregistré!", "success")
-        db.close()
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
@@ -674,7 +676,7 @@ def add_payment(event_id):
 def refund_payment(event_id, payment_id):
     """Mark a payment as refunded (audit trail - never delete)."""
     try:
-        db = get_db()
+        db = get_db_connection()
         reason = request.form.get('refund_reason', '').strip()
 
         payment = db.execute(
@@ -698,7 +700,6 @@ def refund_payment(event_id, payment_id):
             )
             db.commit()
             flash("Paiement marqué comme remboursé", "success")
-        db.close()
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
@@ -708,13 +709,12 @@ def refund_payment(event_id, payment_id):
 def update_event_status(event_id):
     """Update event status with proper flow."""
     try:
-        db = get_db()
+        db = get_db_connection()
         new_status = request.form.get('status', '')
         new_date = request.form.get('new_date', '').strip()
 
         if new_status not in EVENT_STATUSES:
             flash("Statut invalide", "danger")
-            db.close()
             return redirect(url_for('event_detail', event_id=event_id))
 
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -737,7 +737,6 @@ def update_event_status(event_id):
             flash(status_messages.get(new_status, "Statut mis à jour"), "success")
 
         db.commit()
-        db.close()
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
@@ -746,13 +745,12 @@ def update_event_status(event_id):
 @login_required
 def delete_event(event_id):
     try:
-        db = get_db()
+        db = get_db_connection()
         db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
         db.execute("DELETE FROM payments WHERE event_id=?", (event_id,))
         db.execute("DELETE FROM expenses WHERE event_id=?", (event_id,))
         db.execute("DELETE FROM events WHERE id=?", (event_id,))
         db.commit()
-        db.close()
         flash("Événement supprimé", "success")
     except Exception as e:
         flash(f"Erreur lors de la suppression: {str(e)}", "danger")
@@ -763,7 +761,7 @@ def delete_event(event_id):
 def add_event_expense(event_id):
     """Add expenses linked to an event - handles multiple categories."""
     try:
-        db = get_db()
+        db = get_db_connection()
         expense_date = request.form.get('expense_date', date.today().isoformat())
         
         categories_added = 0
@@ -801,7 +799,6 @@ def add_event_expense(event_id):
             flash(f"{categories_added} dépense(s) enregistrée(s)!", "success")
         else:
             flash("Sélectionnez au moins une catégorie avec un montant", "warning")
-        db.close()
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
@@ -811,18 +808,16 @@ def add_event_expense(event_id):
 def delete_expense(expense_id):
     """Delete an expense."""
     try:
-        db = get_db()
+        db = get_db_connection()
         expense = db.execute("SELECT event_id FROM expenses WHERE id=?", (expense_id,)).fetchone()
         if expense:
             event_id = expense['event_id']
             db.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
             db.commit()
-            db.close()
             flash("Dépense supprimée", "success")
             if event_id:
                 return redirect(url_for('event_detail', event_id=event_id))
         else:
-            db.close()
             flash("Dépense introuvable", "danger")
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
@@ -831,7 +826,7 @@ def delete_expense(expense_id):
 @app.route('/evenements')
 @login_required
 def event_list():
-    db = get_db()
+    db = get_db_connection()
     status_filter = request.args.get('status', '')
     search = request.args.get('q', '').strip()
 
@@ -848,7 +843,6 @@ def event_list():
 
     query += " ORDER BY e.event_date DESC"
     events = db.execute(query, params).fetchall()
-    db.close()
     return render_template('event_list.html', events=events, statuses=EVENT_STATUSES,
                            status_filter=status_filter, search=search)
 
@@ -856,7 +850,7 @@ def event_list():
 @app.route('/finances')
 @login_required
 def financials():
-    db = get_db()
+    db = get_db_connection()
     
     # Date range filter
     start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
@@ -955,13 +949,12 @@ def financials():
         ef_dict['total_paid'] = float(ef_dict['total_paid'])
         ef_dict['total_amount'] = float(ef_dict['total_amount'])
         ef_dict['profit'] = ef_dict['total_revenue'] - ef_dict['total_costs']
-        ef_dict['remaining'] = ef_dict['total_amount'] - ef_dict['total_paid']
+        ef_dict['remaining'] = round(ef_dict['total_amount'] - ef_dict['total_paid'], 2)
         event_financials_list.append(ef_dict)
     
     # Total profit (revenue - costs across all events)
     total_profit = sum(ef['profit'] for ef in event_financials_list)
     
-    db.close()
     
     # Handle CSV export
     if export_csv:
@@ -995,7 +988,7 @@ def financials():
 @app.route('/clients')
 @login_required
 def client_list():
-    db = get_db()
+    db = get_db_connection()
     search = request.args.get('q', '').strip()
 
     query = ("SELECT c.*, "
@@ -1011,17 +1004,15 @@ def client_list():
 
     query += " ORDER BY c.created_at DESC"
     clients = db.execute(query, params).fetchall()
-    db.close()
     return render_template('client_list.html', clients=clients, search=search)
 
 @app.route('/client/<int:client_id>')
 @login_required
 def client_detail(client_id):
-    db = get_db()
+    db = get_db_connection()
     client = db.execute("SELECT * FROM clients WHERE id=?", (client_id,)).fetchone()
     if not client:
         flash("Client introuvable", "danger")
-        db.close()
         return redirect(url_for('client_list'))
 
     events = db.execute(
@@ -1070,10 +1061,9 @@ def client_detail(client_id):
             'costs': float(costs),
             'profit': float(revenue) - float(costs),
             'paid': float(paid),
-            'remaining': float(ev['total_amount']) - float(paid)
+            'remaining': round(float(ev['total_amount']) - float(paid), 2)
         }
 
-    db.close()
     return render_template('client_detail.html', client=client, events=events,
                            total_owed=total_owed, total_paid=total_paid,
                            all_payments=all_payments, event_financials=event_financials)
@@ -1085,7 +1075,7 @@ EXPENSE_CATEGORIES = ['Serveurs', 'Nettoyeurs', 'Sécurité', 'Autre']
 @login_required
 def expenses():
     """Expense list with filters."""
-    db = get_db()
+    db = get_db_connection()
     
     start_date = request.args.get('start_date', (date.today() - timedelta(days=30)).isoformat())
     end_date = request.args.get('end_date', date.today().isoformat())
@@ -1134,7 +1124,6 @@ def expenses():
         "SELECT id, title, event_date FROM events ORDER BY event_date DESC LIMIT 20"
     ).fetchall()
     
-    db.close()
     
     return render_template('expenses.html',
                            expenses=expenses,
@@ -1153,7 +1142,7 @@ def expenses():
 def add_expense():
     """Add a new expense."""
     try:
-        db = get_db()
+        db = get_db_connection()
 
         expense_date = request.form.get('expense_date', date.today().isoformat())
         category = request.form.get('category', '')
@@ -1166,11 +1155,9 @@ def add_expense():
 
         if not category:
             flash("La catégorie est requise", "danger")
-            db.close()
             return redirect(url_for('expenses'))
         if amount <= 0:
             flash("Le montant doit être supérieur à 0", "danger")
-            db.close()
             return redirect(url_for('expenses'))
 
         # For 'Autre' category, use description as custom name
@@ -1183,7 +1170,6 @@ def add_expense():
             (expense_date, category, description, amount, event_id, method, reference, notes)
         )
         db.commit()
-        db.close()
 
         flash("Dépense enregistrée!", "success")
     except Exception as e:
@@ -1195,7 +1181,7 @@ def add_expense():
 @login_required
 def accounting():
     """Accounting dashboard with P&L."""
-    db = get_db()
+    db = get_db_connection()
     
     start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
     end_date = request.args.get('end_date', date.today().isoformat())
@@ -1274,7 +1260,6 @@ def accounting():
     
     monthly_pl.reverse()  # Most recent first
     
-    db.close()
     
     return render_template('accounting.html',
                            start_date=start_date, end_date=end_date,
@@ -1289,7 +1274,7 @@ def accounting():
 @app.route('/evenement/<int:event_id>/contrat')
 @login_required
 def generate_contract(event_id):
-    db = get_db()
+    db = get_db_connection()
     event = db.execute(
         "SELECT e.*, c.name as client_name, c.phone, c.phone2, c.email, c.address, "
         "v.name as venue_name, v.capacity_men, v.capacity_women, "
@@ -1300,7 +1285,6 @@ def generate_contract(event_id):
 
     if not event:
         flash("Événement introuvable", "danger")
-        db.close()
         return redirect(url_for('index'))
 
     payments = db.execute("SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY payment_date DESC", (event_id,)).fetchall()
@@ -1308,7 +1292,6 @@ def generate_contract(event_id):
                            (event_id,)).fetchone()['s']
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
 
-    db.close()
 
     pdf_bytes = generate_contract_pdf(
         event,
@@ -1327,7 +1310,7 @@ def generate_contract(event_id):
 @app.route('/evenement/<int:event_id>/recu/<int:payment_id>')
 @login_required
 def generate_receipt(event_id, payment_id):
-    db = get_db()
+    db = get_db_connection()
     event = db.execute(
         "SELECT e.*, c.name as client_name, c.phone, c.address, "
         "v.name as venue_name FROM events e "
@@ -1336,14 +1319,12 @@ def generate_receipt(event_id, payment_id):
 
     if not event:
         flash("Événement introuvable", "danger")
-        db.close()
         return redirect(url_for('index'))
 
     payment = db.execute("SELECT * FROM payments WHERE id=? AND event_id=?",
                          (payment_id, event_id)).fetchone()
     if not payment:
         flash("Paiement introuvable", "danger")
-        db.close()
         return redirect(url_for('event_detail', event_id=event_id))
 
     payment_date_str = str(payment['payment_date'])[:19]
@@ -1351,10 +1332,9 @@ def generate_receipt(event_id, payment_id):
         "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_date < ? AND is_refunded=0",
         (event_id, payment_date_str)).fetchone()['s']
     total_paid_after = float(total_paid_before) + float(payment['amount'])
-    remaining = float(event['total_amount']) - total_paid_after
+    remaining = round(float(event['total_amount']) - total_paid_after, 2)
     receipt_no = f"{payment_date_str[:4]}-{payment_id:04d}"
 
-    db.close()
 
     html = generate_receipt_html(
         event, payment, total_paid_before, total_paid_after,
@@ -1368,7 +1348,7 @@ def generate_receipt(event_id, payment_id):
 @app.route('/parametres', methods=['GET', 'POST'])
 @login_required
 def settings():
-    db = get_db()
+    db = get_db_connection()
     if request.method == 'POST':
         for venue_id in request.form.getlist('venue_id'):
             cap_m = request.form.get(f'capacity_men_{venue_id}', 0, type=int)
@@ -1399,14 +1379,13 @@ def settings():
     deposit_min = settings_dict.get('deposit_min', '20000')
     hall_name = settings_dict.get('hall_name', 'Samba Fête')
     currency = settings_dict.get('currency', 'DA')
-    db.close()
     return render_template('settings.html', venues=venues, deposit_min=deposit_min,
                            hall_name=hall_name, currency=currency)
 
 @app.route('/parametres/lieu/<int:venue_id>/supprimer', methods=['POST'])
 @login_required
 def delete_venue(venue_id):
-    db = get_db()
+    db = get_db_connection()
     count = db.execute("SELECT COUNT(*) as c FROM events WHERE venue_id=?", (venue_id,)).fetchone()['c']
     if count > 0:
         flash("Impossible de supprimer: ce lieu a des événements", "danger")
@@ -1414,7 +1393,6 @@ def delete_venue(venue_id):
         db.execute("DELETE FROM venues WHERE id=?", (venue_id,))
         db.commit()
         flash("Lieu supprimé", "success")
-    db.close()
     return redirect(url_for('settings'))
 
 # ─── User Management (Admin Only) ──────────────────────────────────
@@ -1507,7 +1485,7 @@ def delete_user_route(user_id):
 @app.route('/api/calendar-events')
 @login_required
 def api_calendar_events():
-    db = get_db()
+    db = get_db_connection()
     year = request.args.get('year', date.today().year, type=int)
     month = request.args.get('month', date.today().month, type=int)
 
@@ -1527,7 +1505,6 @@ def api_calendar_events():
         (first, last)).fetchall()
 
     result = events
-    db.close()
     return jsonify(result)
 
 # ─── Export Endpoints ───────────────────────────────────────────────
@@ -1535,7 +1512,7 @@ def api_calendar_events():
 @login_required
 def export_events():
     """Export events to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     # Get filter params
     status_filter = request.args.get('status', '')
@@ -1556,7 +1533,6 @@ def export_events():
     
     query += " ORDER BY e.event_date DESC"
     events = db.execute(query, params).fetchall()
-    db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_events_ods(events, export_date)
@@ -1571,7 +1547,7 @@ def export_events():
 @login_required
 def export_clients():
     """Export clients to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     search = request.args.get('q', '').strip()
     
@@ -1588,7 +1564,6 @@ def export_clients():
     
     query += " ORDER BY c.created_at DESC"
     clients = db.execute(query, params).fetchall()
-    db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_clients_ods(clients, export_date)
@@ -1603,7 +1578,7 @@ def export_clients():
 @login_required
 def export_payments():
     """Export payments to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     # Get all payments with related info
     payments = db.execute(
@@ -1613,7 +1588,6 @@ def export_payments():
         "JOIN clients c ON e.client_id = c.id "
         "ORDER BY p.payment_date DESC"
     ).fetchall()
-    db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_payments_ods(payments, export_date)
@@ -1628,7 +1602,7 @@ def export_payments():
 @login_required
 def export_finances():
     """Export financial report to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
     end_date = request.args.get('end_date', date.today().isoformat())
@@ -1665,7 +1639,6 @@ def export_finances():
         (start_date, end_date)
     ).fetchone()['s']
     
-    db.close()
     
     summary_stats = {
         'total_revenue': total_revenue,
@@ -1691,7 +1664,7 @@ def export_finances():
 @login_required
 def export_expenses():
     """Export expenses to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
     end_date = request.args.get('end_date', date.today().isoformat())
@@ -1712,7 +1685,6 @@ def export_expenses():
     
     query += " ORDER BY ex.expense_date DESC"
     expenses = db.execute(query, params).fetchall()
-    db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_expenses_ods(expenses, export_date)
@@ -1727,7 +1699,7 @@ def export_expenses():
 @login_required
 def export_pl():
     """Export Profit & Loss report to ODS format."""
-    db = get_db()
+    db = get_db_connection()
     
     start_date = request.args.get('start_date', (date.today() - timedelta(days=365)).isoformat())
     end_date = request.args.get('end_date', date.today().isoformat())
@@ -1771,7 +1743,6 @@ def export_pl():
     
     monthly_data.reverse()
     
-    db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_pl_report_ods(monthly_data, export_date)
