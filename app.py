@@ -392,7 +392,6 @@ DEFAULT_SERVICES = {
 }
 
 @app.route('/evenement/nouveau', methods=['GET', 'POST'])
-@login_required
 @app.route('/evenement/<int:event_id>/modifier', methods=['GET', 'POST'])
 @login_required
 def event_form(event_id=None):

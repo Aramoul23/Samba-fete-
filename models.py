@@ -3,14 +3,13 @@ import psycopg2
 import psycopg2.extras
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
 def is_postgres():
     return DATABASE_URL.startswith('postgresql://')
 
-class User(UserMixin):
+class User:
     """User model for Flask-Login."""
     def __init__(self, id, username, password_hash, role, is_active=1):
         self.id = id
@@ -24,8 +23,19 @@ class User(UserMixin):
         return self._is_active
     
     @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_anonymous(self):
+        return False
+    
+    @property
     def is_admin(self):
         return self.role == 'admin'
+    
+    def get_id(self):
+        return str(self.id)
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
