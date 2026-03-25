@@ -518,7 +518,7 @@ def event_detail(event_id):
 
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
     payments = db.execute(
-        "SELECT * FROM payments WHERE event_id=? ORDER BY date DESC", 
+        "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC", 
         (event_id,)
     ).fetchall()
     
@@ -1223,7 +1223,7 @@ def generate_contract(event_id):
         db.close()
         return redirect(url_for('index'))
 
-    payments = db.execute("SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY date DESC", (event_id,)).fetchall()
+    payments = db.execute("SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY payment_date DESC", (event_id,)).fetchall()
     total_paid = db.execute("SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
                            (event_id,)).fetchone()['s']
     event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
