@@ -2,3 +2,4 @@ flask>=3.0.0
 odfpy>=1.4.1
 reportlab>=4.0
 psycopg2-binary>=2.9.0
+weasyprint>=60.0
