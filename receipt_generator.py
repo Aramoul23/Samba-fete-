@@ -50,7 +50,7 @@ def generate_receipt_html(event, payment, total_paid_before, total_paid_after, r
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; color: #2c3e50; }}
 .receipt {{ width: 148mm; min-height: 210mm; background: white; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-.header {{ background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 15px 15px 12px; text-align: center; position: relative; }}
+.header {{ background: linear-gradient(135deg, #1e3a5f 0%, #2c3e50 100%); padding: 15px 15px 12px; text-align: center; position: relative; }}
 .header::after {{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c9a227 0%, #e8d5a3 50%, #c9a227 100%); }}
 .header-decoration {{ color: #c9a227; font-size: 12pt; letter-spacing: 6px; margin-bottom: 3px; }}
 .header h1 {{ font-family: 'Georgia', serif; font-size: 16pt; font-weight: normal; color: #c9a227; letter-spacing: 4px; margin-bottom: 2px; text-transform: uppercase; }}

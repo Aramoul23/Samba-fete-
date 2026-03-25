@@ -103,7 +103,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
 @page {{ size: A4; margin: 0; }}
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 body {{ font-family: 'Georgia', 'Times New Roman', serif; font-size: 9pt; color: #2c3e50; line-height: 1.2; }}
-.header {{ background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 20px 25px 15px; text-align: center; position: relative; }}
+.header {{ background: linear-gradient(135deg, #1e3a5f 0%, #2c3e50 100%); padding: 20px 25px 15px; text-align: center; position: relative; }}
 .header::after {{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #c9a227 0%, #e8d5a3 50%, #c9a227 100%); }}
 .header-decoration {{ color: #c9a227; font-size: 24pt; margin-bottom: 5px; letter-spacing: 8px; }}
 .header h1 {{ font-family: 'Georgia', serif; font-size: 22pt; font-weight: normal; color: #c9a227; letter-spacing: 6px; margin-bottom: 3px; text-transform: uppercase; }}
@@ -127,7 +127,7 @@ body {{ font-family: 'Georgia', 'Times New Roman', serif; font-size: 9pt; color:
 .event-item {{ background: white; padding: 8px 10px; border-radius: 4px; border: 1px solid #e8e0d5; }}
 .event-item-label {{ font-size: 6.5pt; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }}
 .event-item-value {{ font-size: 9pt; font-weight: bold; color: #2c3e50; margin-top: 2px; }}
-.event-item.highlight {{ background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border-color: #c9a227; }}
+.event-item.highlight {{ background: linear-gradient(135deg, #1e3a5f 0%, #2c3e50 100%); border-color: #c9a227; }}
 .event-item.highlight .event-item-label {{ color: #c9a227; }}
 .event-item.highlight .event-item-value {{ color: white; font-size: 12pt; }}
 .services-section {{ padding: 12px 25px; background: white; }}
@@ -142,7 +142,7 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 .financial-box {{ background: white; padding: 10px; border-radius: 4px; text-align: center; border: 1px solid #e8e0d5; }}
 .financial-box.paid {{ background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }}
 .financial-box.due {{ background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #fca5a5; }}
-.financial-box.total {{ background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border-color: #c9a227; }}
+.financial-box.total {{ background: linear-gradient(135deg, #1e3a5f 0%, #2c3e50 100%); border-color: #c9a227; }}
 .fin-label {{ font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 3px; }}
 .fin-value {{ font-size: 12pt; font-weight: bold; color: #2c3e50; }}
 .financial-box.paid .fin-label, .financial-box.paid .fin-value {{ color: #166534; }}
