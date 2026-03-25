@@ -40,6 +40,12 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a href="{{ url_for('quick_payment') }}" class="nav-link {% if request.endpoint == 'quick_payment' %}active{% endif %}" style="background: rgba(6, 214, 160, 0.1);">
+                    <i class="fas fa-bolt" style="color: var(--success);"></i> <span>Paiement Rapide</span>
+                </a>
+            </li>
+
             <li class="nav-section-title">Gestion</li>
             <li class="nav-item">
                 <a href="{{ url_for('client_list') }}" class="nav-link {% if request.endpoint == 'client_list' or request.endpoint == 'client_detail' %}active{% endif %}">
@@ -160,6 +166,10 @@
         <a href="/calendrier" class="mobile-nav-item {% if request.path == '/calendrier' %}active{% endif %}">
             <i class="bi bi-calendar3"></i>
             <span>Calendrier</span>
+        </a>
+        <a href="/paiement-rapide" class="mobile-nav-item {% if request.path == '/paiement-rapide' %}active{% endif %}" style="color: #06d6a0;">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>Payer</span>
         </a>
         <a href="/evenement/nouveau" class="mobile-nav-item {% if '/evenement' in request.path %}active{% endif %}" style="color: #667eea;">
             <i class="bi bi-plus-circle-fill"></i>

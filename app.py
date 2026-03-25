@@ -4,7 +4,7 @@ from models import get_db, init_db, get_setting, set_setting, get_user_by_id, ge
 from models import get_all_users, create_user, update_user, delete_user
 from datetime import datetime, date, timedelta
 from contract_generator import generate_contract_pdf
-from receipt_generator import generate_receipt_html
+from receipt_generator import generate_receipt_html, generate_receipt_pdf
 from export_functions import export_events_ods, export_clients_ods, export_payments_ods, export_financials_ods, export_expenses_ods, export_pl_report_ods
 import calendar
 import csv
@@ -140,29 +140,32 @@ def ensure_default_data():
     """Ensure database has default venues and settings."""
     db = get_db()
     
-    venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()['c']
-    
-    if venue_count == 0:
-        print("Initializing default venues...")
-        for v in DEFAULT_VENUES:
-            db.execute(
-                "INSERT INTO venues (name, capacity_men, capacity_women, is_active) VALUES (?, ?, ?, 1)",
-                (v['name'], v['capacity_men'], v['capacity_women'])
-            )
-        db.commit()
-        print(f"Created {len(DEFAULT_VENUES)} default venues.")
-    
-    settings = db.execute("SELECT key FROM settings WHERE key IN ('hall_name', 'currency', 'deposit_min')").fetchall()
-    existing_keys = {s['key'] for s in settings}
-    
-    if 'hall_name' not in existing_keys:
-        set_setting('hall_name', 'Samba Fête')
-    if 'currency' not in existing_keys:
-        set_setting('currency', 'DA')
-    if 'deposit_min' not in existing_keys:
-        set_setting('deposit_min', '20000')
-    
-    print("Default data check complete.")
+    try:
+        venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()['c']
+        
+        if venue_count == 0:
+            print("Initializing default venues...")
+            for v in DEFAULT_VENUES:
+                db.execute(
+                    "INSERT INTO venues (name, capacity_men, capacity_women, is_active) VALUES (?, ?, ?, 1)",
+                    (v['name'], v['capacity_men'], v['capacity_women'])
+                )
+            db.commit()
+            print(f"Created {len(DEFAULT_VENUES)} default venues.")
+        
+        settings = db.execute("SELECT key FROM settings WHERE key IN ('hall_name', 'currency', 'deposit_min')").fetchall()
+        existing_keys = {s['key'] for s in settings}
+        
+        if 'hall_name' not in existing_keys:
+            set_setting('hall_name', 'Samba Fête')
+        if 'currency' not in existing_keys:
+            set_setting('currency', 'DA')
+        if 'deposit_min' not in existing_keys:
+            set_setting('deposit_min', '20000')
+        
+        print("Default data check complete.")
+    finally:
+        db.close()
 
 # ─── Login/Logout Routes ──────────────────────────────────────────
 @app.route('/login', methods=['GET', 'POST'])
@@ -214,7 +217,7 @@ def index():
     revenue_month = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (first_day.isoformat(), last_day.isoformat())).fetchone()['s']
 
     upcoming = db.execute(
@@ -230,7 +233,7 @@ def index():
         "SELECT p.*, e.title, c.name as client_name FROM payments p "
         "JOIN events e ON p.event_id=e.id JOIN clients c ON e.client_id=c.id "
         "WHERE p.is_refunded=0 "
-        "ORDER BY p.date DESC LIMIT 5").fetchall()
+        "ORDER BY p.payment_date DESC LIMIT 5").fetchall()
 
     # --- V2 Dashboard Data ---
     # Last month revenue for % change comparison
@@ -245,7 +248,7 @@ def index():
     last_month_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (prev_first.isoformat(), prev_last.isoformat())).fetchone()['s']
     
     # This month expenses
@@ -297,7 +300,7 @@ def index():
         m_rev = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
             "JOIN events e ON p.event_id=e.id "
-            "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+            "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
             (m_first.isoformat(), m_last.isoformat())).fetchone()['s']
         
         m_exp = db.execute(
@@ -677,6 +680,11 @@ def add_payment(event_id):
             flash("Paiement enregistré!", "success")
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
+    
+    # Redirect back to quick payment if coming from there
+    next_url = request.args.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/paiement/<int:payment_id>/rembourser', methods=['POST'])
@@ -871,7 +879,7 @@ def financials():
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -927,8 +935,8 @@ def financials():
         "FROM payments p "
         "JOIN events e ON p.event_id = e.id "
         "JOIN clients c ON e.client_id = c.id "
-        "WHERE p.date BETWEEN ? AND ? "
-        "ORDER BY p.date DESC",
+        "WHERE p.payment_date BETWEEN ? AND ? "
+        "ORDER BY p.payment_date DESC",
         (start_date, end_date)
     ).fetchall()
     
@@ -1043,7 +1051,7 @@ def client_detail(client_id):
         "FROM payments p "
         "JOIN events e ON p.event_id=e.id "
         "WHERE e.client_id=? "
-        "ORDER BY p.date DESC",
+        "ORDER BY p.payment_date DESC",
         (client_id,)).fetchall()
 
     # Detailed financials per event
@@ -1199,7 +1207,7 @@ def accounting():
     # Total income (payments received in period)
     total_income_raw = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     total_income = float(total_income_raw or 0)
@@ -1244,7 +1252,7 @@ def accounting():
         # Income for this month
         month_income_raw = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
+            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
         month_income = float(month_income_raw or 0)
@@ -1344,21 +1352,23 @@ def generate_receipt(event_id, payment_id):
         flash("Paiement introuvable", "danger")
         return redirect(url_for('event_detail', event_id=event_id))
 
-    date_str = str(payment['date'])[:19]
+    date_str = str(payment['payment_date'])[:19]
     total_paid_before = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND date < ? AND is_refunded=0",
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_date < ? AND is_refunded=0",
         (event_id, date_str)).fetchone()['s']
     total_paid_after = float(total_paid_before) + float(payment['amount'])
     remaining = round(float(event['total_amount']) - total_paid_after, 2)
     receipt_no = f"{date_str[:4]}-{payment_id:04d}"
 
 
-    html = generate_receipt_html(
+    pdf_bytes = generate_receipt_pdf(
         event, payment, total_paid_before, total_paid_after,
         remaining, receipt_no
     )
-    response = make_response(html)
-    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    safe_title = event['client_name'].replace(' ', '_')[:20]
+    response.headers['Content-Disposition'] = f'inline; filename=recu_{safe_title}_{payment_id}.pdf'
     return response
 
 # ─── Settings ────────────────────────────────────────────────────────
@@ -1610,12 +1620,12 @@ def export_payments():
     )
     params = []
     if start_date:
-        query += " AND p.date >= ?"
+        query += " AND p.payment_date >= ?"
         params.append(start_date)
     if end_date:
-        query += " AND p.date <= ?"
+        query += " AND p.payment_date <= ?"
         params.append(end_date + ' 23:59:59')
-    query += " ORDER BY p.date DESC"
+    query += " ORDER BY p.payment_date DESC"
     
     payments = db.execute(query, params).fetchall()
     
@@ -1656,7 +1666,7 @@ def export_finances():
     # Summary stats
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -1750,7 +1760,7 @@ def export_pl():
         
         month_income = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
+            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
         
@@ -1782,6 +1792,84 @@ def export_pl():
     response.headers['Content-Disposition'] = f'attachment; filename=rapport_pl_{start_date}_{end_date}.ods'
     return response
 
+
+# ─── Quick Payment (Walk-In) ────────────────────────────────────────
+@app.route('/paiement-rapide', methods=['GET', 'POST'])
+@login_required
+def quick_payment():
+    """Dedicated page for walk-in payments. Search client → see events → record payment."""
+    db = get_db_connection()
+    search = request.args.get('q', '').strip()
+    selected_client_id = request.args.get('client_id', type=int)
+    selected_event_id = request.args.get('event_id', type=int)
+
+    clients = []
+    client_events = []
+    selected_client = None
+    selected_event = None
+    event_payments = []
+    event_financials = None
+
+    # Step 1: Search clients
+    if search:
+        clients = db.execute(
+            "SELECT c.*, "
+            "(SELECT COUNT(*) FROM events WHERE client_id=c.id AND status NOT IN ('annulé','terminé')) as active_events, "
+            "(SELECT COALESCE(SUM(e.total_amount),0) FROM events e WHERE e.client_id=c.id AND e.status NOT IN ('annulé','terminé')) as total_owed "
+            "FROM clients c WHERE c.name LIKE ? OR c.phone LIKE ? ORDER BY c.name LIMIT 20",
+            (f'%{search}%', f'%{search}%')
+        ).fetchall()
+
+    # Step 2: If client selected, show their active events
+    if selected_client_id:
+        selected_client = db.execute("SELECT * FROM clients WHERE id=?", (selected_client_id,)).fetchone()
+        if selected_client:
+            client_events = db.execute(
+                "SELECT e.*, v.name as venue_name, "
+                "COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.event_id=e.id AND p.is_refunded=0), 0) as total_paid "
+                "FROM events e JOIN venues v ON e.venue_id=v.id "
+                "WHERE e.client_id=? AND e.status NOT IN ('annulé','terminé') "
+                "ORDER BY e.event_date ASC",
+                (selected_client_id,)
+            ).fetchall()
+
+    # Step 3: If event selected, show payment details and form
+    if selected_event_id:
+        selected_event = db.execute(
+            "SELECT e.*, c.name as client_name, c.phone, v.name as venue_name "
+            "FROM events e JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+            "WHERE e.id=?", (selected_event_id,)
+        ).fetchone()
+        if selected_event:
+            event_payments = db.execute(
+                "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC",
+                (selected_event_id,)
+            ).fetchall()
+            total_paid = db.execute(
+                "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
+                (selected_event_id,)
+            ).fetchone()['s']
+            total_refunded = db.execute(
+                "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=1",
+                (selected_event_id,)
+            ).fetchone()['s']
+            event_financials = {
+                'total': float(selected_event['total_amount']),
+                'paid': float(total_paid),
+                'remaining': round(float(selected_event['total_amount']) - float(total_paid), 2),
+                'refunded': float(total_refunded),
+            }
+
+    return render_template('quick_payment.html',
+                           search=search, clients=clients,
+                           selected_client_id=selected_client_id,
+                           selected_client=selected_client,
+                           client_events=client_events,
+                           selected_event_id=selected_event_id,
+                           selected_event=selected_event,
+                           event_payments=event_payments,
+                           event_financials=event_financials,
+                           today_str=date.today().isoformat())
 
 # ─── Init and Run ────────────────────────────────────────────────────
 if __name__ == '__main__':
