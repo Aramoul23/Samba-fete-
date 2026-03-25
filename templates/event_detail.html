@@ -209,6 +209,100 @@
             </div>
             {% endif %}
 
+            <!-- Expenses -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Dépenses liées</h5>
+                    <span class="badge-amount" style="background: var(--danger-soft); color: var(--danger);">
+                        {{ total_expenses | format_da }}
+                    </span>
+                </div>
+                <div class="card-body-custom">
+                    {% if event_expenses %}
+                    <div class="table-responsive mb-3">
+                        <table class="table-elegant">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Catégorie</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Montant</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exp in event_expenses %}
+                                <tr>
+                                    <td>{{ exp.expense_date }}</td>
+                                    <td><span class="badge-slot" style="background: var(--danger-soft); color: var(--danger);">{{ exp.category }}</span></td>
+                                    <td>{{ exp.description or '—' }}</td>
+                                    <td class="text-end" style="font-weight: 600; color: var(--danger);">{{ exp.amount | format_da }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('delete_expense', expense_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr style="background: var(--bg);">
+                                    <td colspan="3" style="font-weight: 700;">Total Dépenses</td>
+                                    <td class="text-end" style="font-weight: 700; color: var(--danger);">{{ total_expenses | format_da }}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Aucune dépense liée à cet événement</p>
+                    {% endif %}
+
+                    <!-- Add Expense Form -->
+                    <div class="add-payment-form" style="margin-top: 16px;">
+                        <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter une Dépense</h6>
+                        <form method="POST" action="{{ url_for('add_event_expense', event_id=event.id) }}">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Date</label>
+                                    <input type="date" name="expense_date" class="form-input-elegant" value="{{ today_str }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Catégorie</label>
+                                    <select name="category" class="form-input-elegant" required>
+                                        <option value="">--</option>
+                                        <option value="Serveurs">Serveurs</option>
+                                        <option value="Nettoyeurs">Nettoyeurs</option>
+                                        <option value="Sécurité">Sécurité</option>
+                                        <option value="Autre">Autre</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label-elegant">Description</label>
+                                    <input type="text" name="description" class="form-input-elegant" placeholder="Détails...">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Montant</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="amount" class="form-input-elegant" step="100" min="0" required>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-elegant">Fournisseur</label>
+                                    <input type="text" name="vendor" class="form-input-elegant" placeholder="Nom">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="submit" class="btn btn-danger btn-sm w-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Payments -->
             <div class="card-custom">
                 <div class="card-header-custom">
@@ -374,12 +468,24 @@
                                 <span class="text-muted">Coûts</span>
                                 <strong class="text-danger">{{ total_costs | format_da }}</strong>
                             </div>
+                            {% if total_expenses > 0 %}
+                            <div class="d-flex justify-content-between mb-2" style="font-size: 0.8125rem;">
+                                <span class="text-muted">Dépenses</span>
+                                <strong class="text-danger">{{ total_expenses | format_da }}</strong>
+                            </div>
+                            {% endif %}
                             <hr style="margin: 8px 0;">
                             <div class="d-flex justify-content-between" style="font-size: 0.9375rem;">
                                 <strong>Bénéfice Net</strong>
-                                <strong style="color: {% if profit > 0 %}var(--success){% else %}var(--danger){% endif %};">
+                                {% if total_expenses > 0 %}
+                                <strong style="color: {% if adjusted_profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                                    {{ adjusted_profit | format_da }}
+                                </strong>
+                                {% else %}
+                                <strong style="color: {% if profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">
                                     {{ profit | format_da }}
                                 </strong>
+                                {% endif %}
                             </div>
                         </div>
 

@@ -7,9 +7,10 @@ from export_functions import export_events_ods, export_clients_ods, export_payme
 import calendar
 import csv
 import io
+import os
 
 app = Flask(__name__)
-app.secret_key = 'samba-fete-secret-key-2024'
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 
 # ─── Helpers ────────────────────────────────────────────────────────
 TIME_SLOTS = ['Après-midi', 'Soirée', 'Nuit']
@@ -449,14 +450,29 @@ def event_detail(event_id):
     ).fetchone()['s']
     
     profit = total_revenue - total_costs
-    
+
+    # Get expenses linked to this event
+    event_expenses = db.execute(
+        "SELECT * FROM expenses WHERE event_id=? ORDER BY expense_date DESC",
+        (event_id,)
+    ).fetchall()
+    total_expenses = db.execute(
+        "SELECT COALESCE(SUM(amount),0) as s FROM expenses WHERE event_id=?",
+        (event_id,)
+    ).fetchone()['s']
+
+    # Adjusted profit = revenue - costs - expenses
+    adjusted_profit = profit - float(total_expenses)
+
     # Check if event is pending for more than 48h
     needs_confirmation = False
-    if event['status'] == 'en attente' and event.get('created_at'):
+    if event['status'] == 'en attente':
         try:
-            created = datetime.strptime(event['created_at'], '%Y-%m-%d %H:%M:%S')
-            if (datetime.now() - created) > timedelta(hours=48):
-                needs_confirmation = True
+            created_at = event['created_at'] if 'created_at' in event.keys() else None
+            if created_at:
+                created = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                if (datetime.now() - created) > timedelta(hours=48):
+                    needs_confirmation = True
         except (ValueError, TypeError):
             pass
 
@@ -465,103 +481,171 @@ def event_detail(event_id):
                            payments=payments, total_paid=total_paid, deposit=deposit,
                            total_refunded=total_refunded, total_revenue=total_revenue,
                            total_costs=total_costs, profit=profit,
-                           needs_confirmation=needs_confirmation, statuses=EVENT_STATUSES)
+                           needs_confirmation=needs_confirmation, statuses=EVENT_STATUSES,
+                           event_expenses=event_expenses, total_expenses=float(total_expenses),
+                           adjusted_profit=adjusted_profit, today_str=date.today().isoformat())
 
 @app.route('/evenement/<int:event_id>/paiement', methods=['POST'])
 def add_payment(event_id):
-    db = get_db()
-    data = request.form
-    amount = data.get('amount', 0, type=float)
-    method = data.get('method', 'espèces')
-    payment_type = data.get('payment_type', 'acompte')
-    reference = data.get('reference', '').strip()
-    notes = data.get('notes', '').strip()
+    try:
+        db = get_db()
+        data = request.form
+        amount = data.get('amount', 0, type=float)
+        method = data.get('method', 'espèces')
+        payment_type = data.get('payment_type', 'acompte')
+        reference = data.get('reference', '').strip()
+        notes = data.get('notes', '').strip()
 
-    if amount <= 0:
-        flash("Montant invalide", "danger")
-    else:
-        db.execute(
-            "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) VALUES (?,?,?,?,?,?)",
-            (event_id, amount, method, payment_type, reference, notes)
-        )
-        db.commit()
-        flash("Paiement enregistré!", "success")
-
-    db.close()
+        if amount <= 0:
+            flash("Montant invalide", "danger")
+        else:
+            db.execute(
+                "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) VALUES (?,?,?,?,?,?)",
+                (event_id, amount, method, payment_type, reference, notes)
+            )
+            db.commit()
+            flash("Paiement enregistré!", "success")
+        db.close()
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/paiement/<int:payment_id>/rembourser', methods=['POST'])
 def refund_payment(event_id, payment_id):
     """Mark a payment as refunded (audit trail - never delete)."""
-    db = get_db()
-    reason = request.form.get('refund_reason', '').strip()
-    
-    payment = db.execute(
-        "SELECT * FROM payments WHERE id=? AND event_id=?", 
-        (payment_id, event_id)
-    ).fetchone()
-    
-    if not payment:
-        flash("Paiement introuvable", "danger")
-    elif payment['is_refunded']:
-        flash("Ce paiement a déjà été remboursé", "warning")
-    else:
-        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        db.execute(
-            "UPDATE payments SET is_refunded=1, refund_date=?, refund_reason=? WHERE id=?",
-            (now_str, reason, payment_id)
-        )
-        db.commit()
-        flash("Paiement marqué comme remboursé", "success")
-    
-    db.close()
+    try:
+        db = get_db()
+        reason = request.form.get('refund_reason', '').strip()
+
+        payment = db.execute(
+            "SELECT * FROM payments WHERE id=? AND event_id=?",
+            (payment_id, event_id)
+        ).fetchone()
+
+        if not payment:
+            flash("Paiement introuvable", "danger")
+        elif payment['is_refunded']:
+            flash("Ce paiement a déjà été remboursé", "warning")
+        else:
+            now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            db.execute(
+                "UPDATE payments SET is_refunded=1, refund_date=?, refund_reason=? WHERE id=?",
+                (now_str, reason, payment_id)
+            )
+            db.commit()
+            flash("Paiement marqué comme remboursé", "success")
+        db.close()
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/statut', methods=['POST'])
 def update_event_status(event_id):
     """Update event status with proper flow."""
-    db = get_db()
-    new_status = request.form.get('status', '')
-    new_date = request.form.get('new_date', '').strip()
-    
-    if new_status not in EVENT_STATUSES:
-        flash("Statut invalide", "danger")
+    try:
+        db = get_db()
+        new_status = request.form.get('status', '')
+        new_date = request.form.get('new_date', '').strip()
+
+        if new_status not in EVENT_STATUSES:
+            flash("Statut invalide", "danger")
+            db.close()
+            return redirect(url_for('event_detail', event_id=event_id))
+
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        if new_status == 'changé de date' and new_date:
+            db.execute("UPDATE events SET status=?, event_date=?, updated_at=? WHERE id=?",
+                      (new_status, new_date, now_str, event_id))
+            flash(f"Date changée à {new_date}. Statut mis à jour.", "success")
+        else:
+            db.execute("UPDATE events SET status=?, updated_at=? WHERE id=?",
+                      (new_status, now_str, event_id))
+
+            status_messages = {
+                'confirmé': "Événement confirmé!",
+                'en attente': "Statut remis à 'en attente'",
+                'changé de date': "Statut mis à jour",
+                'terminé': "Événement marqué comme terminé",
+                'annulé': "Événement annulé"
+            }
+            flash(status_messages.get(new_status, "Statut mis à jour"), "success")
+
+        db.commit()
         db.close()
-        return redirect(url_for('event_detail', event_id=event_id))
-    
-    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    if new_status == 'changé de date' and new_date:
-        db.execute("UPDATE events SET status=?, event_date=?, updated_at=? WHERE id=?",
-                  (new_status, new_date, now_str, event_id))
-        flash(f"Date changée à {new_date}. Statut mis à jour.", "success")
-    else:
-        db.execute("UPDATE events SET status=?, updated_at=? WHERE id=?",
-                  (new_status, now_str, event_id))
-        
-        status_messages = {
-            'confirmé': "Événement confirmé!",
-            'en attente': "Statut remis à 'en attente'",
-            'changé de date': "Statut mis à jour",
-            'terminé': "Événement marqué comme terminé",
-            'annulé': "Événement annulé"
-        }
-        flash(status_messages.get(new_status, "Statut mis à jour"), "success")
-    
-    db.commit()
-    db.close()
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('event_detail', event_id=event_id))
 
 @app.route('/evenement/<int:event_id>/supprimer', methods=['POST'])
 def delete_event(event_id):
-    db = get_db()
-    db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
-    db.execute("DELETE FROM payments WHERE event_id=?", (event_id,))
-    db.execute("DELETE FROM events WHERE id=?", (event_id,))
-    db.commit()
-    db.close()
-    flash("Événement supprimé", "success")
+    try:
+        db = get_db()
+        db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
+        db.execute("DELETE FROM payments WHERE event_id=?", (event_id,))
+        db.execute("DELETE FROM expenses WHERE event_id=?", (event_id,))
+        db.execute("DELETE FROM events WHERE id=?", (event_id,))
+        db.commit()
+        db.close()
+        flash("Événement supprimé", "success")
+    except Exception as e:
+        flash(f"Erreur lors de la suppression: {str(e)}", "danger")
     return redirect(url_for('index'))
+
+@app.route('/evenement/<int:event_id>/depense', methods=['POST'])
+def add_event_expense(event_id):
+    """Add an expense linked to an event."""
+    try:
+        db = get_db()
+        expense_date = request.form.get('expense_date', date.today().isoformat())
+        category = request.form.get('category', '')
+        description = request.form.get('description', '').strip()
+        amount = request.form.get('amount', 0, type=float)
+        vendor = request.form.get('vendor', '').strip()
+        method = request.form.get('method', 'espèces')
+        notes = request.form.get('notes', '').strip()
+
+        # Validate
+        if not category:
+            flash("La catégorie est requise", "danger")
+        elif amount <= 0:
+            flash("Le montant doit être supérieur à 0", "danger")
+        else:
+            # For 'Autre' category, use description as custom name
+            if category == 'Autre' and description:
+                description = f"Autre: {description}"
+            db.execute(
+                "INSERT INTO expenses (expense_date, category, description, amount, vendor, event_id, method, notes) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (expense_date, category, description, amount, vendor or None, event_id, method, notes)
+            )
+            db.commit()
+            flash("Dépense enregistrée!", "success")
+        db.close()
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
+    return redirect(url_for('event_detail', event_id=event_id))
+
+@app.route('/depense/<int:expense_id>/supprimer', methods=['POST'])
+def delete_expense(expense_id):
+    """Delete an expense."""
+    try:
+        db = get_db()
+        expense = db.execute("SELECT event_id FROM expenses WHERE id=?", (expense_id,)).fetchone()
+        if expense:
+            event_id = expense['event_id']
+            db.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
+            db.commit()
+            db.close()
+            flash("Dépense supprimée", "success")
+            if event_id:
+                return redirect(url_for('event_detail', event_id=event_id))
+        else:
+            db.close()
+            flash("Dépense introuvable", "danger")
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
+    return redirect(url_for('expenses'))
 
 @app.route('/evenements')
 def event_list():
@@ -806,7 +890,7 @@ def client_detail(client_id):
                            all_payments=all_payments, event_financials=event_financials)
 
 # ─── Expenses ────────────────────────────────────────────────────────
-EXPENSE_CATEGORIES = ['Salaires', 'Transport', 'Décoration', 'Alimentation', 'Marketing', 'Maintenance', 'Autre']
+EXPENSE_CATEGORIES = ['Serveurs', 'Nettoyeurs', 'Sécurité', 'Autre']
 
 @app.route('/depenses', methods=['GET'])
 def expenses():
@@ -877,32 +961,43 @@ def expenses():
 @app.route('/depenses/ajouter', methods=['POST'])
 def add_expense():
     """Add a new expense."""
-    db = get_db()
-    
-    expense_date = request.form.get('expense_date', date.today().isoformat())
-    category = request.form.get('category', '')
-    description = request.form.get('description', '').strip()
-    amount = request.form.get('amount', 0, type=float)
-    vendor = request.form.get('vendor', '').strip()
-    event_id = request.form.get('event_id', type=int) or None
-    method = request.form.get('method', 'espèces')
-    reference = request.form.get('reference', '').strip()
-    notes = request.form.get('notes', '').strip()
-    
-    if not category or amount <= 0:
-        flash("Catégorie et montant sont requis", "danger")
+    try:
+        db = get_db()
+
+        expense_date = request.form.get('expense_date', date.today().isoformat())
+        category = request.form.get('category', '')
+        description = request.form.get('description', '').strip()
+        amount = request.form.get('amount', 0, type=float)
+        vendor = request.form.get('vendor', '').strip()
+        event_id = request.form.get('event_id', type=int) or None
+        method = request.form.get('method', 'espèces')
+        reference = request.form.get('reference', '').strip()
+        notes = request.form.get('notes', '').strip()
+
+        if not category:
+            flash("La catégorie est requise", "danger")
+            db.close()
+            return redirect(url_for('expenses'))
+        if amount <= 0:
+            flash("Le montant doit être supérieur à 0", "danger")
+            db.close()
+            return redirect(url_for('expenses'))
+
+        # For 'Autre' category, use description as custom name
+        if category == 'Autre' and description:
+            description = f"Autre: {description}"
+
+        db.execute(
+            "INSERT INTO expenses (expense_date, category, description, amount, vendor, event_id, method, reference, notes) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (expense_date, category, description, amount, vendor or None, event_id, method, reference, notes)
+        )
+        db.commit()
         db.close()
-        return redirect(url_for('expenses'))
-    
-    db.execute(
-        "INSERT INTO expenses (expense_date, category, description, amount, vendor, event_id, method, reference, notes) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (expense_date, category, description, amount, vendor or None, event_id, method, reference, notes)
-    )
-    db.commit()
-    db.close()
-    
-    flash("Dépense enregistrée!", "success")
+
+        flash("Dépense enregistrée!", "success")
+    except Exception as e:
+        flash(f"Erreur: {str(e)}", "danger")
     return redirect(url_for('expenses'))
 
 # ─── Accounting Dashboard ───────────────────────────────────────────
@@ -1278,9 +1373,9 @@ def export_finances():
     ).fetchone()['s']
     
     total_outstanding = db.execute(
-        "SELECT COALESCE(SUM(e.total_amount - COALESCE("
-        "  (SELECT SUM(p.amount) FROM payments p WHERE p.event_id=e.id AND p.is_refunded=0)"
-        "), 0), 0) as s FROM events e "
+        "SELECT COALESCE(SUM(e.total_amount - "
+        "  COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.event_id=e.id AND p.is_refunded=0), 0)"
+        "), 0) as s FROM events e "
         "WHERE e.event_date BETWEEN ? AND ? AND e.status NOT IN ('annulé', 'terminé')",
         (start_date, end_date)
     ).fetchone()['s']
