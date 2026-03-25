@@ -125,31 +125,31 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
 <style>
 @page {{
     size: A4;
-    margin: 12mm 16mm 10mm 16mm;
+    margin: 8mm 12mm 8mm 12mm;
 }}
 
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
 body {{
     font-family: 'Helvetica Neue', Arial, sans-serif;
-    font-size: 6.5pt;
+    font-size: 5.5pt;
     color: #1a1a1a;
-    line-height: 1.2;
+    line-height: 1.1;
 }}
 
 .header {{
     text-align: center;
-    padding-bottom: 4pt;
-    border-bottom: 2pt solid #2d5a7b;
-    margin-bottom: 2pt;
+    padding-bottom: 2pt;
+    border-bottom: 1pt solid #2d5a7b;
+    margin-bottom: 1pt;
 }}
 
 .header h1 {{
-    font-size: 18pt;
+    font-size: 14pt;
     font-weight: 400;
     color: #2d5a7b;
-    letter-spacing: 3pt;
-    margin-bottom: 1pt;
+    letter-spacing: 2pt;
+    margin-bottom: 0pt;
 }}
 
 .header .tagline {{
@@ -169,9 +169,9 @@ body {{
     display: flex;
     justify-content: space-around;
     background: #f5f5f5;
-    padding: 5pt 10pt;
-    border: 1pt solid #ccc;
-    margin-bottom: 2pt;
+    padding: 2pt 6pt;
+    border: 0.5pt solid #ccc;
+    margin-bottom: 1pt;
 }}
 
 .info-bar .item {{ text-align: center; }}
@@ -186,9 +186,9 @@ body {{
 
 .party {{
     flex: 1;
-    border: 1pt solid #999;
-    padding: 4pt 6pt;
-    border-left: 3pt solid #2d5a7b;
+    border: 0.5pt solid #999;
+    padding: 2pt 4pt;
+    border-left: 2pt solid #2d5a7b;
 }}
 
 .party.client {{ border-left-color: #5a8a6a; }}
@@ -197,13 +197,13 @@ body {{
 .party .name {{ font-size: 8pt; font-weight: 600; color: #1a1a1a; margin: 2pt 0; }}
 .party .details {{ font-size: 6.5pt; color: #444; line-height: 1.3; }}
 
-.clause {{ margin-bottom: 2pt; }}
+.clause {{ margin-bottom: 1pt; }}
 
 .clause-head {{
     display: flex;
     align-items: center;
-    gap: 3pt;
-    margin-bottom: 2pt;
+    gap: 2pt;
+    margin-bottom: 0.5pt;
 }}
 
 .clause-num {{
@@ -324,9 +324,9 @@ td:last-child {{ text-align: right; font-weight: 500; }}
 .signatures {{
     display: flex;
     justify-content: space-between;
-    margin-top: 4pt;
-    padding-top: 4pt;
-    border-top: 1pt solid #999;
+    margin-top: 2pt;
+    padding-top: 2pt;
+    border-top: 0.5pt solid #999;
 }}
 
 .sig {{
@@ -335,20 +335,20 @@ td:last-child {{ text-align: right; font-weight: 500; }}
 }}
 
 .sig .sig-label {{
-    font-size: 6.5pt;
+    font-size: 5.5pt;
     color: #555;
     text-transform: uppercase;
-    margin-bottom: 18pt;
+    margin-bottom: 10pt;
 }}
 
-.sig .sig-name {{ font-size: 8pt; font-weight: 600; color: #1a1a1a; }}
-.sig .sig-line {{ border-top: 1pt solid #333; width: 80%; margin: 5pt auto 3pt; }}
-.sig .sig-detail {{ font-size: 6pt; color: #666; }}
+.sig .sig-name {{ font-size: 7pt; font-weight: 600; color: #1a1a1a; }}
+.sig .sig-line {{ border-top: 0.5pt solid #333; width: 80%; margin: 3pt auto 2pt; }}
+.sig .sig-detail {{ font-size: 5pt; color: #666; }}
 
 .footer {{
-    margin-top: 4pt;
-    padding-top: 4pt;
-    border-top: 1pt solid #ccc;
+    margin-top: 2pt;
+    padding-top: 2pt;
+    border-top: 0.5pt solid #ccc;
     text-align: center;
     font-size: 6pt;
     color: #888;
@@ -356,10 +356,10 @@ td:last-child {{ text-align: right; font-weight: 500; }}
 
 .no-refund {{
     background: #fff8f5;
-    border: 1pt solid #e5c9b8;
-    padding: 4pt 8pt;
-    margin: 2pt 0;
-    font-size: 6.5pt;
+    border: 0.5pt solid #e5c9b8;
+    padding: 2pt 4pt;
+    margin: 1pt 0;
+    font-size: 5.5pt;
     color: #8b4513;
 }}
 </style>
