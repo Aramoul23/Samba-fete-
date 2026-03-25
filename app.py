@@ -92,7 +92,7 @@ def get_event_financials(event_id):
         'costs': float(cost_lines),
         'profit': float(revenue_lines) - float(cost_lines),
         'paid': float(total_paid),
-        'remaining': event_total - float(total_paid),
+        'remaining': float(event_total) - float(total_paid),
         'refunded': float(total_refunded)
     }
 
@@ -592,7 +592,7 @@ def add_payment(event_id):
         data = request.form
         amount = data.get('amount', 0, type=float)
         method = data.get('method', 'espèces')
-        payment_type = data.get('payment_type', 'acompte')
+        payment_type = data.get('payment_type', 'acompte').lower()
         reference = data.get('reference', '').strip()
         notes = data.get('notes', '').strip()
 
@@ -884,6 +884,10 @@ def financials():
     event_financials_list = []
     for ef in event_financials:
         ef_dict = ef
+        ef_dict['total_revenue'] = float(ef_dict['total_revenue'])
+        ef_dict['total_costs'] = float(ef_dict['total_costs'])
+        ef_dict['total_paid'] = float(ef_dict['total_paid'])
+        ef_dict['total_amount'] = float(ef_dict['total_amount'])
         ef_dict['profit'] = ef_dict['total_revenue'] - ef_dict['total_costs']
         ef_dict['remaining'] = ef_dict['total_amount'] - ef_dict['total_paid']
         event_financials_list.append(ef_dict)
@@ -998,7 +1002,7 @@ def client_detail(client_id):
             'costs': float(costs),
             'profit': float(revenue) - float(costs),
             'paid': float(paid),
-            'remaining': ev['total_amount'] - float(paid)
+            'remaining': float(ev['total_amount']) - float(paid)
         }
 
     db.close()
@@ -1236,9 +1240,9 @@ def generate_contract(event_id):
 
     pdf_bytes = generate_contract_pdf(
         event,
-        [ payments],
+        payments,
         total_paid,
-        [ event_lines]
+        event_lines
     )
 
     response = make_response(pdf_bytes)
@@ -1269,12 +1273,13 @@ def generate_receipt(event_id, payment_id):
         db.close()
         return redirect(url_for('event_detail', event_id=event_id))
 
+    payment_date_str = str(payment['payment_date'])[:19]
     total_paid_before = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_date < ? AND is_refunded=0",
-        (event_id, payment['payment_date'])).fetchone()['s']
-    total_paid_after = total_paid_before + payment['amount']
-    remaining = event['total_amount'] - total_paid_after
-    receipt_no = f"{payment['payment_date'][:4]}-{payment_id:04d}"
+        (event_id, payment_date_str)).fetchone()['s']
+    total_paid_after = float(total_paid_before) + float(payment['amount'])
+    remaining = float(event['total_amount']) - total_paid_after
+    receipt_no = f"{payment_date_str[:4]}-{payment_id:04d}"
 
     db.close()
 
@@ -1359,7 +1364,7 @@ def api_calendar_events():
         "ORDER BY e.event_date",
         (first, last)).fetchall()
 
-    result = [ events]
+    result = events
     db.close()
     return jsonify(result)
 
@@ -1391,7 +1396,7 @@ def export_events():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_events_ods([ events], export_date)
+    ods_content = export_events_ods(events, export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1422,7 +1427,7 @@ def export_clients():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_clients_ods([ clients], export_date)
+    ods_content = export_clients_ods(clients, export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1446,7 +1451,7 @@ def export_payments():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_payments_ods([ payments], export_date)
+    ods_content = export_payments_ods(payments, export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'
@@ -1505,8 +1510,8 @@ def export_finances():
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_financials_ods(
-        [ event_financials], 
-        summary_stats, 
+        event_financials,
+        summary_stats,
         export_date
     )
     
@@ -1543,7 +1548,7 @@ def export_expenses():
     db.close()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
-    ods_content = export_expenses_ods([ expenses], export_date)
+    ods_content = export_expenses_ods(expenses, export_date)
     
     response = make_response(ods_content)
     response.headers['Content-Type'] = 'application/vnd.oasis.opendocument.spreadsheet'

@@ -65,7 +65,7 @@ def get_time_slot_display(slot_input):
 def generate_contract_pdf(event, payments, total_paid, event_lines):
     """Generate a beautiful French contract PDF using WeasyPrint."""
     
-    remaining = event.get('total_amount', 0) - total_paid
+    remaining = float(event.get('total_amount', 0)) - float(total_paid)
     contract_num = event.get('id', '000')
     if isinstance(contract_num, int):
         contract_num = f"{contract_num:04d}"
@@ -82,7 +82,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
     for p in (payments or [])[:8]:
         payment_rows += f"""
         <tr>
-            <td>{p.get('payment_date', '')[:10]}</td>
+            <td>{str(p.get('payment_date', ''))[:10]}</td>
             <td>{format_da(p.get('amount', 0))}</td>
             <td>{p.get('method', '')}</td>
             <td>{p.get('reference') or '—'}</td>

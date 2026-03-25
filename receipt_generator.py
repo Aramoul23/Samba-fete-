@@ -12,11 +12,12 @@ def format_da(amount):
 def format_date_fr(date_str):
     """Convert YYYY-MM-DD to French date string."""
     try:
+        date_str = str(date_str)
         d = date_str[:10]
         year, month, day = d.split('-')
         return f"{int(day)} {MONTH_NAMES_FR[int(month)]} {year}"
     except Exception:
-        return date_str
+        return str(date_str)
 
 METHOD_NAMES = {
     'espèces': 'Espèces',
