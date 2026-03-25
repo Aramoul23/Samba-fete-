@@ -398,7 +398,7 @@
                                             <i class="fas fa-undo"></i>
                                         </button>
                                         {% else %}
-                                        <span class="text-muted" style="font-size: 0.75rem;">{{ p.refund_reason or 'Remboursé' }}</span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">{% if p.notes and '[REMBOURSÉ' in p.notes %}{{ p.notes.split('[REMBOURSÉ')[-1].rstrip(']').strip(': ') }}{% else %}Remboursé{% endif %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>

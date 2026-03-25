@@ -120,9 +120,9 @@
                             {% endif %}
                             <span class="ms-2">· <a href="{{ url_for('event_detail', event_id=p.event_id) }}">{{ p.event_title }}</a></span>
                         </div>
-                        {% if p.is_refunded and p.refund_reason %}
+                        {% if p.is_refunded and p.notes and '[REMBOURSÉ' in p.notes %}
                         <div class="mt-1" style="font-size: 0.75rem; color: var(--danger);">
-                            <i class="fas fa-info-circle me-1"></i>Motif: {{ p.refund_reason }}
+                            <i class="fas fa-info-circle me-1"></i>Motif: {{ p.notes.split('[REMBOURSÉ')[-1].rstrip(']').strip(': ') }}
                         </div>
                         {% endif %}
                     </div>

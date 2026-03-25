@@ -61,16 +61,9 @@
                     {% set slot_count = day_events | length %}
                     {% set is_today = (date_str == today_str) %}
                     {% set is_past = (date_str < today_str) %}
-                    {# Determine status #}
-                    {% set has_confirmed = false %}
-                    {% set has_pending = false %}
-                    {% for ev in day_events %}
-                        {% if ev.status == 'confirmé' %}
-                            {% set has_confirmed = true %}
-                        {% elif ev.status == 'en attente' %}
-                            {% set has_pending = true %}
-                        {% endif %}
-                    {% endfor %}
+                    {# Determine status - check ALL events, not just last #}
+                    {% set has_confirmed = day_events | selectattr('status', 'equalto', 'confirmé') | list | length > 0 %}
+                    {% set has_pending = day_events | selectattr('status', 'equalto', 'en attente') | list | length > 0 %}
 
                     <div class="calendar-day {% if has_confirmed %}booked-day{% elif has_pending %}pending-day{% elif is_past %}past-day{% else %}free-day{% endif %} {% if is_today %}today{% endif %}"
                          data-date="{{ date_str }}"

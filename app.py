@@ -72,6 +72,10 @@ def format_da(amount):
 
 app.jinja_env.filters['format_da'] = format_da
 
+@app.context_processor
+def inject_year():
+    return {'current_year': datetime.now().year}
+
 def check_pending_events():
     """Check for events that have been 'en attente' for more than 48 hours."""
     db = get_db_connection()
@@ -1581,14 +1585,27 @@ def export_payments():
     """Export payments to ODS format."""
     db = get_db_connection()
     
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    
     # Get all payments with related info
-    payments = db.execute(
+    query = (
         "SELECT p.*, e.title, e.event_date, c.name as client_name "
         "FROM payments p "
         "JOIN events e ON p.event_id = e.id "
         "JOIN clients c ON e.client_id = c.id "
-        "ORDER BY p.payment_date DESC"
-    ).fetchall()
+        "WHERE 1=1"
+    )
+    params = []
+    if start_date:
+        query += " AND p.payment_date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND p.payment_date <= ?"
+        params.append(end_date + ' 23:59:59')
+    query += " ORDER BY p.payment_date DESC"
+    
+    payments = db.execute(query, params).fetchall()
     
     export_date = datetime.now().strftime('%Y-%m-%d %H:%M')
     ods_content = export_payments_ods(payments, export_date)
