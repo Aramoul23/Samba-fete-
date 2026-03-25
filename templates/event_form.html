@@ -400,6 +400,42 @@
             <!-- Right Column: Sidebar -->
             <div class="col-lg-4">
 
+                <!-- Section: Availability Calendar -->
+                <div class="card-custom mb-4 sticky-sidebar">
+                    <div class="section-header">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h5>Disponibilités</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="avail-calendar">
+                            <div class="avail-cal-header">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="availCalPrev()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span id="availCalTitle" class="fw-bold"></span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="availCalNext()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="avail-cal-grid">
+                                <div class="avail-cal-dayname">Lun</div>
+                                <div class="avail-cal-dayname">Mar</div>
+                                <div class="avail-cal-dayname">Mer</div>
+                                <div class="avail-cal-dayname">Jeu</div>
+                                <div class="avail-cal-dayname">Ven</div>
+                                <div class="avail-cal-dayname">Sam</div>
+                                <div class="avail-cal-dayname">Dim</div>
+                            </div>
+                            <div id="availCalDays" class="avail-cal-grid"></div>
+                        </div>
+                        <div class="avail-cal-legend mt-2">
+                            <span class="legend-item"><span class="legend-dot legend-green"></span> Disponible</span>
+                            <span class="legend-item"><span class="legend-dot legend-yellow"></span> En attente</span>
+                            <span class="legend-item"><span class="legend-dot legend-red"></span> Occupé</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Section: Acompte -->
                 <div class="card-custom mb-4 sticky-sidebar">
                     <div class="section-header">
@@ -508,6 +544,120 @@ function removeLine(btn) {
     }
 }
 
+// ─── Availability Calendar ──────────────────────────────────────
+let availCalYear = new Date().getFullYear();
+let availCalMonth = new Date().getMonth() + 1; // 1-12
+let availCalEvents = {}; // { 'YYYY-MM-DD': status }
+const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+function loadAvailCalendar() {
+    fetch(`/api/calendar-events?year=${availCalYear}&month=${availCalMonth}`)
+        .then(r => r.json())
+        .then(events => {
+            availCalEvents = {};
+            events.forEach(ev => {
+                if (ev.event_date) {
+                    availCalEvents[ev.event_date] = ev.status;
+                }
+            });
+            renderAvailCalendar();
+        })
+        .catch(() => {
+            availCalEvents = {};
+            renderAvailCalendar();
+        });
+}
+
+function renderAvailCalendar() {
+    document.getElementById('availCalTitle').textContent =
+        `${MONTH_NAMES_FR[availCalMonth - 1]} ${availCalYear}`;
+
+    const container = document.getElementById('availCalDays');
+    container.innerHTML = '';
+
+    const firstDay = new Date(availCalYear, availCalMonth - 1, 1);
+    let startDow = firstDay.getDay(); // 0=Sun
+    startDow = startDow === 0 ? 6 : startDow - 1; // Convert to Mon=0
+
+    const daysInMonth = new Date(availCalYear, availCalMonth, 0).getDate();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const selectedDate = document.querySelector('input[name="event_date"]').value;
+
+    // Empty cells before first day
+    for (let i = 0; i < startDow; i++) {
+        const el = document.createElement('div');
+        el.className = 'avail-cal-day empty';
+        container.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${availCalYear}-${String(availCalMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const el = document.createElement('div');
+        el.className = 'avail-cal-day';
+        el.textContent = d;
+
+        const isPast = dateStr < todayStr;
+        if (isPast) el.classList.add('past');
+
+        const status = availCalEvents[dateStr];
+        if (status === 'confirmé' || status === 'terminé') {
+            el.classList.add('booked');
+        } else if (status === 'en attente') {
+            el.classList.add('pending');
+        } else {
+            el.classList.add(isPast ? 'neutral' : 'available');
+        }
+
+        if (dateStr === selectedDate) {
+            el.classList.add('selected');
+        }
+
+        el.title = dateStr + (status ? ` — ${status}` : '');
+
+        el.addEventListener('click', () => {
+            document.querySelector('input[name="event_date"]').value = dateStr;
+            // Remove previous selection
+            container.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+        });
+
+        container.appendChild(el);
+    }
+}
+
+function availCalPrev() {
+    availCalMonth--;
+    if (availCalMonth < 1) { availCalMonth = 12; availCalYear--; }
+    loadAvailCalendar();
+}
+
+function availCalNext() {
+    availCalMonth++;
+    if (availCalMonth > 12) { availCalMonth = 1; availCalYear++; }
+    loadAvailCalendar();
+}
+
+// Sync calendar when date input changes manually
+document.querySelector('input[name="event_date"]').addEventListener('change', function() {
+    const parts = this.value.split('-');
+    if (parts.length === 3) {
+        const y = parseInt(parts[0]);
+        const m = parseInt(parts[1]);
+        if (y !== availCalYear || m !== availCalMonth) {
+            availCalYear = y;
+            availCalMonth = m;
+            loadAvailCalendar();
+        } else {
+            renderAvailCalendar();
+        }
+    }
+});
+
+// Load calendar on page ready
+loadAvailCalendar();
+
 function calculateServicesTotal() {
     let total = 0;
 
@@ -581,5 +731,99 @@ function calculateServicesTotal() {
     background-color: #C9A84C;
     border-color: #C9A84C;
 }
+
+/* Availability Calendar */
+.avail-calendar {
+    font-size: 0.85rem;
+}
+.avail-cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.avail-cal-header span {
+    font-size: 0.95rem;
+}
+.avail-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+}
+.avail-cal-dayname {
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: #666;
+    padding: 2px 0;
+}
+.avail-cal-day {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+.avail-cal-day:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.avail-cal-day.selected {
+    border-color: #333 !important;
+    box-shadow: 0 0 0 2px rgba(51,51,51,0.3);
+}
+.avail-cal-day.empty {
+    cursor: default;
+}
+.avail-cal-day.empty:hover {
+    transform: none;
+    box-shadow: none;
+}
+.avail-cal-day.past {
+    opacity: 0.5;
+}
+.avail-cal-day.available {
+    background: #d4edda;
+    color: #155724;
+}
+.avail-cal-day.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+.avail-cal-day.booked {
+    background: #f8d7da;
+    color: #721c24;
+}
+.avail-cal-day.neutral {
+    background: #e9ecef;
+    color: #495057;
+}
+.avail-cal-legend {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.7rem;
+    color: #666;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.legend-green { background: #28a745; }
+.legend-yellow { background: #ffc107; }
+.legend-red { background: #dc3545; }
 </style>
 {% endblock %}
