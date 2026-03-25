@@ -25,6 +25,8 @@ MED_GRAY = HexColor('#E0E0E0')
 COMPANY_NAME = "Samba Fête"
 COMPANY_ADDRESS = "102 ZAM, Nouvelle Ville, Constantine"
 COMPANY_TEL = "0550 50 37 67"
+COMPANY_RC = "034275305A"
+COMPANY_NIF = "1635"
 
 # French month names
 MONTHS_FR = {
@@ -123,7 +125,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
     company_data = [[
         Paragraph(f"<b>{COMPANY_NAME}</b>", styles['ClauseText']),
         Paragraph(f"{COMPANY_ADDRESS}", styles['ClauseText']),
-        Paragraph(f"Tél : {COMPANY_TEL}", styles['ClauseText']),
+        Paragraph(f"Tél : {COMPANY_TEL}<br/>RC : {COMPANY_RC} · NIF : {COMPANY_NIF}", styles['ClauseText']),
     ]]
     company_table = Table(company_data, colWidths=[55*mm, 70*mm, 50*mm])
     company_table.setStyle(TableStyle([
@@ -162,6 +164,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
                 f"<b>{COMPANY_NAME}</b><br/>"
                 f"{COMPANY_ADDRESS}<br/>"
                 f"Tél : {COMPANY_TEL}<br/>"
+                f"RC : {COMPANY_RC} · NIF : {COMPANY_NIF}<br/>"
                 f"<i>Ci-après dénommé « le Prestataire »</i>",
                 styles['ClauseText']
             ),
@@ -429,11 +432,11 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
     story.append(Spacer(1, 10*mm))
     story.append(HRFlowable(width="100%", thickness=1, color=GOLD, spaceAfter=2*mm))
     story.append(Paragraph(
-        f"{COMPANY_NAME} · {COMPANY_ADDRESS} · Tél : {COMPANY_TEL}",
+        f"{COMPANY_NAME} · {COMPANY_ADDRESS} · Tél : {COMPANY_TEL} · RC : {COMPANY_RC} · NIF : {COMPANY_NIF}",
         styles['SmallCenter']
     ))
     story.append(Paragraph(
-        "Ce contrat est régi par le droit algérien. Tout litige sera soumis aux tribunaux compétents d'Alger.",
+        "Ce contrat est régi par le droit algérien. Tout litige sera soumis aux tribunaux compétents de Constantine.",
         styles['SmallCenter']
     ))
 

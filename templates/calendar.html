@@ -61,16 +61,27 @@
                     {% set slot_count = day_events | length %}
                     {% set is_today = (date_str == today_str) %}
                     {% set is_past = (date_str < today_str) %}
+                    {# Determine status: if any event is 'confirmé' -> booked, else pending #}
+                    {% set has_confirmed = false %}
+                    {% set has_pending = false %}
+                    {% for ev in day_events %}
+                        {% if ev.status == 'confirmé' %}
+                            {% set has_confirmed = true %}
+                        {% elif ev.status == 'en attente' %}
+                            {% set has_pending = true %}
+                        {% endif %}
+                    {% endfor %}
 
-                    <div class="calendar-day {% if slot_count > 0 %}booked-day{% elif is_past %}past-day{% else %}free-day{% endif %} {% if is_today %}today{% endif %}"
+                    <div class="calendar-day {% if has_confirmed %}booked-day{% elif has_pending %}pending-day{% elif is_past %}past-day{% else %}free-day{% endif %} {% if is_today %}today{% endif %}"
                          data-date="{{ date_str }}"
                          data-has-events="{% if slot_count > 0 %}true{% else %}false{% endif %}"
-                         onclick="showDayDetail('{{ date_str }}', {% if slot_count > 0 %}true{% else %}false{% endif %})">
+                         data-status="{% if has_confirmed %}booked{% elif has_pending %}pending{% else %}free{% endif %}"
+                         onclick="showDayDetail('{{ date_str }}', {% if slot_count > 0 %}true{% else %}false{% endif %}, '{% if has_confirmed %}booked{% elif has_pending %}pending{% else %}free{% endif %}')">
                         <div class="day-number">{{ day }}</div>
                         {% if slot_count > 0 %}
                             <div class="day-events">
                                 {% for ev in day_events[:3] %}
-                                    <div class="day-event-dot" title="{{ ev.title }} ({{ ev.time_slot }})">
+                                    <div class="day-event-dot {% if ev.status == 'confirmé' %}dot-confirmed{% elif ev.status == 'en attente' %}dot-pending{% endif %}" title="{{ ev.title }} ({{ ev.time_slot }})">
                                         <span class="event-mini-title">{{ ev.title[:12] }}</span>
                                     </div>
                                 {% endfor %}
@@ -104,7 +115,7 @@
         </div>
     </div>
 
-    <!-- Booked Date Error Popup -->
+    <!-- Booked Date Error Popup (RED - Confirmed) -->
     <div class="modal fade" id="bookedErrorModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="border: 3px solid #dc3545;">
@@ -129,6 +140,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Pending Date Popup (YELLOW - En attente) -->
+    <div class="modal fade" id="pendingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border: 3px solid #ffc107;">
+                <div class="modal-header" style="background-color: #ffc107; color: #000;">
+                    <h4 class="modal-title">
+                        <i class="fas fa-clock me-2"></i>
+                        DATE EN ATTENTE
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-5">
+                    <i class="fas fa-hourglass-half fa-5x mb-4" style="color: #ffc107;"></i>
+                    <h2 class="fw-bold" style="color: #856404;">Cette date est en attente de confirmation (48h)</h2>
+                    <p class="lead text-muted mt-3" id="pendingDateText"></p>
+                    <div id="pendingEventsList" class="mt-4"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Compris
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -136,14 +173,18 @@
 <script>
 const calendarEvents = {{ booked_dict | tojson }};
 
-function showDayDetail(dateStr, hasEvents) {
-    // If the date has booked events, show the BIG error popup
+function showDayDetail(dateStr, hasEvents, status) {
+    // If the date has events, show appropriate popup based on status
     if (hasEvents) {
-        showBookedError(dateStr);
+        if (status === 'booked') {
+            showBookedError(dateStr);
+        } else if (status === 'pending') {
+            showPendingModal(dateStr);
+        }
         return;
     }
 
-    // Otherwise show the normal detail modal
+    // Otherwise show the normal detail modal (GREEN - available)
     const title = document.getElementById('dayDetailTitle');
     const body = document.getElementById('dayDetailBody');
     const addBtn = document.getElementById('dayAddEventBtn');
@@ -189,6 +230,32 @@ function showBookedError(dateStr) {
     new bootstrap.Modal(document.getElementById('bookedErrorModal')).show();
 }
 
+function showPendingModal(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = d.toLocaleDateString('fr-FR', options);
+
+    document.getElementById('pendingDateText').textContent = formattedDate;
+
+    // Show pending events
+    const events = calendarEvents[dateStr] || [];
+    let eventsHtml = '<div class="list-group">';
+    events.forEach(ev => {
+        eventsHtml += `
+            <div class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${ev.title}</strong><br>
+                    <small>${ev.time_slot}</small>
+                </div>
+                <span class="badge bg-warning text-dark">${ev.status}</span>
+            </div>`;
+    });
+    eventsHtml += '</div>';
+    document.getElementById('pendingEventsList').innerHTML = eventsHtml;
+
+    new bootstrap.Modal(document.getElementById('pendingModal')).show();
+}
+
 function filterVenue(venueId) {
     // Reload page with venue filter
     if (venueId) {
@@ -216,6 +283,17 @@ function filterVenue(venueId) {
 .calendar-day.booked-day:hover {
     background-color: #f5c2c7;
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
+
+.calendar-day.pending-day {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    cursor: pointer;
+}
+
+.calendar-day.pending-day:hover {
+    background-color: #ffe69c;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
 }
 
 .calendar-day.free-day {
@@ -248,6 +326,10 @@ function filterVenue(venueId) {
     color: #dc3545;
 }
 
+.pending-day .day-number {
+    color: #856404;
+}
+
 .free-day .day-number {
     color: #28a745;
 }
@@ -261,6 +343,10 @@ function filterVenue(venueId) {
     text-overflow: ellipsis;
 }
 
+.pending-day .event-mini-title {
+    color: #856404;
+}
+
 .day-event-dot {
     background-color: #f5c6cb;
     border-radius: 3px;
@@ -268,9 +354,21 @@ function filterVenue(venueId) {
     margin-bottom: 2px;
 }
 
+.day-event-dot.dot-pending {
+    background-color: #ffeeba;
+}
+
 /* Legend dots */
 .legend-dot.booked {
     background-color: #dc3545;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.pending {
+    background-color: #ffc107;
     width: 12px;
     height: 12px;
     border-radius: 50%;
