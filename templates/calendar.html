@@ -33,9 +33,9 @@
 
             <!-- Legend -->
             <div class="calendar-legend">
-                <span class="legend-item"><span class="legend-dot free"></span> Disponible</span>
-                <span class="legend-item"><span class="legend-dot booked"></span> Occupé</span>
-                <span class="legend-item"><span class="legend-dot partial"></span> Partiel</span>
+                <span class="legend-item"><span class="legend-dot free"></span> Disponible (vert)</span>
+                <span class="legend-item"><span class="legend-dot booked"></span> Occupé (rouge)</span>
+                <span class="legend-item"><span class="legend-dot empty"></span> Vide (blanc)</span>
             </div>
         </div>
     </div>
@@ -54,16 +54,18 @@
         {% for week in weeks %}
             {% for day in week %}
                 {% if day == 0 %}
-                    <div class="calendar-day empty"></div>
+                    <div class="calendar-day empty-day"></div>
                 {% else %}
                     {% set date_str = "%04d-%02d-%02d" | format(year, month, day) %}
                     {% set day_events = booked_dict.get(date_str, []) %}
                     {% set slot_count = day_events | length %}
                     {% set is_today = (date_str == today_str) %}
+                    {% set is_past = (date_str < today_str) %}
 
-                    <div class="calendar-day {% if slot_count > 0 %}has-events booked{% else %}free{% endif %} {% if is_today %}today{% endif %}"
+                    <div class="calendar-day {% if slot_count > 0 %}booked-day{% elif is_past %}past-day{% else %}free-day{% endif %} {% if is_today %}today{% endif %}"
                          data-date="{{ date_str }}"
-                         onclick="showDayDetail('{{ date_str }}')">
+                         data-has-events="{% if slot_count > 0 %}true{% else %}false{% endif %}"
+                         onclick="showDayDetail('{{ date_str }}', {% if slot_count > 0 %}true{% else %}false{% endif %})">
                         <div class="day-number">{{ day }}</div>
                         {% if slot_count > 0 %}
                             <div class="day-events">
@@ -101,6 +103,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Booked Date Error Popup -->
+    <div class="modal fade" id="bookedErrorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border: 3px solid #dc3545;">
+                <div class="modal-header" style="background-color: #dc3545; color: white;">
+                    <h4 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        DATE DÉJÀ RÉSERVÉE
+                    </h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-5">
+                    <i class="fas fa-ban fa-5x text-danger mb-4"></i>
+                    <h2 class="text-danger fw-bold">Cette date est déjà réservée!</h2>
+                    <p class="lead text-muted mt-3" id="bookedDateText"></p>
+                    <div id="bookedEventsList" class="mt-4"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Compris
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -108,7 +136,14 @@
 <script>
 const calendarEvents = {{ booked_dict | tojson }};
 
-function showDayDetail(dateStr) {
+function showDayDetail(dateStr, hasEvents) {
+    // If the date has booked events, show the BIG error popup
+    if (hasEvents) {
+        showBookedError(dateStr);
+        return;
+    }
+
+    // Otherwise show the normal detail modal
     const title = document.getElementById('dayDetailTitle');
     const body = document.getElementById('dayDetailBody');
     const addBtn = document.getElementById('dayAddEventBtn');
@@ -117,35 +152,41 @@ function showDayDetail(dateStr) {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     title.textContent = d.toLocaleDateString('fr-FR', options);
 
-    const events = calendarEvents[dateStr] || [];
-
-    if (events.length === 0) {
-        body.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-check-circle fa-3x mb-3" style="color: var(--success);"></i>
-                <p class="text-muted">Ce jour est disponible</p>
-            </div>`;
-    } else {
-        let html = '';
-        events.forEach(ev => {
-            const statusBadge = ev.status === 'confirmé' ? 'status-confirmé' :
-                               ev.status === 'en attente' ? 'status-en-attente' : 'status-terminé';
-            html += `
-            <div class="day-event-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">${ev.title}</h6>
-                        <span class="badge-slot">${ev.time_slot}</span>
-                    </div>
-                    <span class="badge-status ${statusBadge}">${ev.status}</span>
-                </div>
-            </div>`;
-        });
-        body.innerHTML = html;
-    }
+    body.innerHTML = `
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-3x mb-3" style="color: #28a745;"></i>
+            <p class="text-success fw-bold">Ce jour est disponible</p>
+            <p class="text-muted">Vous pouvez ajouter un événement à cette date</p>
+        </div>`;
 
     addBtn.href = `/evenement/nouveau?date=${dateStr}`;
     new bootstrap.Modal(document.getElementById('dayDetailModal')).show();
+}
+
+function showBookedError(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = d.toLocaleDateString('fr-FR', options);
+
+    document.getElementById('bookedDateText').textContent = formattedDate;
+
+    // Show booked events
+    const events = calendarEvents[dateStr] || [];
+    let eventsHtml = '<div class="list-group">';
+    events.forEach(ev => {
+        eventsHtml += `
+            <div class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${ev.title}</strong><br>
+                    <small>${ev.time_slot}</small>
+                </div>
+                <span class="badge bg-danger">${ev.status}</span>
+            </div>`;
+    });
+    eventsHtml += '</div>';
+    document.getElementById('bookedEventsList').innerHTML = eventsHtml;
+
+    new bootstrap.Modal(document.getElementById('bookedErrorModal')).show();
 }
 
 function filterVenue(venueId) {
@@ -157,4 +198,111 @@ function filterVenue(venueId) {
     }
 }
 </script>
+
+<style>
+/* Calendar Color Coding */
+.calendar-day.empty-day {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #ccc;
+}
+
+.calendar-day.booked-day {
+    background-color: #f8d7da;
+    border: 2px solid #dc3545;
+    cursor: pointer;
+}
+
+.calendar-day.booked-day:hover {
+    background-color: #f5c2c7;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
+
+.calendar-day.free-day {
+    background-color: #d1e7dd;
+    border: 2px solid #28a745;
+    cursor: pointer;
+}
+
+.calendar-day.free-day:hover {
+    background-color: #bbd7e0;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+}
+
+.calendar-day.past-day {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    opacity: 0.7;
+}
+
+.calendar-day.today {
+    box-shadow: 0 0 0 3px #C9A84C;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.booked-day .day-number {
+    color: #dc3545;
+}
+
+.free-day .day-number {
+    color: #28a745;
+}
+
+.event-mini-title {
+    font-size: 0.7em;
+    color: #721c24;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-event-dot {
+    background-color: #f5c6cb;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-bottom: 2px;
+}
+
+/* Legend dots */
+.legend-dot.booked {
+    background-color: #dc3545;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.free {
+    background-color: #28a745;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.empty {
+    background-color: #e9ecef;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid #ccc;
+}
+
+/* Big Error Popup Styling */
+#bookedErrorModal .modal-content {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+</style>
 {% endblock %}

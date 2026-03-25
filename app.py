@@ -90,7 +90,8 @@ def calendar_view():
     params = [first, last]
     
     if venue_filter:
-        query += " AND venue_id = ?"
+        query += " AND (venue_id = ? OR venue_id2 = ?)"
+        params.append(venue_filter)
         params.append(venue_filter)
     
     query += " ORDER BY event_date"
@@ -118,6 +119,18 @@ def calendar_view():
                            time_slots=TIME_SLOTS, venue_filter=venue_filter or '')
 
 # ─── Events ──────────────────────────────────────────────────────────
+# Default service definitions
+DEFAULT_SERVICES = {
+    'location': {'name': 'Location de la salle', 'default_price': 0, 'required': True},
+    'individuel': {'name': 'Service individuel', 'default_price': 5000},
+    'cafe': {'name': 'Service café', 'default_price': 10000},
+    'groupe': {'name': 'Groupe interdit', 'default_price': 15000},
+    'photo': {'name': 'Photo', 'default_price': 8000},
+    'deco': {'name': 'Déco el Hana', 'default_price': 25000},
+    'panneaux': {'name': 'Panneaux de réception', 'default_price': 12000},
+    'table': {'name': "Table d'honneur", 'default_price': 7000},
+}
+
 @app.route('/evenement/nouveau', methods=['GET', 'POST'])
 @app.route('/evenement/<int:event_id>/modifier', methods=['GET', 'POST'])
 def event_form(event_id=None):
@@ -125,6 +138,7 @@ def event_form(event_id=None):
     event = None
     client = None
     event_lines = []
+    custom_lines = []
 
     if event_id:
         event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
@@ -133,7 +147,15 @@ def event_form(event_id=None):
             db.close()
             return redirect(url_for('index'))
         client = db.execute("SELECT * FROM clients WHERE id=?", (event['client_id'],)).fetchone()
-        event_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
+        all_lines = db.execute("SELECT * FROM event_lines WHERE event_id=?", (event_id,)).fetchall()
+
+        # Separate predefined services from custom lines
+        predefined_names = [v['name'] for v in DEFAULT_SERVICES.values()] + ['Autre']
+        for line in all_lines:
+            if line['description'] in predefined_names:
+                event_lines.append(dict(line))
+            else:
+                custom_lines.append(dict(line))
 
     venues = db.execute("SELECT * FROM venues WHERE is_active=1").fetchall()
 
@@ -146,6 +168,7 @@ def event_form(event_id=None):
         client_email = data.get('client_email', '').strip()
         client_address = data.get('client_address', '').strip()
         venue_id = data.get('venue_id', type=int)
+        venue_id2 = data.get('venue_id2', type=int)
         event_type = data.get('event_type', 'Mariage')
         event_date = data.get('event_date')
         time_slot = data.get('time_slot', 'Soirée')
@@ -156,10 +179,31 @@ def event_form(event_id=None):
         total_amount = data.get('total_amount', 0, type=float)
         deposit_required = data.get('deposit_required', 20000, type=float)
 
-        # Line items
+        # Line items (additional custom lines)
         line_descs = request.form.getlist('line_desc[]')
         line_amounts = request.form.getlist('line_amount[]')
         line_costs = request.form.getlist('line_is_cost[]')
+
+        # Services
+        service_location = data.get('service_location')
+        price_location = data.get('price_location', 0, type=float)
+        service_individuel = data.get('service_individuel')
+        price_individuel = data.get('price_individuel', 0, type=float)
+        service_cafe = data.get('service_cafe')
+        price_cafe = data.get('price_cafe', 0, type=float)
+        service_groupe = data.get('service_groupe')
+        price_groupe = data.get('price_groupe', 0, type=float)
+        service_photo = data.get('service_photo')
+        price_photo = data.get('price_photo', 0, type=float)
+        service_deco = data.get('service_deco')
+        price_deco = data.get('price_deco', 0, type=float)
+        service_panneaux = data.get('service_panneaux')
+        price_panneaux = data.get('price_panneaux', 0, type=float)
+        service_table = data.get('service_table')
+        price_table = data.get('price_table', 0, type=float)
+        service_autre = data.get('service_autre')
+        price_autre = data.get('price_autre', 0, type=float)
+        autre_name = data.get('autre_name', '').strip() or 'Autre'
 
         errors = []
         if not title:
@@ -178,7 +222,7 @@ def event_form(event_id=None):
                 flash(e, 'danger')
             db.close()
             return render_template('event_form.html', event=event, client=client,
-                                   event_lines=event_lines, venues=venues,
+                                   event_lines=event_lines, custom_lines=custom_lines, venues=venues,
                                    time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
                                    statuses=EVENT_STATUSES, event_id=event_id)
 
@@ -194,22 +238,61 @@ def event_form(event_id=None):
 
         # Create or update event
         if event:
-            db.execute("UPDATE events SET title=?, client_id=?, venue_id=?, event_type=?, event_date=?, "
+            db.execute("UPDATE events SET title=?, client_id=?, venue_id=?, venue_id2=?, event_type=?, event_date=?, "
                        "time_slot=?, guests_men=?, guests_women=?, status=?, notes=?, "
                        "total_amount=?, deposit_required=? WHERE id=?",
-                       (title, client_id, venue_id, event_type, event_date, time_slot,
+                       (title, client_id, venue_id, venue_id2, event_type, event_date, time_slot,
                         guests_men, guests_women, status, notes, total_amount, deposit_required, event_id))
             # Remove old lines
             db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
         else:
-            cur = db.execute("INSERT INTO events (title, client_id, venue_id, event_type, event_date, "
+            cur = db.execute("INSERT INTO events (title, client_id, venue_id, venue_id2, event_type, event_date, "
                             "time_slot, guests_men, guests_women, status, notes, total_amount, deposit_required) "
-                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                            (title, client_id, venue_id, event_type, event_date, time_slot,
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                            (title, client_id, venue_id, venue_id2, event_type, event_date, time_slot,
                              guests_men, guests_women, status, notes, total_amount, deposit_required))
             event_id = cur.lastrowid
 
-        # Insert line items
+        # Insert service lines (predefined services)
+        # Location de la salle (always added if price > 0)
+        if price_location > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Location de la salle', price_location))
+
+        # Other services (only if checked and price > 0)
+        if service_individuel and price_individuel > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Service individuel', price_individuel))
+
+        if service_cafe and price_cafe > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Service café', price_cafe))
+
+        if service_groupe and price_groupe > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Groupe interdit', price_groupe))
+
+        if service_photo and price_photo > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Photo', price_photo))
+
+        if service_deco and price_deco > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Déco el Hana', price_deco))
+
+        if service_panneaux and price_panneaux > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, 'Panneaux de réception', price_panneaux))
+
+        if service_table and price_table > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, "Table d'honneur", price_table))
+
+        if service_autre and price_autre > 0:
+            db.execute("INSERT INTO event_lines (event_id, description, amount, is_cost) VALUES (?,?,?,0)",
+                      (event_id, autre_name or 'Autre', price_autre))
+
+        # Insert custom line items
         for i, desc in enumerate(line_descs):
             if desc.strip():
                 amount = float(line_amounts[i]) if i < len(line_amounts) else 0
@@ -224,7 +307,7 @@ def event_form(event_id=None):
 
     db.close()
     return render_template('event_form.html', event=event, client=client,
-                           event_lines=event_lines, venues=venues,
+                           event_lines=event_lines, custom_lines=custom_lines, venues=venues,
                            time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
                            statuses=EVENT_STATUSES, event_id=event_id)
 
@@ -233,8 +316,10 @@ def event_detail(event_id):
     db = get_db()
     event = db.execute(
         "SELECT e.*, c.name as client_name, c.id as client_id, c.phone, c.phone2, c.email, c.address, "
-        "v.name as venue_name FROM events e "
+        "v.name as venue_name, v.capacity_men, v.capacity_women, "
+        "v2.name as venue2_name FROM events e "
         "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
         "WHERE e.id=?", (event_id,)).fetchone()
     if not event:
         flash("Événement introuvable", "danger")
@@ -375,8 +460,10 @@ def generate_contract(event_id):
     db = get_db()
     event = db.execute(
         "SELECT e.*, c.name as client_name, c.phone, c.phone2, c.email, c.address, "
-        "v.name as venue_name, v.capacity_men, v.capacity_women FROM events e "
+        "v.name as venue_name, v.capacity_men, v.capacity_women, "
+        "v2.name as venue2_name FROM events e "
         "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
         "WHERE e.id=?", (event_id,)).fetchone()
 
     if not event:
@@ -476,8 +563,10 @@ def api_calendar_events():
         last = f"{year}-{month+1:02d}-01"
 
     events = db.execute(
-        "SELECT e.id, e.title, e.event_date, e.time_slot, e.status, c.name as client_name, v.name as venue_name "
+        "SELECT e.id, e.title, e.event_date, e.time_slot, e.status, c.name as client_name, "
+        "v.name as venue_name, COALESCE(v2.name, '') as venue2_name "
         "FROM events e JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
         "WHERE e.event_date >= ? AND e.event_date < ? AND e.status != 'annulé' "
         "ORDER BY e.event_date",
         (first, last)).fetchall()

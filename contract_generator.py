@@ -211,7 +211,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
         ["Titre / Intitulé", event.get('title', 'N/A')],
         ["Date de l'événement", format_date_fr(event.get('event_date', ''))],
         ["Créneau horaire", event.get('time_slot', 'N/A')],
-        ["Salle / Lieu", event.get('venue_name', 'N/A')],
+        ["Salle / Lieu", event.get('venue_name', 'N/A') + (" + " + event.get('venue2_name', '') if event.get('venue2_name') else "")],
         ["Nombre d'invités (Hommes)", str(event.get('guests_men', 0))],
         ["Nombre d'invités (Femmes)", str(event.get('guests_women', 0))],
         ["Total invités", str(event.get('guests_men', 0) + event.get('guests_women', 0))],

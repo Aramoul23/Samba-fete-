@@ -12,7 +12,7 @@
                 <div class="event-meta">
                     <span><i class="fas fa-calendar me-1"></i>{{ event.event_date[:10] }}</span>
                     <span class="ms-3"><i class="fas fa-clock me-1"></i>{{ event.time_slot }}</span>
-                    <span class="ms-3"><i class="fas fa-map-marker-alt me-1"></i>{{ event.venue_name }}</span>
+                    <span class="ms-3"><i class="fas fa-map-marker-alt me-1"></i>{{ event.venue_name }}{% if event.venue2_name %} + {{ event.venue2_name }}{% endif %}</span>
                     <span class="ms-3">
                         <span class="badge-status status-{{ event.status | replace(' ', '-') }}">{{ event.status }}</span>
                     </span>
@@ -45,7 +45,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="detail-label">Lieu</div>
-                            <div class="detail-value">{{ event.venue_name }}</div>
+                            <div class="detail-value">{{ event.venue_name }}{% if event.venue2_name %} + {{ event.venue2_name }}{% endif %}</div>
                         </div>
                         <div class="col-md-4">
                             <div class="detail-label">Créneau</div>

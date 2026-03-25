@@ -84,10 +84,22 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label-elegant">Lieu</label>
-                                <select name="venue_id" class="form-input-elegant">
+                                <label class="form-label-elegant">Lieu principal *</label>
+                                <select name="venue_id" class="form-input-elegant" required>
+                                    <option value="">-- Sélectionner --</option>
                                     {% for v in venues %}
                                     <option value="{{ v.id }}" {% if event and event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Lieu secondaire (optionnel)</label>
+                                <select name="venue_id2" class="form-input-elegant">
+                                    <option value="">-- Aucun --</option>
+                                    {% for v in venues %}
+                                    {% if not event or event.venue_id != v.id %}
+                                    <option value="{{ v.id }}" {% if event and event.venue_id2 == v.id %}selected{% endif %}>{{ v.name }}</option>
+                                    {% endif %}
                                     {% endfor %}
                                 </select>
                             </div>
@@ -132,16 +144,203 @@
                     </div>
                 </div>
 
-                <!-- Section: Devis (Pricing Lines) -->
+                <!-- Section: Produits / Services -->
+                <div class="card-custom mb-4">
+                    <div class="section-header">
+                        <i class="fas fa-concierge-bell"></i>
+                        <h5>Produits & Services</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            La Location de la salle est requise par défaut. Cochez les services supplémentaires souhaités.
+                        </p>
+
+                        <div class="services-grid">
+                            <!-- Required: Location de la salle -->
+                            <div class="service-item service-required">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_location" name="service_location" checked disabled>
+                                        <label class="form-check-label fw-bold" for="service_location">
+                                            Location de la salle
+                                            <span class="badge bg-primary ms-2">Requis</span>
+                                        </label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_location" name="price_location"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Location de la salle') | map(attribute='amount') | first | default(0) }}"
+                                               step="100" min="0">
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Optional Services -->
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_individuel" name="service_individuel"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Service individuel') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_individuel">Service individuel</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_individuel" name="price_individuel" value="5000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Service individuel') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_cafe" name="service_cafe"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Service café') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_cafe">Service café</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_cafe" name="price_cafe" value="10000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Service café') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_groupe" name="service_groupe"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Groupe interdit') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_groupe">Groupe interdit</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_groupe" name="price_groupe" value="15000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Groupe interdit') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_photo" name="service_photo"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Photo') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_photo">Photo</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_photo" name="price_photo" value="8000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Photo') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_deco" name="service_deco"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Déco el Hana') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_deco">Déco el Hana</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_deco" name="price_deco" value="25000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Déco el Hana') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_panneaux" name="service_panneaux"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Panneaux de réception') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_panneaux">Panneaux de réception</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_panneaux" name="price_panneaux" value="12000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Panneaux de réception') | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_table" name="service_table"
+                                               {% if event_lines | selectattr('description', 'equalto', "Table d'honneur") | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_table">Table d'honneur</label>
+                                    </div>
+                                    <div class="input-group" style="width: 150px;">
+                                        <input type="number" class="form-input-elegant form-control-sm"
+                                               id="price_table" name="price_table" value="7000" step="100" min="0"
+                                               {% if not (event_lines | selectattr('description', 'equalto', "Table d'honneur") | list) %}disabled{% endif %}>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Autre (Custom) -->
+                            <div class="service-item" style="background: #f8f9fa;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input service-checkbox"
+                                               id="service_autre" name="service_autre"
+                                               {% if event_lines | selectattr('description', 'equalto', 'Autre') | list %}checked{% endif %}>
+                                        <label class="form-check-label" for="service_autre">Autre</label>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" class="form-input-elegant form-control-sm"
+                                               id="autre_name" name="autre_name" placeholder="Nom du service"
+                                               style="width: 150px;"
+                                               {% if not (event_lines | selectattr('description', 'equalto', 'Autre') | list) %}disabled{% endif %}>
+                                        <div class="input-group" style="width: 130px;">
+                                            <input type="number" class="form-input-elegant form-control-sm"
+                                                   id="price_autre" name="price_autre" value="0" step="100" min="0"
+                                                   {% if not (event_lines | selectattr('description', 'equalto', 'Autre') | list) %}disabled{% endif %}>
+                                            <span class="input-group-text">DA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="calculateServicesTotal()">
+                                <i class="fas fa-calculator me-1"></i> Calculer le Total des Services
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Devis (Additional Custom Pricing Lines) -->
                 <div class="card-custom mb-4">
                     <div class="section-header">
                         <i class="fas fa-list-check"></i>
-                        <h5>Devis</h5>
+                        <h5>Lignes Supplémentaires (Devis)</h5>
                     </div>
                     <div class="card-body-custom">
                         <div id="linesContainer">
-                            {% if event_lines %}
-                                {% for line in event_lines %}
+                            {% if custom_lines %}
+                                {% for line in custom_lines %}
                                 <div class="line-item row g-2 mb-2 align-items-center">
                                     <div class="col-md-5">
                                         <input type="text" name="line_desc[]" class="form-input-elegant"
@@ -190,10 +389,7 @@
 
                         <div class="d-flex gap-2 mt-3">
                             <button type="button" class="btn btn-outline-gold btn-sm" onclick="addLine()">
-                                <i class="fas fa-plus me-1"></i> Nouveau Produit
-                            </button>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="calculateTotal()">
-                                <i class="fas fa-calculator me-1"></i> Calculer le Montant Total
+                                <i class="fas fa-plus me-1"></i> Nouvelle Ligne
                             </button>
                         </div>
                     </div>
@@ -262,6 +458,24 @@
 
 {% block scripts %}
 <script>
+// Service checkbox toggle - enable/disable price inputs
+document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+    if (checkbox.id === 'service_location') return; // Location is always enabled
+
+    checkbox.addEventListener('change', function() {
+        const serviceId = this.id.replace('service_', '');
+        const priceInput = document.getElementById('price_' + serviceId);
+        const autreNameInput = document.getElementById('autre_name');
+
+        if (priceInput) {
+            priceInput.disabled = !this.checked;
+        }
+        if (serviceId === 'autre' && autreNameInput) {
+            autreNameInput.disabled = !this.checked;
+        }
+    });
+});
+
 function addLine() {
     const container = document.getElementById('linesContainer');
     const div = document.createElement('div');
@@ -294,10 +508,36 @@ function removeLine(btn) {
     }
 }
 
-function calculateTotal() {
+function calculateServicesTotal() {
+    let total = 0;
+
+    // Location de la salle (always included)
+    const locationPrice = parseFloat(document.getElementById('price_location').value) || 0;
+    total += locationPrice;
+
+    // Other services
+    const services = [
+        { checkbox: 'service_individuel', price: 'price_individuel' },
+        { checkbox: 'service_cafe', price: 'price_cafe' },
+        { checkbox: 'service_groupe', price: 'price_groupe' },
+        { checkbox: 'service_photo', price: 'price_photo' },
+        { checkbox: 'service_deco', price: 'price_deco' },
+        { checkbox: 'service_panneaux', price: 'price_panneaux' },
+        { checkbox: 'service_table', price: 'price_table' },
+        { checkbox: 'service_autre', price: 'price_autre' },
+    ];
+
+    services.forEach(service => {
+        const checkbox = document.getElementById(service.checkbox);
+        if (checkbox && checkbox.checked) {
+            const priceInput = document.getElementById(service.price);
+            total += parseFloat(priceInput.value) || 0;
+        }
+    });
+
+    // Add custom lines
     const amounts = document.querySelectorAll('input[name="line_amount[]"]');
     const costs = document.querySelectorAll('input[name="line_is_cost[]"]');
-    let total = 0;
 
     amounts.forEach((input, index) => {
         const value = parseFloat(input.value) || 0;
@@ -312,4 +552,34 @@ function calculateTotal() {
     document.getElementById('totalAmountInput').value = Math.max(0, total).toFixed(0);
 }
 </script>
+
+<style>
+.service-item {
+    padding: 12px 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: white;
+}
+
+.service-item:hover {
+    border-color: #C9A84C;
+    background: #fffdf5;
+}
+
+.service-required {
+    background: #e8f4fd !important;
+    border-color: #0d6efd !important;
+}
+
+.services-grid {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.form-check-input:checked {
+    background-color: #C9A84C;
+    border-color: #C9A84C;
+}
+</style>
 {% endblock %}

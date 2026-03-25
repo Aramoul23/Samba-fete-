@@ -37,6 +37,7 @@ def init_db():
             title TEXT NOT NULL,
             client_id INTEGER NOT NULL,
             venue_id INTEGER NOT NULL,
+            venue_id2 INTEGER,
             event_type TEXT NOT NULL,
             event_date TEXT NOT NULL,
             time_slot TEXT NOT NULL,
@@ -48,7 +49,8 @@ def init_db():
             deposit_required REAL DEFAULT 20000,
             created_at TEXT DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (client_id) REFERENCES clients(id),
-            FOREIGN KEY (venue_id) REFERENCES venues(id)
+            FOREIGN KEY (venue_id) REFERENCES venues(id),
+            FOREIGN KEY (venue_id2) REFERENCES venues(id)
         );
 
         CREATE TABLE IF NOT EXISTS event_lines (
@@ -84,6 +86,8 @@ def init_db():
                     ('Grande Salle', 400, 270))
         cur.execute("INSERT INTO venues (name, capacity_men, capacity_women) VALUES (?, ?, ?)",
                     ('Jardin', 200, 150))
+        cur.execute("INSERT INTO venues (name, capacity_men, capacity_women) VALUES (?, ?, ?)",
+                    ('Chalet', 100, 80))
 
     # Seed default settings
     cur.execute("SELECT COUNT(*) FROM settings")
