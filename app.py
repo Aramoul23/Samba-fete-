@@ -84,11 +84,17 @@ def calendar_view():
     else:
         last = f"{year}-{month+1:02d}-01"
 
-    booked = db.execute(
-        "SELECT event_date, time_slot, title, status FROM events "
-        "WHERE event_date >= ? AND event_date < ? AND status != 'annulé' "
-        "ORDER BY event_date",
-        (first, last)).fetchall()
+    venue_filter = request.args.get('venue', type=int)
+    
+    query = "SELECT event_date, time_slot, title, status FROM events WHERE event_date >= ? AND event_date < ? AND status != 'annulé'"
+    params = [first, last]
+    
+    if venue_filter:
+        query += " AND venue_id = ?"
+        params.append(venue_filter)
+    
+    query += " ORDER BY event_date"
+    booked = db.execute(query, params).fetchall()
 
     booked_dict = {}
     for b in booked:
@@ -109,7 +115,7 @@ def calendar_view():
                            month_name=MONTH_NAMES_FR[month],
                            weeks=weeks, booked_dict=booked_dict,
                            today_str=today_str, venues=venues,
-                           time_slots=TIME_SLOTS)
+                           time_slots=TIME_SLOTS, venue_filter=venue_filter or '')
 
 # ─── Events ──────────────────────────────────────────────────────────
 @app.route('/evenement/nouveau', methods=['GET', 'POST'])

@@ -24,9 +24,9 @@
             <!-- Venue Filter -->
             <div class="d-flex align-items-center gap-3">
                 <select class="form-input-elegant" style="width: auto; min-width: 180px;" onchange="filterVenue(this.value)">
-                    <option value="">Tous les lieux</option>
+                    <option value="" {% if not venue_filter %}selected{% endif %}>Tous les lieux</option>
                     {% for v in venues %}
-                    <option value="{{ v.id }}">{{ v.name }}</option>
+                    <option value="{{ v.id }}" {% if venue_filter == v.id %}selected{% endif %}>{{ v.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -149,8 +149,12 @@ function showDayDetail(dateStr) {
 }
 
 function filterVenue(venueId) {
-    // Venue filter functionality
-    console.log('Filter by venue:', venueId);
+    // Reload page with venue filter
+    if (venueId) {
+        window.location.href = '/calendrier?venue=' + venueId;
+    } else {
+        window.location.href = '/calendrier';
+    }
 }
 </script>
 {% endblock %}
