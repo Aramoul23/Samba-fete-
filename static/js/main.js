@@ -14,6 +14,40 @@ function toggleSidebar() {
     }
 }
 
+// ─── Swipe Gestures for Mobile ──────────────────────
+(function() {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+        
+        const diff = touchEndX - touchStartX;
+        const threshold = 80;
+        
+        // Swipe right to open sidebar
+        if (diff > threshold && touchStartX < 30) {
+            sidebar.classList.add('open');
+            document.querySelector('.sidebar-overlay')?.classList.add('active');
+        }
+        // Swipe left to close sidebar
+        else if (diff < -threshold && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            document.querySelector('.sidebar-overlay')?.classList.remove('active');
+        }
+    }
+})();
+
 // ─── Auto-dismiss alerts ─────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert-dismissible');

@@ -129,8 +129,58 @@
     <!-- Overlay for mobile -->
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav d-md-none">
+        <a href="/" class="mobile-nav-item {% if request.path == '/' %}active{% endif %}">
+            <i class="bi bi-house"></i>
+            <span>Accueil</span>
+        </a>
+        <a href="/calendrier" class="mobile-nav-item {% if request.path == '/calendrier' %}active{% endif %}">
+            <i class="bi bi-calendar3"></i>
+            <span>Calendrier</span>
+        </a>
+        <a href="/evenement/nouveau" class="mobile-nav-item {% if '/evenement' in request.path %}active{% endif %}" style="color: #667eea;">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span>Nouveau</span>
+        </a>
+        <a href="/clients" class="mobile-nav-item {% if request.path == '/clients' %}active{% endif %}">
+            <i class="bi bi-people"></i>
+            <span>Clients</span>
+        </a>
+        <a href="/finances" class="mobile-nav-item {% if request.path == '/finances' %}active{% endif %}">
+            <i class="bi bi-graph-up"></i>
+            <span>Finances</span>
+        </a>
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Mobile: Hide sidebar overlay on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close sidebar on nav click (mobile)
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelector('.sidebar').classList.remove('open');
+                    document.querySelector('.sidebar-overlay').classList.remove('active');
+                });
+            });
+            
+            // Prevent zoom on input focus (iOS)
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('focus', () => {
+                    if (window.innerWidth < 768) {
+                        document.querySelector('meta[name=viewport]').setAttribute('content', 
+                            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                    }
+                });
+                el.addEventListener('blur', () => {
+                    document.querySelector('meta[name=viewport]').setAttribute('content', 
+                        'width=device-width, initial-scale=1.0');
+                });
+            });
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
