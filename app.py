@@ -1067,7 +1067,7 @@ def expenses():
                            total_expenses=total_expenses,
                            expenses_this_month=float(month_expenses),
                            avg_expense=avg_expense,
-                           expenses_by_category=[ expenses_by_category],
+                           expenses_by_category=expenses_by_category,
                            recent_events=[ recent_events],
                            today_str=date.today().isoformat())
 
@@ -1203,7 +1203,7 @@ def accounting():
                            total_expenses=float(total_expenses),
                            net_profit=net_profit,
                            profit_margin=profit_margin,
-                           expenses_by_category=[ expenses_by_category],
+                           expenses_by_category=expenses_by_category,
                            monthly_pl=monthly_pl)
 
 # ─── Contract PDF ────────────────────────────────────────────────────
