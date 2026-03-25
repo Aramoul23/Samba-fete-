@@ -847,7 +847,7 @@ def financials():
         "LEFT JOIN payments p ON p.event_id = e.id "
         "WHERE e.event_date BETWEEN ? AND ? "
         "GROUP BY c.id "
-        "HAVING total_billed > 0 "
+        "HAVING COALESCE(SUM(e.total_amount), 0) > 0 "
         "ORDER BY total_billed DESC "
         "LIMIT 10",
         (start_date, end_date)
