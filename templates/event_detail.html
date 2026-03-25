@@ -260,43 +260,78 @@
 
                     <!-- Add Expense Form -->
                     <div class="add-payment-form" style="margin-top: 16px;">
-                        <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter une Dépense</h6>
+                        <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter des Dépenses</h6>
                         <form method="POST" action="{{ url_for('add_event_expense', event_id=event.id) }}">
-                            <div class="row g-2 align-items-end">
+                            <div class="row g-2 align-items-start">
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Date</label>
                                     <input type="date" name="expense_date" class="form-input-elegant" value="{{ today_str }}" required>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label-elegant">Catégorie</label>
-                                    <select name="category" class="form-input-elegant" required>
-                                        <option value="">--</option>
-                                        <option value="Serveurs">Serveurs</option>
-                                        <option value="Nettoyeurs">Nettoyeurs</option>
-                                        <option value="Sécurité">Sécurité</option>
-                                        <option value="Autre">Autre</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label-elegant">Description</label>
-                                    <input type="text" name="description" class="form-input-elegant" placeholder="Détails...">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label-elegant">Montant</label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" name="amount" class="form-input-elegant" step="100" min="0" required>
-                                        <span class="input-group-text">DA</span>
+                                <div class="col-md-10">
+                                    <label class="form-label-elegant">Catégories</label>
+                                    <div class="row g-2">
+                                        <!-- Serveurs -->
+                                        <div class="col-md-3">
+                                            <div class="expense-cat-card">
+                                                <label class="expense-cat-label">
+                                                    <input type="checkbox" name="cat_serveurs" class="form-check-input me-2" onchange="toggleExpenseAmount('serveurs')">
+                                                    <strong>Serveurs</strong>
+                                                </label>
+                                                <div class="input-group input-group-sm mt-1" id="amount_serveurs_group" style="display:none;">
+                                                    <input type="number" name="amount_serveurs" class="form-input-elegant" value="15000" step="100" min="0">
+                                                    <span class="input-group-text">DA</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Nettoyeurs -->
+                                        <div class="col-md-3">
+                                            <div class="expense-cat-card">
+                                                <label class="expense-cat-label">
+                                                    <input type="checkbox" name="cat_nettoyeurs" class="form-check-input me-2" onchange="toggleExpenseAmount('nettoyeurs')">
+                                                    <strong>Nettoyeurs</strong>
+                                                </label>
+                                                <div class="input-group input-group-sm mt-1" id="amount_nettoyeurs_group" style="display:none;">
+                                                    <input type="number" name="amount_nettoyeurs" class="form-input-elegant" value="8000" step="100" min="0">
+                                                    <span class="input-group-text">DA</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Sécurité -->
+                                        <div class="col-md-3">
+                                            <div class="expense-cat-card">
+                                                <label class="expense-cat-label">
+                                                    <input type="checkbox" name="cat_securite" class="form-check-input me-2" onchange="toggleExpenseAmount('securite')">
+                                                    <strong>Sécurité</strong>
+                                                </label>
+                                                <div class="input-group input-group-sm mt-1" id="amount_securite_group" style="display:none;">
+                                                    <input type="number" name="amount_securite" class="form-input-elegant" value="10000" step="100" min="0">
+                                                    <span class="input-group-text">DA</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Autre -->
+                                        <div class="col-md-3">
+                                            <div class="expense-cat-card">
+                                                <label class="expense-cat-label">
+                                                    <input type="checkbox" name="cat_autre" class="form-check-input me-2" onchange="toggleExpenseAmount('autre')">
+                                                    <strong>Autre</strong>
+                                                </label>
+                                                <div id="autre_details" style="display:none; margin-top: 6px;">
+                                                    <input type="text" name="autre_name" class="form-input-elegant mb-1" placeholder="Nom..." style="font-size: 0.8rem; padding: 6px 10px;">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" name="amount_autre" class="form-input-elegant" step="100" min="0" placeholder="Montant">
+                                                        <span class="input-group-text">DA</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label-elegant">Fournisseur</label>
-                                    <input type="text" name="vendor" class="form-input-elegant" placeholder="Nom">
-                                </div>
-                                <div class="col-md-1">
-                                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-plus me-1"></i>Ajouter les Dépenses
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -618,6 +653,12 @@ function showRefundModal(paymentId, amount) {
 
 function formatDA(amount) {
     return new Intl.NumberFormat('fr-DZ').format(amount) + ' DA';
+}
+
+function toggleExpenseAmount(cat) {
+    const cb = document.querySelector(`input[name="cat_${cat}"]`);
+    const group = document.getElementById(cat === 'autre' ? 'autre_details' : `amount_${cat}_group`);
+    if (group) group.style.display = cb.checked ? 'block' : 'none';
 }
 </script>
 {% endblock %}

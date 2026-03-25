@@ -1908,6 +1908,46 @@ select.form-input-elegant {
     background: var(--text-tertiary);
 }
 
+/* ─── Expense Category Cards ──────────────────────── */
+.expense-cat-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    transition: all var(--duration) var(--ease-out);
+    height: 100%;
+}
+
+.expense-cat-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-xs);
+}
+
+.expense-cat-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+    margin: 0;
+}
+
+/* ─── Stat Gradient Cards ─────────────────────────── */
+.stat-gradient-blue {
+    background: linear-gradient(135deg, rgba(67, 97, 238, 0.06) 0%, rgba(67, 97, 238, 0.02) 100%);
+}
+
+.stat-card .stat-trend {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    margin-top: 6px;
+}
+
 /* ─── Animations ───────────────────────────────────── */
 @keyframes fadeInUp {
     from {

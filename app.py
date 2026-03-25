@@ -161,6 +161,94 @@ def index():
         "WHERE p.is_refunded=0 "
         "ORDER BY p.date DESC LIMIT 5").fetchall()
 
+    # --- V2 Dashboard Data ---
+    # Last month revenue for % change comparison
+    prev_month = today.month - 1 if today.month > 1 else 12
+    prev_month_year = today.year if today.month > 1 else today.year - 1
+    prev_first = date(prev_month_year, prev_month, 1)
+    if prev_month == 12:
+        prev_last = date(prev_month_year + 1, 1, 1) - timedelta(days=1)
+    else:
+        prev_last = date(prev_month_year, prev_month + 1, 1) - timedelta(days=1)
+    
+    last_month_revenue = db.execute(
+        "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
+        "JOIN events e ON p.event_id=e.id "
+        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        (prev_first.isoformat(), prev_last.isoformat())).fetchone()['s']
+    
+    # This month expenses
+    month_expenses = db.execute(
+        "SELECT COALESCE(SUM(amount),0) as s FROM expenses WHERE expense_date BETWEEN ? AND ?",
+        (first_day.isoformat(), last_day.isoformat())).fetchone()['s']
+    
+    # This month profit
+    month_profit = float(revenue_month) - float(month_expenses)
+    
+    # Revenue % change
+    if float(last_month_revenue) > 0:
+        revenue_pct_change = ((float(revenue_month) - float(last_month_revenue)) / float(last_month_revenue)) * 100
+    else:
+        revenue_pct_change = 100.0 if float(revenue_month) > 0 else 0.0
+    
+    # Pending count
+    pending_count = db.execute(
+        "SELECT COUNT(*) as c FROM events WHERE status = 'en attente' AND event_date >= ?",
+        (today.isoformat(),)).fetchone()['c']
+    
+    # Next event
+    next_event = db.execute(
+        "SELECT e.event_date, c.name as client_name FROM events e "
+        "JOIN clients c ON e.client_id=c.id "
+        "WHERE e.event_date >= ? AND e.status NOT IN ('annulé', 'terminé') "
+        "ORDER BY e.event_date ASC LIMIT 1",
+        (today.isoformat(),)).fetchone()
+    
+    # 6 months chart data
+    chart_labels = []
+    chart_revenues = []
+    chart_expenses = []
+    chart_profits = []
+    
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        
+        m_first = date(y, m, 1)
+        if m == 12:
+            m_last = date(y + 1, 1, 1) - timedelta(days=1)
+        else:
+            m_last = date(y, m + 1, 1) - timedelta(days=1)
+        
+        m_rev = db.execute(
+            "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
+            "JOIN events e ON p.event_id=e.id "
+            "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+            (m_first.isoformat(), m_last.isoformat())).fetchone()['s']
+        
+        m_exp = db.execute(
+            "SELECT COALESCE(SUM(amount),0) as s FROM expenses "
+            "WHERE expense_date BETWEEN ? AND ?",
+            (m_first.isoformat(), m_last.isoformat())).fetchone()['s']
+        
+        chart_labels.append(MONTH_NAMES_FR[m][:3])
+        chart_revenues.append(float(m_rev))
+        chart_expenses.append(float(m_exp))
+        chart_profits.append(float(m_rev) - float(m_exp))
+    
+    # Upcoming events with revenue
+    upcoming_with_revenue = []
+    for ev in upcoming:
+        ev_dict = dict(ev)
+        ev_rev = db.execute(
+            "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
+            (ev['id'],)).fetchone()['s']
+        ev_dict['paid'] = float(ev_rev)
+        upcoming_with_revenue.append(ev_dict)
+    
     hall_name = get_setting('hall_name', 'Samba Fête')
     currency = get_setting('currency', 'DA')
     pending_needs_attention = check_pending_events()
@@ -172,7 +260,19 @@ def index():
                            recent_payments=recent_payments, today=today,
                            hall_name=hall_name, currency=currency,
                            month_name=MONTH_NAMES_FR[today.month],
-                           pending_needs_attention=pending_needs_attention)
+                           pending_needs_attention=pending_needs_attention,
+                           # V2 data
+                           last_month_revenue=last_month_revenue,
+                           month_expenses=month_expenses,
+                           month_profit=month_profit,
+                           revenue_pct_change=revenue_pct_change,
+                           pending_count=pending_count,
+                           next_event=next_event,
+                           chart_labels=chart_labels,
+                           chart_revenues=chart_revenues,
+                           chart_expenses=chart_expenses,
+                           chart_profits=chart_profits,
+                           upcoming_with_revenue=upcoming_with_revenue)
 
 # ─── Calendar ────────────────────────────────────────────────────────
 @app.route('/calendrier')
@@ -594,33 +694,46 @@ def delete_event(event_id):
 
 @app.route('/evenement/<int:event_id>/depense', methods=['POST'])
 def add_event_expense(event_id):
-    """Add an expense linked to an event."""
+    """Add expenses linked to an event - handles multiple categories."""
     try:
         db = get_db()
         expense_date = request.form.get('expense_date', date.today().isoformat())
-        category = request.form.get('category', '')
-        description = request.form.get('description', '').strip()
-        amount = request.form.get('amount', 0, type=float)
-        vendor = request.form.get('vendor', '').strip()
-        method = request.form.get('method', 'espèces')
-        notes = request.form.get('notes', '').strip()
-
-        # Validate
-        if not category:
-            flash("La catégorie est requise", "danger")
-        elif amount <= 0:
-            flash("Le montant doit être supérieur à 0", "danger")
-        else:
-            # For 'Autre' category, use description as custom name
-            if category == 'Autre' and description:
-                description = f"Autre: {description}"
-            db.execute(
-                "INSERT INTO expenses (expense_date, category, description, amount, vendor, event_id, method, notes) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (expense_date, category, description, amount, vendor or None, event_id, method, notes)
-            )
+        
+        categories_added = 0
+        
+        # Fixed categories
+        for cat_key, cat_name, default_price in [
+            ('serveurs', 'Serveurs', 15000),
+            ('nettoyeurs', 'Nettoyeurs', 8000),
+            ('securite', 'Sécurité', 10000),
+        ]:
+            if request.form.get(f'cat_{cat_key}'):
+                amount = request.form.get(f'amount_{cat_key}', default_price, type=float)
+                if amount > 0:
+                    db.execute(
+                        "INSERT INTO expenses (expense_date, category, description, amount, event_id, method) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (expense_date, cat_name, cat_name, amount, event_id, 'espèces')
+                    )
+                    categories_added += 1
+        
+        # Custom "Autre" category
+        if request.form.get('cat_autre'):
+            autre_name = request.form.get('autre_name', '').strip() or 'Autre'
+            autre_amount = request.form.get('amount_autre', 0, type=float)
+            if autre_amount > 0:
+                db.execute(
+                    "INSERT INTO expenses (expense_date, category, description, amount, event_id, method) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (expense_date, 'Autre', f'Autre: {autre_name}', autre_amount, event_id, 'espèces')
+                )
+                categories_added += 1
+        
+        if categories_added > 0:
             db.commit()
-            flash("Dépense enregistrée!", "success")
+            flash(f"{categories_added} dépense(s) enregistrée(s)!", "success")
+        else:
+            flash("Sélectionnez au moins une catégorie avec un montant", "warning")
         db.close()
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")

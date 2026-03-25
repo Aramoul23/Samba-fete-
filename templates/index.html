@@ -8,8 +8,8 @@
     <div class="welcome-banner mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1 class="welcome-title">Bienvenue sur {{ hall_name }}</h1>
-                <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — Gérez vos événements avec élégance</p>
+                <h1 class="welcome-title">{{ hall_name }}</h1>
+                <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — {{ pending_count }} en attente · Prochain: {% if next_event %}{{ next_event.event_date[:10] }} ({{ next_event.client_name }}){% else %}Aucun{% endif %}</p>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-lg">
@@ -19,11 +19,28 @@
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats Cards - 6 per row -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+        <!-- Revenus ce mois -->
+        <div class="col-6 col-lg-2">
+            <div class="stat-card stat-gradient-blue">
                 <div class="stat-icon bg-blue-soft">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ revenue_month | format_da }}</span>
+                    <span class="stat-label">Revenus ce mois</span>
+                    <span class="stat-trend {% if revenue_pct_change >= 0 %}up{% else %}down{% endif %}">
+                        <i class="fas fa-arrow-{% if revenue_pct_change >= 0 %}up{% else %}down{% endif %}"></i>
+                        {{ "%.1f"|format(revenue_pct_change|abs) }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Événements ce mois -->
+        <div class="col-6 col-lg-2">
+            <div class="stat-card">
+                <div class="stat-icon bg-purple-soft">
                     <i class="fas fa-calendar-check"></i>
                 </div>
                 <div class="stat-info">
@@ -32,36 +49,82 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <!-- Dépenses ce mois -->
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
-                <div class="stat-icon bg-success-soft">
-                    <i class="fas fa-coins"></i>
+                <div class="stat-icon bg-danger-soft">
+                    <i class="fas fa-receipt"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ revenue_month | format_da }}</span>
-                    <span class="stat-label">Revenus ce mois</span>
+                    <span class="stat-value">{{ month_expenses | format_da }}</span>
+                    <span class="stat-label">Dépenses ce mois</span>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <!-- Profit ce mois -->
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
-                <div class="stat-icon bg-info-soft">
-                    <i class="fas fa-users"></i>
+                <div class="stat-icon {% if month_profit >= 0 %}bg-success-soft{% else %}bg-danger-soft{% endif %}">
+                    <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_clients }}</span>
-                    <span class="stat-label">Clients</span>
+                    <span class="stat-value" style="color: {% if month_profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">{{ month_profit | format_da }}</span>
+                    <span class="stat-label">Profit ce mois</span>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <!-- En attente -->
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
-                <div class="stat-icon bg-purple-soft">
-                    <i class="fas fa-glass-cheers"></i>
+                <div class="stat-icon bg-warning-soft">
+                    <i class="fas fa-clock"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">{{ total_events }}</span>
-                    <span class="stat-label">Total Événements</span>
+                    <span class="stat-value">{{ pending_count }}</span>
+                    <span class="stat-label">En attente</span>
+                </div>
+            </div>
+        </div>
+        <!-- Prochain événement -->
+        <div class="col-6 col-lg-2">
+            <div class="stat-card">
+                <div class="stat-icon bg-teal-soft">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-info">
+                    {% if next_event %}
+                    <span class="stat-value" style="font-size: 1.1rem;">{{ next_event.event_date[:10] }}</span>
+                    <span class="stat-label">{{ next_event.client_name }}</span>
+                    {% else %}
+                    <span class="stat-value">—</span>
+                    <span class="stat-label">Prochain événement</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="fas fa-chart-bar"></i> Revenus vs Dépenses</h5>
+                    <span class="badge-slot">6 derniers mois</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="revenueExpenseChart" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="fas fa-chart-line"></i> Évolution du Profit</h5>
+                    <span class="badge-slot">6 derniers mois</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="profitChart" height="260"></canvas>
                 </div>
             </div>
         </div>
@@ -76,8 +139,8 @@
                     <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Événements à venir</h5>
                     <a href="{{ url_for('event_list') }}" class="btn btn-sm btn-outline-gold">Voir tout</a>
                 </div>
-                <div class="card-body-custom">
-                    {% if upcoming %}
+                <div class="card-body-custom" style="padding: 0;">
+                    {% if upcoming_with_revenue %}
                     <div class="table-responsive">
                         <table class="table-elegant">
                             <thead>
@@ -86,25 +149,23 @@
                                     <th>Événement</th>
                                     <th>Client</th>
                                     <th>Lieu</th>
-                                    <th>Créneau</th>
                                     <th>Statut</th>
+                                    <th class="text-end">Payé</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for event in upcoming %}
-                                <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=event.id) }}'">
+                                {% for ev in upcoming_with_revenue %}
+                                <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ev.id) }}'">
+                                    <td><strong>{{ ev.event_date[:10] }}</strong></td>
+                                    <td style="font-weight: 500;">{{ ev.title }}</td>
+                                    <td>{{ ev.client_name }}</td>
+                                    <td>{{ ev.venue_name }}</td>
                                     <td>
-                                        <strong>{{ event.event_date[:10] }}</strong>
-                                    </td>
-                                    <td style="font-weight: 500;">{{ event.title }}</td>
-                                    <td><a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="text-decoration-none">{{ event.client_name }}</a></td>
-                                    <td>{{ event.venue_name }}</td>
-                                    <td><span class="badge-slot">{{ event.time_slot }}</span></td>
-                                    <td>
-                                        <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
-                                            {{ event.status }}
+                                        <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
+                                            {{ ev.status }}
                                         </span>
                                     </td>
+                                    <td class="text-end" style="font-weight: 600;">{{ ev.paid | format_da }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -123,7 +184,7 @@
             </div>
         </div>
 
-        <!-- Recent Payments + Quick Actions -->
+        <!-- Recent Payments -->
         <div class="col-lg-4">
             <!-- Quick Actions -->
             <div class="card-custom mb-4 no-hover">
@@ -136,10 +197,10 @@
                             <i class="fas fa-plus me-2"></i>Nouvel Événement
                         </a>
                         <a href="{{ url_for('calendar_view') }}" class="btn btn-outline-gold btn-lg">
-                            <i class="fas fa-calendar me-2"></i>Voir le Calendrier
+                            <i class="fas fa-calendar me-2"></i>Calendrier
                         </a>
                         <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-lg">
-                            <i class="fas fa-users me-2"></i>Liste des Clients
+                            <i class="fas fa-users me-2"></i>Clients
                         </a>
                     </div>
                 </div>
@@ -150,7 +211,7 @@
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements Récents</h5>
                 </div>
-                <div class="card-body-custom">
+                <div class="card-body-custom" style="padding-top: 8px;">
                     {% if recent_payments %}
                         {% for p in recent_payments %}
                         <div class="payment-item">
@@ -180,29 +241,59 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-// Dashboard chart - Revenue visualization
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('revenueChart');
-    if (ctx) {
-        new Chart(ctx.getContext('2d'), {
+    const chartLabels = {{ chart_labels | tojson }};
+    const chartRevenues = {{ chart_revenues | tojson }};
+    const chartExpenses = {{ chart_expenses | tojson }};
+    const chartProfits = {{ chart_profits | tojson }};
+
+    // Revenue vs Expenses Bar Chart
+    const ctx1 = document.getElementById('revenueExpenseChart');
+    if (ctx1) {
+        new Chart(ctx1.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-                datasets: [{
-                    label: 'Revenus (DA)',
-                    data: [450000, 320000, 580000, 410000, 670000, 520000],
-                    backgroundColor: 'rgba(67, 97, 238, 0.15)',
-                    borderColor: 'rgba(67, 97, 238, 0.8)',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Revenus',
+                        data: chartRevenues,
+                        backgroundColor: 'rgba(67, 97, 238, 0.75)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: 'Dépenses',
+                        data: chartExpenses,
+                        backgroundColor: 'rgba(239, 71, 111, 0.65)',
+                        borderColor: 'rgba(239, 71, 111, 1)',
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: { display: false }
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Inter', size: 12, weight: 500 }, usePointStyle: true, pointStyle: 'circle', padding: 20 }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleFont: { family: 'Inter', size: 13, weight: 600 },
+                        bodyFont: { family: 'Inter', size: 12 },
+                        padding: 14,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(ctx) { return ctx.dataset.label + ': ' + new Intl.NumberFormat('fr-DZ').format(ctx.parsed.y) + ' DA'; }
+                        }
+                    }
                 },
                 scales: {
                     y: {
@@ -210,16 +301,76 @@ document.addEventListener('DOMContentLoaded', function() {
                         grid: { color: 'rgba(0,0,0,0.04)' },
                         ticks: {
                             font: { family: 'Inter', size: 11 },
-                            callback: function(value) {
-                                return (value / 1000) + 'K DA';
-                            }
+                            callback: function(v) { return (v >= 1000 ? (v/1000)+'K' : v) + ' DA'; }
                         }
                     },
                     x: {
                         grid: { display: false },
-                        ticks: {
-                            font: { family: 'Inter', size: 11, weight: 500 }
+                        ticks: { font: { family: 'Inter', size: 11, weight: 500 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Profit Trend Line Chart
+    const ctx2 = document.getElementById('profitChart');
+    if (ctx2) {
+        new Chart(ctx2.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Profit',
+                    data: chartProfits,
+                    borderColor: '#06d6a0',
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return 'rgba(6, 214, 160, 0.1)';
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, 'rgba(6, 214, 160, 0.25)');
+                        gradient.addColorStop(1, 'rgba(6, 214, 160, 0.02)');
+                        return gradient;
+                    },
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#06d6a0',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 8,
+                    tension: 0.35,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleFont: { family: 'Inter', size: 13, weight: 600 },
+                        bodyFont: { family: 'Inter', size: 12 },
+                        padding: 14,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: function(ctx) { return 'Profit: ' + new Intl.NumberFormat('fr-DZ').format(ctx.parsed.y) + ' DA'; }
                         }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        ticks: {
+                            font: { family: 'Inter', size: 11 },
+                            callback: function(v) { return (v >= 1000 ? (v/1000)+'K' : v) + ' DA'; }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter', size: 11, weight: 500 } }
                     }
                 }
             }
