@@ -143,7 +143,7 @@ def index():
     revenue_month = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (first_day.isoformat(), last_day.isoformat())).fetchone()['s']
 
     upcoming = db.execute(
@@ -159,7 +159,7 @@ def index():
         "SELECT p.*, e.title, c.name as client_name FROM payments p "
         "JOIN events e ON p.event_id=e.id JOIN clients c ON e.client_id=c.id "
         "WHERE p.is_refunded=0 "
-        "ORDER BY p.date DESC LIMIT 5").fetchall()
+        "ORDER BY p.payment_date DESC LIMIT 5").fetchall()
 
     # --- V2 Dashboard Data ---
     # Last month revenue for % change comparison
@@ -174,7 +174,7 @@ def index():
     last_month_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
         (prev_first.isoformat(), prev_last.isoformat())).fetchone()['s']
     
     # This month expenses
@@ -226,7 +226,7 @@ def index():
         m_rev = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
             "JOIN events e ON p.event_id=e.id "
-            "WHERE p.date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
+            "WHERE p.payment_date BETWEEN ? AND ? AND e.status != 'annulé' AND p.is_refunded=0",
             (m_first.isoformat(), m_last.isoformat())).fetchone()['s']
         
         m_exp = db.execute(
@@ -799,7 +799,7 @@ def financials():
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
         "JOIN events e ON p.event_id=e.id "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -855,8 +855,8 @@ def financials():
         "FROM payments p "
         "JOIN events e ON p.event_id = e.id "
         "JOIN clients c ON e.client_id = c.id "
-        "WHERE p.date BETWEEN ? AND ? "
-        "ORDER BY p.date DESC",
+        "WHERE p.payment_date BETWEEN ? AND ? "
+        "ORDER BY p.payment_date DESC",
         (start_date, end_date)
     ).fetchall()
     
@@ -968,7 +968,7 @@ def client_detail(client_id):
         "FROM payments p "
         "JOIN events e ON p.event_id=e.id "
         "WHERE e.client_id=? "
-        "ORDER BY p.date DESC",
+        "ORDER BY p.payment_date DESC",
         (client_id,)).fetchall()
 
     # Detailed financials per event
@@ -1124,7 +1124,7 @@ def accounting():
     # Total income (payments received in period)
     total_income = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -1164,7 +1164,7 @@ def accounting():
         # Income for this month
         month_income = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
+            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
         
@@ -1440,7 +1440,7 @@ def export_payments():
         "FROM payments p "
         "JOIN events e ON p.event_id = e.id "
         "JOIN clients c ON e.client_id = c.id "
-        "ORDER BY p.date DESC"
+        "ORDER BY p.payment_date DESC"
     ).fetchall()
     db.close()
     
@@ -1480,7 +1480,7 @@ def export_finances():
     # Summary stats
     total_revenue = db.execute(
         "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-        "WHERE p.date BETWEEN ? AND ? AND p.is_refunded=0",
+        "WHERE p.payment_date BETWEEN ? AND ? AND p.is_refunded=0",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -1574,7 +1574,7 @@ def export_pl():
         
         month_income = db.execute(
             "SELECT COALESCE(SUM(p.amount),0) as s FROM payments p "
-            "WHERE p.date >= ? AND p.date <= ? AND p.is_refunded=0",
+            "WHERE p.payment_date >= ? AND p.payment_date <= ? AND p.is_refunded=0",
             (month_start, month_end_str)
         ).fetchone()['s']
         

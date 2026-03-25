@@ -120,7 +120,8 @@ def init_db():
                 method TEXT DEFAULT 'Espèces',
                 reference TEXT,
                 notes TEXT,
-                payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_refunded INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS expenses (
                 id SERIAL PRIMARY KEY,
@@ -195,6 +196,7 @@ def init_db():
                 reference TEXT,
                 notes TEXT,
                 payment_date TEXT DEFAULT (datetime('now','localtime')),
+                is_refunded INTEGER DEFAULT 0,
                 FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
             );
             CREATE TABLE IF NOT EXISTS expenses (
