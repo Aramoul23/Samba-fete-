@@ -212,7 +212,7 @@
                             <div class="payment-info">
                                 <strong>{{ p.client_name }}</strong>
                                 <small class="text-muted d-block">{{ p.title }}</small>
-                                <small class="text-muted">{{ p.date[:10] }} · {{ p.method }}</small>
+                                <small class="text-muted">{{ p.payment_date[:10] }} · {{ p.method }}</small>
                             </div>
                             <div class="payment-amount">
                                 <span class="badge-amount">{{ p.amount | format_da }}</span>
