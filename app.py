@@ -41,6 +41,7 @@ def close_db_connection(exception):
     """Close database connection at end of request."""
     db = getattr(g, '_database', None)
     if db is not None:
+        db.close()
 
 def get_db_connection():
     """Get database connection with automatic cleanup."""
