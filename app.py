@@ -134,7 +134,7 @@ def get_event_financials(event_id):
 
 def ensure_default_data():
     """Ensure database has default venues and settings."""
-    db = get_db_connection()
+    db = get_db()
     
     venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()['c']
     
