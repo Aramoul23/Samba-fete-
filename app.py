@@ -637,7 +637,10 @@ def event_detail(event_id):
         try:
             created_at = event['created_at'] if 'created_at' in event.keys() else None
             if created_at:
-                created = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                if isinstance(created_at, str):
+                    created = datetime.strptime(created_at[:19], '%Y-%m-%d %H:%M:%S')
+                else:
+                    created = created_at
                 if (datetime.now() - created) > timedelta(hours=48):
                     needs_confirmation = True
         except (ValueError, TypeError):

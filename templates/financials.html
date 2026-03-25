@@ -196,7 +196,7 @@
                     <tbody>
                         {% for p in payments %}
                         <tr {% if p.is_refunded %}style="opacity: 0.6;"{% endif %}>
-                            <td><strong>{{ p.payment_date[:10] }}</strong></td>
+                            <td><strong>{{ p.payment_date|string[:10] }}</strong></td>
                             <td>
                                 <a href="{{ url_for('event_detail', event_id=p.event_id) }}" class="text-decoration-none">
                                     {{ p.title }}

@@ -111,7 +111,7 @@
                                 <span class="badge-status ms-2" style="background: var(--danger); font-size: 0.65rem;">Remboursé</span>
                                 {% endif %}
                             </div>
-                            <small class="text-muted">{{ p.payment_date[:10] }}</small>
+                            <small class="text-muted">{{ p.payment_date|string[:10] }}</small>
                         </div>
                         <div class="mt-1" style="font-size: 0.8125rem; color: var(--text-secondary);">
                             <span>{{ p.method }}</span>
