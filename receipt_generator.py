@@ -297,7 +297,7 @@ def generate_receipt_html(event, payment, total_paid_before, total_paid_after,
                 <div class="section-title">Détails du Paiement</div>
                 <div class="info-row">
                     <span class="label">Date:</span>
-                    <span class="value">{format_date_fr(payment['date'])}</span>
+                    <span class="value">{format_date_fr(payment['payment_date'])}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Mode:</span>

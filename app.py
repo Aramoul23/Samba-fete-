@@ -51,7 +51,7 @@ def check_pending_events():
     ).fetchall()
     
     db.close()
-    return [ pending_old]
+    return pending_old
 
 def get_event_financials(event_id):
     """Get complete financial data for an event."""
@@ -628,9 +628,13 @@ def refund_payment(event_id, payment_id):
             flash("Ce paiement a déjà été remboursé", "warning")
         else:
             now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Append refund info to notes (cross-db compatible concatenation)
+            existing_notes = payment.get('notes', '') or ''
+            refund_note = f" [REMBOURSÉ: {reason}]" if reason else " [REMBOURSÉ]"
+            new_notes = existing_notes + refund_note
             db.execute(
-                "UPDATE payments SET is_refunded=1, refund_date=?, refund_reason=? WHERE id=?",
-                (now_str, reason, payment_id)
+                "UPDATE payments SET is_refunded=1, notes=? WHERE id=?",
+                (new_notes, payment_id)
             )
             db.commit()
             flash("Paiement marqué comme remboursé", "success")
@@ -815,7 +819,7 @@ def financials():
     # Total refunded
     total_refunded = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE date BETWEEN ? AND ? AND is_refunded=1",
+        "WHERE payment_date BETWEEN ? AND ? AND is_refunded=1",
         (start_date, end_date)
     ).fetchone()['s']
     
@@ -1060,7 +1064,7 @@ def expenses():
     db.close()
     
     return render_template('expenses.html',
-                           expenses=[ expenses],
+                           expenses=expenses,
                            start_date=start_date, end_date=end_date,
                            category_filter=category_filter,
                            categories=EXPENSE_CATEGORIES,
@@ -1068,7 +1072,7 @@ def expenses():
                            expenses_this_month=float(month_expenses),
                            avg_expense=avg_expense,
                            expenses_by_category=expenses_by_category,
-                           recent_events=[ recent_events],
+                           recent_events=recent_events,
                            today_str=date.today().isoformat())
 
 @app.route('/depenses/ajouter', methods=['POST'])
@@ -1266,7 +1270,7 @@ def generate_receipt(event_id, payment_id):
         return redirect(url_for('event_detail', event_id=event_id))
 
     total_paid_before = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND date < ? AND is_refunded=0",
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_date < ? AND is_refunded=0",
         (event_id, payment['payment_date'])).fetchone()['s']
     total_paid_after = total_paid_before + payment['amount']
     remaining = event['total_amount'] - total_paid_after
@@ -1296,12 +1300,9 @@ def settings():
         deposit_min = request.form.get('deposit_min', 20000, type=float)
         hall_name = request.form.get('hall_name', 'Samba Fête')
         currency = request.form.get('currency', 'DA')
-        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                   ('deposit_min', str(deposit_min)))
-        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                   ('hall_name', hall_name))
-        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                   ('currency', currency))
+        set_setting('deposit_min', str(deposit_min))
+        set_setting('hall_name', hall_name)
+        set_setting('currency', currency)
 
         new_name = request.form.get('new_venue_name', '').strip()
         if new_name:

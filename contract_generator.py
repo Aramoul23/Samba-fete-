@@ -82,7 +82,7 @@ def generate_contract_pdf(event, payments, total_paid, event_lines):
     for p in (payments or [])[:8]:
         payment_rows += f"""
         <tr>
-            <td>{p.get('date', '')[:10]}</td>
+            <td>{p.get('payment_date', '')[:10]}</td>
             <td>{format_da(p.get('amount', 0))}</td>
             <td>{p.get('method', '')}</td>
             <td>{p.get('reference') or '—'}</td>

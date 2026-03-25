@@ -119,7 +119,7 @@ def export_payments_ods(payments, export_date):
         if not is_refunded:
             total_amount += amount
         status = 'Rembourse' if is_refunded else 'Valide'
-        rows.append([i, payment.get('date', '')[:10], payment.get('client_name', ''), payment.get('title', ''),
+        rows.append([i, payment.get('payment_date', '')[:10], payment.get('client_name', ''), payment.get('title', ''),
                      amount, payment.get('method', ''), payment.get('payment_type', ''),
                      payment.get('reference', '') or '', status])
     
