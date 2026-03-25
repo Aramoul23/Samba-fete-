@@ -133,7 +133,8 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
                 description TEXT NOT NULL,
-                amount NUMERIC DEFAULT 0
+                amount NUMERIC DEFAULT 0,
+                is_cost INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS payments (
                 id SERIAL PRIMARY KEY,
@@ -208,6 +209,7 @@ def init_db():
                 event_id INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 amount REAL DEFAULT 0,
+                is_cost INTEGER DEFAULT 0,
                 FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
             );
             CREATE TABLE IF NOT EXISTS payments (
