@@ -1267,10 +1267,10 @@ def generate_receipt(event_id, payment_id):
 
     total_paid_before = db.execute(
         "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND date < ? AND is_refunded=0",
-        (event_id, payment['date'])).fetchone()['s']
+        (event_id, payment['payment_date'])).fetchone()['s']
     total_paid_after = total_paid_before + payment['amount']
     remaining = event['total_amount'] - total_paid_after
-    receipt_no = f"{payment['date'][:4]}-{payment_id:04d}"
+    receipt_no = f"{payment['payment_date'][:4]}-{payment_id:04d}"
 
     db.close()
 
