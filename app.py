@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 
 # ─── Helpers ────────────────────────────────────────────────────────
-TIME_SLOTS = ['Après-midi', 'Soirée', 'Nuit']
+TIME_SLOTS = ['Déjeuner', 'Après-midi', 'Dîner']
 EVENT_TYPES = ['Mariage', 'Fiançailles', 'Anniversaire', 'Conférence', 'Autre']
 EVENT_STATUSES = ['en attente', 'confirmé', 'changé de date', 'terminé', 'annulé']
 PAYMENT_METHODS = ['espèces', 'chèque', 'virement', 'carte']

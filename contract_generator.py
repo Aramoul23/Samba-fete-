@@ -1,26 +1,11 @@
 """
-Generate a professional venue rental contract PDF (French) for Samba Fête.
-Uses ReportLab with Helvetica (no Arabic needed).
+Generate a beautiful print-ready contract PDF (French) for Samba Fête.
+Uses WeasyPrint with HTML/CSS for elegant, modern design.
 """
 
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm, cm
-from reportlab.lib.colors import HexColor
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_RIGHT, TA_LEFT
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, KeepTogether
-)
-from reportlab.lib import colors
+from weasyprint import HTML
 from io import BytesIO
 from datetime import datetime
-
-# Colors
-GOLD = HexColor('#C9A84C')
-DARK_NAVY = HexColor('#1B2A4A')
-LIGHT_GRAY = HexColor('#F5F5F5')
-MED_GRAY = HexColor('#E0E0E0')
 
 COMPANY_NAME = "Samba Fête"
 COMPANY_ADDRESS = "102 ZAM, Nouvelle Ville, Constantine"
@@ -28,11 +13,23 @@ COMPANY_TEL = "0550 50 37 67"
 COMPANY_RC = "034275305A"
 COMPANY_NIF = "1635"
 
-# French month names
 MONTHS_FR = {
     1: 'janvier', 2: 'février', 3: 'mars', 4: 'avril',
     5: 'mai', 6: 'juin', 7: 'juillet', 8: 'août',
     9: 'septembre', 10: 'octobre', 11: 'novembre', 12: 'décembre'
+}
+
+# Time slots for events
+TIME_SLOTS = {
+    'déjeuner': '10h00 — 18h00',
+    'dejeuner': '10h00 — 18h00',
+    'après-midi': '12h00 — 18h00',
+    'apremidi': '12h00 — 18h00',
+    'après midi': '12h00 — 18h00',
+    'dîner': '12h00 — 00h00',
+    'diner': '12h00 — 00h00',
+    'nuit': '18h00 — 06h00',
+    'nuit complète': '18h00 — 06h00',
 }
 
 
@@ -44,7 +41,6 @@ def format_da(amount):
 
 
 def format_date_fr(date_str):
-    """Convert YYYY-MM-DD to French date string."""
     try:
         if isinstance(date_str, str):
             d = datetime.strptime(date_str[:10], '%Y-%m-%d')
@@ -55,393 +51,454 @@ def format_date_fr(date_str):
         return str(date_str)
 
 
-def get_styles():
-    styles = getSampleStyleSheet()
-
-    styles.add(ParagraphStyle(
-        'ContractTitle', parent=styles['Title'],
-        fontSize=18, textColor=DARK_NAVY, alignment=TA_CENTER,
-        spaceAfter=2*mm, fontName='Helvetica-Bold'
-    ))
-    styles.add(ParagraphStyle(
-        'ContractSubtitle', parent=styles['Normal'],
-        fontSize=11, textColor=GOLD, alignment=TA_CENTER,
-        spaceAfter=6*mm, fontName='Helvetica-BoldOblique'
-    ))
-    styles.add(ParagraphStyle(
-        'ClauseTitle', parent=styles['Normal'],
-        fontSize=11, textColor=colors.white,
-        fontName='Helvetica-Bold', spaceAfter=0,
-        spaceBefore=4*mm, leftIndent=0, rightIndent=0,
-        backColor=DARK_NAVY, borderPadding=(2*mm, 3*mm, 2*mm, 3*mm)
-    ))
-    styles.add(ParagraphStyle(
-        'ClauseText', parent=styles['Normal'],
-        fontSize=9.5, leading=14, alignment=TA_JUSTIFY,
-        fontName='Helvetica', spaceAfter=2*mm
-    ))
-    styles.add(ParagraphStyle(
-        'InfoLabel', parent=styles['Normal'],
-        fontSize=9, textColor=HexColor('#666666'), fontName='Helvetica'
-    ))
-    styles.add(ParagraphStyle(
-        'InfoValue', parent=styles['Normal'],
-        fontSize=10, textColor=DARK_NAVY, fontName='Helvetica-Bold'
-    ))
-    styles.add(ParagraphStyle(
-        'SmallCenter', parent=styles['Normal'],
-        fontSize=8, textColor=HexColor('#999999'), alignment=TA_CENTER,
-        fontName='Helvetica'
-    ))
-    styles.add(ParagraphStyle(
-        'SignatureLabel', parent=styles['Normal'],
-        fontSize=9, alignment=TA_CENTER, fontName='Helvetica',
-        spaceBefore=2*mm
-    ))
-    return styles
+def get_time_slot_display(slot_input):
+    """Convert slot input to display format."""
+    if not slot_input:
+        return 'N/A'
+    slot_lower = slot_input.lower().strip()
+    for key, value in TIME_SLOTS.items():
+        if key in slot_lower:
+            return value
+    return slot_input
 
 
 def generate_contract_pdf(event, payments, total_paid, event_lines):
-    """Generate a French contract PDF for the given event."""
-    buf = BytesIO()
-    doc = SimpleDocTemplate(
-        buf, pagesize=A4,
-        topMargin=15*mm, bottomMargin=15*mm,
-        leftMargin=18*mm, rightMargin=18*mm,
-        title=f"Contrat - {event.get('title', 'Evenement')}",
-        author="Samba Fête"
-    )
-    styles = get_styles()
-    story = []
-
-    # ─── HEADER ─────────────────────────────────────────────────────
-    story.append(Paragraph("SAMBA FÊTE", styles['ContractTitle']))
-    story.append(Paragraph(
-        "CONTRAT DE LOCATION DE SALLE ET PRESTATION DE SERVICES",
-        styles['ContractSubtitle']
-    ))
-
-    # Company info bar
-    company_data = [[
-        Paragraph(f"<b>{COMPANY_NAME}</b>", styles['ClauseText']),
-        Paragraph(f"{COMPANY_ADDRESS}", styles['ClauseText']),
-        Paragraph(f"Tél : {COMPANY_TEL}<br/>RC : {COMPANY_RC} · NIF : {COMPANY_NIF}", styles['ClauseText']),
-    ]]
-    company_table = Table(company_data, colWidths=[55*mm, 70*mm, 50*mm])
-    company_table.setStyle(TableStyle([
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,-1), LIGHT_GRAY),
-        ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('TOPPADDING', (0,0), (-1,-1), 2*mm),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2*mm),
-    ]))
-    story.append(company_table)
-    story.append(Spacer(1, 4*mm))
-
-    # Contract reference
-    story.append(Paragraph(
-        f"<b>N° Contrat :</b> SF-{event.get('id', '000'):04d} &nbsp;&nbsp;&nbsp; "
-        f"<b>Date :</b> {format_date_fr(datetime.now().date())}",
-        styles['ClauseText']
-    ))
-    story.append(Spacer(1, 2*mm))
-
-    # Divider
-    story.append(HRFlowable(width="100%", thickness=1, color=GOLD, spaceAfter=4*mm))
-
-    # ─── PARTIES ────────────────────────────────────────────────────
-    story.append(Paragraph("<b>ENTRE LES SOUSSIGNÉS :</b>", styles['ClauseText']))
-    story.append(Spacer(1, 2*mm))
-
-    parties_data = [
-        [
-            Paragraph("<b>Le Prestataire :</b>", styles['ClauseText']),
-            Paragraph("<b>Le Client :</b>", styles['ClauseText']),
-        ],
-        [
-            Paragraph(
-                f"<b>{COMPANY_NAME}</b><br/>"
-                f"{COMPANY_ADDRESS}<br/>"
-                f"Tél : {COMPANY_TEL}<br/>"
-                f"RC : {COMPANY_RC} · NIF : {COMPANY_NIF}<br/>"
-                f"<i>Ci-après dénommé « le Prestataire »</i>",
-                styles['ClauseText']
-            ),
-            Paragraph(
-                f"<b>{event.get('client_name', 'N/A')}</b><br/>"
-                f"Tél : {event.get('phone', 'N/A')}"
-                + (f"<br/>Tél 2 : {event['phone2']}" if event.get('phone2') else "")
-                + (f"<br/>Email : {event.get('email', '')}" if event.get('email') else "")
-                + (f"<br/>Adresse : {event.get('address', '')}" if event.get('address') else "")
-                + f"<br/><i>Ci-après dénommé « le Client »</i>",
-                styles['ClauseText']
-            ),
-        ],
-    ]
-    parties_table = Table(parties_data, colWidths=[87*mm, 87*mm])
-    parties_table.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('BACKGROUND', (0,0), (0,-1), LIGHT_GRAY),
-        ('BACKGROUND', (1,0), (1,-1), LIGHT_GRAY),
-        ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('TOPPADDING', (0,0), (-1,-1), 2*mm),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2*mm),
-        ('LEFTPADDING', (0,0), (-1,-1), 3*mm),
-        ('RIGHTPADDING', (0,0), (-1,-1), 3*mm),
-    ]))
-    story.append(parties_table)
-    story.append(Spacer(1, 2*mm))
-    story.append(HRFlowable(width="100%", thickness=1, color=GOLD, spaceAfter=4*mm))
-
-    # ─── CLAUSES ────────────────────────────────────────────────────
-
-    # Clause 1 — OBJET
-    story.append(Paragraph("Clause 1 — OBJET", styles['ClauseTitle']))
-    story.append(Paragraph(
-        "Le présent contrat a pour objet la location de la salle <b>Samba Fête</b> ainsi que "
-        "la fourniture de services liés à l'événement décrit ci-dessous. Le Client s'engage à "
-        "respecter les termes et conditions stipulés dans le présent contrat. Toute prestation "
-        "non mentionnée dans ce contrat fera l'objet d'un avenant signé par les deux parties.",
-        styles['ClauseText']
-    ))
-
-    # Clause 2 — DESCRIPTION DE L'ÉVÉNEMENT
-    story.append(Paragraph("Clause 2 — DESCRIPTION DE L'ÉVÉNEMENT", styles['ClauseTitle']))
-    event_desc = [
-        ["Type d'événement", event.get('event_type', 'N/A')],
-        ["Titre / Intitulé", event.get('title', 'N/A')],
-        ["Date de l'événement", format_date_fr(event.get('event_date', ''))],
-        ["Créneau horaire", event.get('time_slot', 'N/A')],
-        ["Salle / Lieu", event.get('venue_name', 'N/A') + (" + " + event.get('venue2_name', '') if event.get('venue2_name') else "")],
-        ["Nombre d'invités (Hommes)", str(event.get('guests_men', 0))],
-        ["Nombre d'invités (Femmes)", str(event.get('guests_women', 0))],
-        ["Total invités", str(event.get('guests_men', 0) + event.get('guests_women', 0))],
-    ]
-    desc_data = [[
-        Paragraph(f"<b>{r[0]}</b>", styles['ClauseText']),
-        Paragraph(r[1], styles['ClauseText'])
-    ] for r in event_desc]
-    desc_table = Table(desc_data, colWidths=[60*mm, 114*mm])
-    desc_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (0,-1), LIGHT_GRAY),
-        ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 1.5*mm),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.5*mm),
-        ('LEFTPADDING', (0,0), (-1,-1), 2*mm),
-    ]))
-    story.append(desc_table)
-    story.append(Spacer(1, 2*mm))
-
-    # Services / line items
-    if event_lines:
-        story.append(Paragraph("<b>Prestations incluses :</b>", styles['ClauseText']))
-        svc_header = [
-            Paragraph("<b>Désignation</b>", styles['ClauseText']),
-            Paragraph("<b>Montant</b>", styles['ClauseText']),
-            Paragraph("<b>Type</b>", styles['ClauseText']),
-        ]
-        svc_rows = [svc_header]
-        for line in event_lines:
-            svc_rows.append([
-                Paragraph(line.get('description', ''), styles['ClauseText']),
-                Paragraph(format_da(line.get('amount', 0)), styles['ClauseText']),
-                Paragraph("Coût" if line.get('is_cost') else "Revenu", styles['ClauseText']),
-            ])
-        svc_table = Table(svc_rows, colWidths=[100*mm, 45*mm, 29*mm])
-        svc_table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), DARK_NAVY),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-            ('INNERGRID', (0,0), (-1,-1), 0.5, MED_GRAY),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('TOPPADDING', (0,0), (-1,-1), 1.5*mm),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 1.5*mm),
-            ('LEFTPADDING', (0,0), (-1,-1), 2*mm),
-        ]))
-        story.append(svc_table)
-        story.append(Spacer(1, 2*mm))
-
-    # Clause 3 — CONDITIONS FINANCIÈRES
-    story.append(Paragraph("Clause 3 — CONDITIONS FINANCIÈRES", styles['ClauseTitle']))
+    """Generate a beautiful French contract PDF using WeasyPrint."""
+    
     remaining = event.get('total_amount', 0) - total_paid
+    contract_num = event.get('id', '000')
+    if isinstance(contract_num, int):
+        contract_num = f"{contract_num:04d}"
+    
+    time_display = get_time_slot_display(event.get('time_slot', ''))
+    venue = event.get('venue_name', 'N/A')
+    if event.get('venue2_name'):
+        venue += f" + {event['venue2_name']}"
+    
+    total_guests = event.get('guests_men', 0) + event.get('guests_women', 0)
+    
+    # Build payment history rows
+    payment_rows = ""
+    for p in (payments or [])[:8]:
+        payment_rows += f"""
+        <tr>
+            <td>{p.get('date', '')[:10]}</td>
+            <td>{format_da(p.get('amount', 0))}</td>
+            <td>{p.get('method', '')}</td>
+            <td>{p.get('reference') or '—'}</td>
+        </tr>"""
+    
+    # Build services rows
+    services_rows = ""
+    for line in (event_lines or []):
+        services_rows += f"""
+        <tr>
+            <td>{line.get('description', '')}</td>
+            <td>{format_da(line.get('amount', 0))}</td>
+        </tr>"""
+    
+    if not services_rows:
+        services_rows = """
+        <tr>
+            <td>Location de la salle</td>
+            <td>{}</td>
+        </tr>
+        <tr>
+            <td>Services inclus</td>
+            <td>—</td>
+        </tr>""".format(format_da(event.get('total_amount', 0)))
+    
+    # Phone info
+    phone_info = f"Tél: {event.get('phone', 'N/A')}"
+    if event.get('phone2'):
+        phone_info += f" / {event['phone2']}"
+    if event.get('email'):
+        phone_info += f"<br>Email: {event['email']}"
+    if event.get('address'):
+        phone_info += f"<br>Adresse: {event['address']}"
 
-    fin_data = [
-        [Paragraph("<b>Montant total des prestations</b>", styles['ClauseText']),
-         Paragraph(f"<b>{format_da(event.get('total_amount', 0))}</b>", styles['ClauseText'])],
-        [Paragraph("<b>Acompte requis</b>", styles['ClauseText']),
-         Paragraph(format_da(event.get('deposit_required', 0)), styles['ClauseText'])],
-        [Paragraph("<b>Montant total payé à ce jour</b>", styles['ClauseText']),
-         Paragraph(f"<font color='green'><b>{format_da(total_paid)}</b></font>", styles['ClauseText'])],
-        [Paragraph("<b>Reste à payer</b>", styles['ClauseText']),
-         Paragraph(
-             f"<font color='red'><b>{format_da(remaining)}</b></font>" if remaining > 0
-             else f"<font color='green'><b>Soldé</b></font>",
-             styles['ClauseText']
-         )],
-    ]
-    fin_table = Table(fin_data, colWidths=[100*mm, 74*mm])
-    fin_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (0,-1), LIGHT_GRAY),
-        ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, MED_GRAY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2*mm),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2*mm),
-        ('LEFTPADDING', (0,0), (-1,-1), 2*mm),
-        ('LINEBELOW', (0,-1), (-1,-1), 1.5, DARK_NAVY),
-    ]))
-    story.append(fin_table)
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {{
+    size: A4;
+    margin: 12mm 16mm 10mm 16mm;
+}}
 
-    # Payment history
-    if payments:
-        story.append(Spacer(1, 3*mm))
-        story.append(Paragraph("<b>Historique des paiements :</b>", styles['ClauseText']))
-        pay_header = [
-            Paragraph("<b>Date</b>", styles['ClauseText']),
-            Paragraph("<b>Montant</b>", styles['ClauseText']),
-            Paragraph("<b>Méthode</b>", styles['ClauseText']),
-            Paragraph("<b>Référence</b>", styles['ClauseText']),
-        ]
-        pay_rows = [pay_header]
-        for p in payments[:8]:
-            pay_rows.append([
-                Paragraph(p.get('date', '')[:10], styles['ClauseText']),
-                Paragraph(format_da(p.get('amount', 0)), styles['ClauseText']),
-                Paragraph(p.get('method', ''), styles['ClauseText']),
-                Paragraph(p.get('reference') or '—', styles['ClauseText']),
-            ])
-        pay_table = Table(pay_rows, colWidths=[40*mm, 40*mm, 47*mm, 47*mm])
-        pay_table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), HexColor('#2C3E6B')),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('BOX', (0,0), (-1,-1), 0.5, MED_GRAY),
-            ('INNERGRID', (0,0), (-1,-1), 0.3, MED_GRAY),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('TOPPADDING', (0,0), (-1,-1), 1.5*mm),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 1.5*mm),
-            ('LEFTPADDING', (0,0), (-1,-1), 2*mm),
-            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, LIGHT_GRAY]),
-        ]))
-        story.append(pay_table)
-    story.append(Spacer(1, 2*mm))
+* {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
-    # Clause 4 — CAUTION
-    story.append(Paragraph("Clause 4 — CAUTION", styles['ClauseTitle']))
-    story.append(Paragraph(
-        f"Le Client verse une caution de <b>{format_da(event.get('deposit_required', 0))}</b> "
-        "à la signature du présent contrat. Cette caution sera restituée intégralement au Client "
-        "dans un délai de <b>48 heures</b> suivant la fin de l'événement, sous réserve de l'état "
-        "des locaux. En cas de dégradation constatée, le Prestataire se réserve le droit de "
-        "retenir tout ou partie de la caution pour couvrir les frais de remise en état.",
-        styles['ClauseText']
-    ))
+body {{
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 6.5pt;
+    color: #1a1a1a;
+    line-height: 1.2;
+}}
 
-    # Clause 5 — OBLIGATIONS DU CLIENT
-    story.append(Paragraph("Clause 5 — OBLIGATIONS DU CLIENT", styles['ClauseTitle']))
-    story.append(Paragraph(
-        "Le Client s'engage à :<br/>"
-        "• Respecter le règlement intérieur de la salle et les horaires convenus ;<br/>"
-        "• Assurer la propreté des locaux et rendre la salle dans l'état où elle a été reçue ;<br/>"
-        "• Ne pas dépasser la capacité d'accueil de la salle ;<br/>"
-        "• Ne pas introduire de substances illicites ni engager de comportements dangereux ;<br/>"
-        "• Régler l'intégralité du montant avant la date de l'événement ;<br/>"
-        "• Signaler toute anomalie ou dommage constaté avant le début de l'événement.",
-        styles['ClauseText']
-    ))
+.header {{
+    text-align: center;
+    padding-bottom: 4pt;
+    border-bottom: 2pt solid #2d5a7b;
+    margin-bottom: 2pt;
+}}
 
-    # Clause 6 — OBLIGATIONS DU LOCATEUR
-    story.append(Paragraph("Clause 6 — OBLIGATIONS DU LOCATEUR", styles['ClauseTitle']))
-    story.append(Paragraph(
-        "Le Prestataire s'engage à :<br/>"
-        "• Mettre à disposition la salle en bon état et dans les conditions convenues ;<br/>"
-        "• Assurer le nettoyage des locaux avant et après l'événement ;<br/>"
-        "• Fournir les équipements et services mentionnés dans le présent contrat ;<br/>"
-        "• Garantir la sécurité des personnes et des biens pendant la durée de l'événement ;<br/>"
-        "• Informer le Client de toute modification pouvant affecter le déroulement de l'événement.",
-        styles['ClauseText']
-    ))
+.header h1 {{
+    font-size: 18pt;
+    font-weight: 400;
+    color: #2d5a7b;
+    letter-spacing: 3pt;
+    margin-bottom: 1pt;
+}}
 
-    # Clause 7 — ANNULATION
-    story.append(Paragraph("Clause 7 — ANNULATION", styles['ClauseTitle']))
-    story.append(Paragraph(
-        "<b>Annulation par le Client :</b> En cas d'annulation par le Client, l'acompte versé ne "
-        "sera pas remboursé. Si le solde a été réglé intégralement, le Prestataire retiendra "
-        "l'acompte et remboursera le surplus dans un délai de 30 jours.<br/><br/>"
-        "<b>Annulation par le Prestataire :</b> En cas d'annulation imputable au Prestataire, "
-        "l'intégralité des sommes versées sera remboursée au Client dans un délai de 15 jours. "
-        "Le Prestataire se engage à proposer, dans la mesure du possible, une date de remplacement.<br/><br/>"
-        "<b>Force majeure :</b> En cas de force majeure (catastrophe naturelle, pandémie, décision "
-        "gouvernementale), les deux parties conviennent d'un report de l'événement sans frais supplémentaires.",
-        styles['ClauseText']
-    ))
+.header .tagline {{
+    font-size: 6.5pt;
+    color: #555;
+    letter-spacing: 1.5pt;
+    text-transform: uppercase;
+}}
 
-    # Clause 8 — RÈGLEMENT INTÉRIEUR
-    story.append(Paragraph("Clause 8 — RÈGLEMENT INTÉRIEUR", styles['ClauseTitle']))
-    story.append(Paragraph(
-        "Le Client et ses invités devront se conformer aux règles suivantes :<br/>"
-        "• L'accès à la salle est strictement réservé aux personnes conviées ;<br/>"
-        "• La musique devra être modérée après 23h00 et arrêtée à 00h00 ;<br/>"
-        "• Le stationnement est autorisé uniquement dans les espaces désignés ;<br/>"
-        "• Il est formellement interdit de fumer dans les salles closes ;<br/>"
-        "• Tout objet oublié sera conservé pendant une durée maximale de 30 jours ;<br/>"
-        "• Le non-respect du règlement intérieur pourra entraîner la résiliation immédiate du contrat.",
-        styles['ClauseText']
-    ))
+.header .contact {{
+    font-size: 6.5pt;
+    color: #666;
+    margin-top: 3pt;
+}}
 
-    story.append(Spacer(1, 6*mm))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=MED_GRAY, spaceAfter=4*mm))
+.info-bar {{
+    display: flex;
+    justify-content: space-around;
+    background: #f5f5f5;
+    padding: 5pt 10pt;
+    border: 1pt solid #ccc;
+    margin-bottom: 2pt;
+}}
 
-    # ─── SIGNATURES ─────────────────────────────────────────────────
-    story.append(Paragraph(
-        "<b>Fait en deux (2) exemplaires originaux, à Constantine, le "
-        f"{format_date_fr(datetime.now().date())}</b>",
-        ParagraphStyle('PreSig', parent=styles['ClauseText'], alignment=TA_CENTER, spaceBefore=3*mm)
-    ))
-    story.append(Spacer(1, 12*mm))
+.info-bar .item {{ text-align: center; }}
+.info-bar .label {{ font-size: 6pt; color: #666; text-transform: uppercase; }}
+.info-bar .value {{ font-size: 8pt; font-weight: 600; color: #2d5a7b; }}
 
-    sig_data = [[
-        Paragraph("<b>Le Prestataire</b>", styles['SignatureLabel']),
-        Paragraph("<b>Le Client</b>", styles['SignatureLabel']),
-    ], [
-        Paragraph("<br/><br/><br/><br/>", styles['ClauseText']),
-        Paragraph("<br/><br/><br/><br/>", styles['ClauseText']),
-    ], [
-        Paragraph("Samba Fête", styles['SignatureLabel']),
-        Paragraph(event.get('client_name', ''), styles['SignatureLabel']),
-    ], [
-        Paragraph(COMPANY_ADDRESS, styles['SignatureLabel']),
-        Paragraph(event.get('phone', ''), styles['SignatureLabel']),
-    ]]
-    sig_table = Table(sig_data, colWidths=[87*mm, 87*mm])
-    sig_table.setStyle(TableStyle([
-        ('ALIGN', (0,0), (0,-1), 'RIGHT'),
-        ('ALIGN', (1,0), (1,-1), 'LEFT'),
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('LEFTPADDING', (0,0), (-1,-1), 2*mm),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2*mm),
-    ]))
-    story.append(sig_table)
+.parties {{
+    display: flex;
+    gap: 3pt;
+    margin-bottom: 2pt;
+}}
 
-    # Footer
-    story.append(Spacer(1, 10*mm))
-    story.append(HRFlowable(width="100%", thickness=1, color=GOLD, spaceAfter=2*mm))
-    story.append(Paragraph(
-        f"{COMPANY_NAME} · {COMPANY_ADDRESS} · Tél : {COMPANY_TEL} · RC : {COMPANY_RC} · NIF : {COMPANY_NIF}",
-        styles['SmallCenter']
-    ))
-    story.append(Paragraph(
-        "Ce contrat est régi par le droit algérien. Tout litige sera soumis aux tribunaux compétents de Constantine.",
-        styles['SmallCenter']
-    ))
+.party {{
+    flex: 1;
+    border: 1pt solid #999;
+    padding: 4pt 6pt;
+    border-left: 3pt solid #2d5a7b;
+}}
 
-    # Build
-    doc.build(story)
-    pdf_bytes = buf.getvalue()
-    buf.close()
+.party.client {{ border-left-color: #5a8a6a; }}
+
+.party .label {{ font-size: 6pt; color: #666; text-transform: uppercase; letter-spacing: 1pt; }}
+.party .name {{ font-size: 8pt; font-weight: 600; color: #1a1a1a; margin: 2pt 0; }}
+.party .details {{ font-size: 6.5pt; color: #444; line-height: 1.3; }}
+
+.clause {{ margin-bottom: 2pt; }}
+
+.clause-head {{
+    display: flex;
+    align-items: center;
+    gap: 3pt;
+    margin-bottom: 2pt;
+}}
+
+.clause-num {{
+    background: #2d5a7b;
+    color: white;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    font-size: 6.5pt;
+    font-weight: 600;
+}}
+
+.clause-title {{
+    font-size: 8pt;
+    font-weight: 600;
+    color: #1a1a1a;
+}}
+
+.clause p {{
+    font-size: 6.5pt;
+    color: #333;
+    text-align: justify;
+    line-height: 1.25;
+}}
+
+table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2pt 0;
+}}
+
+th {{
+    background: #e8e8e8;
+    color: #1a1a1a;
+    padding: 4pt 8pt;
+    text-align: left;
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1pt solid #999;
+}}
+
+th:last-child {{ text-align: right; }}
+
+td {{
+    padding: 4pt 8pt;
+    font-size: 6.5pt;
+    color: #1a1a1a;
+    border: 1pt solid #ccc;
+    background: white;
+}}
+
+td:last-child {{ text-align: right; font-weight: 500; }}
+
+.total-row td {{
+    background: #f0f0f0;
+    font-weight: 700;
+    border-top: 2pt solid #2d5a7b;
+}}
+
+.payments {{
+    display: flex;
+    gap: 3pt;
+    margin: 3pt 0;
+}}
+
+.pay-box {{
+    flex: 1;
+    border: 1pt solid #999;
+    padding: 3pt;
+    text-align: center;
+    background: white;
+}}
+
+.pay-box.paid {{ border: 1pt solid #5a8a6a; background: #f5faf7; }}
+.pay-box.due {{ border: 1pt solid #c97b5d; background: #fdf8f5; }}
+
+.pay-box .pay-label {{ font-size: 6pt; color: #666; text-transform: uppercase; margin-bottom: 2pt; }}
+.pay-box .pay-amount {{ font-size: 8pt; font-weight: 700; color: #1a1a1a; }}
+.pay-box .pay-status {{ font-size: 6pt; margin-top: 1pt; }}
+.pay-box.paid .pay-status {{ color: #5a8a6a; }}
+.pay-box.due .pay-status {{ color: #c97b5d; }}
+
+.obligations {{
+    display: flex;
+    gap: 5pt;
+    margin: 3pt 0;
+}}
+
+.obligation {{
+    flex: 1;
+    border: 1pt solid #ccc;
+    padding: 4pt 6pt;
+}}
+
+.obligation h4 {{
+    font-size: 6.5pt;
+    color: #2d5a7b;
+    text-transform: uppercase;
+    margin-bottom: 2pt;
+    font-weight: 600;
+}}
+
+.obligation ul {{ list-style: none; }}
+.obligation li {{
+    font-size: 6.5pt;
+    color: #333;
+    padding: 1pt 0 1pt 10pt;
+    position: relative;
+}}
+.obligation li::before {{
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #2d5a7b;
+    font-weight: bold;
+}}
+
+.signatures {{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4pt;
+    padding-top: 4pt;
+    border-top: 1pt solid #999;
+}}
+
+.sig {{
+    width: 45%;
+    text-align: center;
+}}
+
+.sig .sig-label {{
+    font-size: 6.5pt;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 18pt;
+}}
+
+.sig .sig-name {{ font-size: 8pt; font-weight: 600; color: #1a1a1a; }}
+.sig .sig-line {{ border-top: 1pt solid #333; width: 80%; margin: 5pt auto 3pt; }}
+.sig .sig-detail {{ font-size: 6pt; color: #666; }}
+
+.footer {{
+    margin-top: 4pt;
+    padding-top: 4pt;
+    border-top: 1pt solid #ccc;
+    text-align: center;
+    font-size: 6pt;
+    color: #888;
+}}
+
+.no-refund {{
+    background: #fff8f5;
+    border: 1pt solid #e5c9b8;
+    padding: 4pt 8pt;
+    margin: 2pt 0;
+    font-size: 6.5pt;
+    color: #8b4513;
+}}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>SAMBA FÊTE</h1>
+    <div class="tagline">Location de Salle & Prestation de Services</div>
+    <div class="contact">{COMPANY_ADDRESS} — Tél: {COMPANY_TEL} — RC: {COMPANY_RC} — NIF: {COMPANY_NIF}</div>
+</div>
+
+<div class="info-bar">
+    <div class="item"><div class="label">Contrat N°</div><div class="value">SF-{contract_num}</div></div>
+    <div class="item"><div class="label">Date</div><div class="value">{format_date_fr(datetime.now().date())}</div></div>
+    <div class="item"><div class="label">Événement</div><div class="value">{format_date_fr(event.get('event_date', ''))}</div></div>
+    <div class="item"><div class="label">Type</div><div class="value">{event.get('event_type', 'N/A')}</div></div>
+</div>
+
+<div class="parties">
+    <div class="party">
+        <div class="label">Le Prestataire</div>
+        <div class="name">{COMPANY_NAME}</div>
+        <div class="details">{COMPANY_ADDRESS}<br>Tél: {COMPANY_TEL}<br>RC: {COMPANY_RC} — NIF: {COMPANY_NIF}</div>
+    </div>
+    <div class="party client">
+        <div class="label">Le Client</div>
+        <div class="name">{event.get('client_name', 'N/A')}</div>
+        <div class="details">{phone_info}</div>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">01</span><span class="clause-title">Objet du Contrat</span></div>
+    <p>Le présent contrat a pour objet la location de la salle <b>Samba Fête</b> et la fourniture de services liés à l'événement décrit ci-après. Le Client s'engage à respecter l'ensemble des termes et conditions stipulés dans le présent contrat. Toute prestation non mentionnée fera l'objet d'un avenant signé par les deux parties.</p>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">02</span><span class="clause-title">Description de l'Événement</span></div>
+    <table>
+        <tr><th style="width:22%">Type</th><td>{event.get('event_type', 'N/A')}</td><th style="width:15%">Date</th><td>{format_date_fr(event.get('event_date', ''))}</td></tr>
+        <tr><th>Intitulé</th><td colspan="3">{event.get('title', 'N/A')}</td></tr>
+        <tr><th>Créneau horaire</th><td>{time_display}</td><th>Salles</th><td>{venue}</td></tr>
+        <tr><th>Invités (Hommes)</th><td>{event.get('guests_men', 0)}</td><th>Invités (Femmes)</th><td>{event.get('guests_women', 0)}</td></tr>
+        <tr><th><strong>Total</strong></th><td colspan="3"><strong>{total_guests} personnes</strong></td></tr>
+    </table>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">03</span><span class="clause-title">Prestations & Tarifs</span></div>
+    <table>
+        <thead><tr><th style="width:65%">Prestation</th><th style="width:35%">Montant</th></tr></thead>
+        <tbody>
+            {services_rows}
+            <tr class="total-row"><td><strong>MONTANT TOTAL</strong></td><td><strong>{format_da(event.get('total_amount', 0))}</strong></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">04</span><span class="clause-title">Conditions Financières</span></div>
+    <div class="payments">
+        <div class="pay-box"><div class="pay-label">Total</div><div class="pay-amount">{format_da(event.get('total_amount', 0)).replace(' DA', '')}</div><div class="pay-status">DA</div></div>
+        <div class="pay-box paid"><div class="pay-label">Acompte versé</div><div class="pay-amount">{format_da(total_paid).replace(' DA', '')}</div><div class="pay-status">✓ Payé</div></div>
+        <div class="pay-box {"due" if remaining > 0 else ""}"><div class="pay-label">Reste à payer</div><div class="pay-amount">{format_da(remaining).replace(' DA', '')}</div><div class="pay-status">{"Avant l'événement" if remaining > 0 else "✓ Soldé"}</div></div>
+        <div class="pay-box"><div class="pay-label">Caution</div><div class="pay-amount">{format_da(event.get('deposit_required', 0)).replace(' DA', '')}</div><div class="pay-status">À restituer</div></div>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">05</span><span class="clause-title">Caution & Restitution</span></div>
+    <p>Le Client verse une caution de <b>{format_da(event.get('deposit_required', 0))}</b> à la signature. Cette caution sera restituée sous <b>48 heures</b> après l'événement, sous réserve de l'état des locaux. En cas de dégradation, le Prestataire se réserve le droit de retenir tout ou partie de la caution.</p>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">06</span><span class="clause-title">Obligations du Client</span></div>
+    <div class="obligations">
+        <div class="obligation">
+            <h4>Responsabilités</h4>
+            <ul>
+                <li>Respecter le règlement intérieur</li>
+                <li>Assurer la propreté des locaux</li>
+                <li>Ne pas dépasser la capacité d'accueil</li>
+                <li>Signaler toute anomalie avant le début</li>
+            </ul>
+        </div>
+        <div class="obligation">
+            <h4>Interdictions</h4>
+            <ul>
+                <li>Aucune substance illicite</li>
+                <li>Comportements dangereux</li>
+                <li>Accès réservé aux invités</li>
+                <li>Non-respect = résiliation immédiate</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-head"><span class="clause-num">07</span><span class="clause-title">Obligations du Prestataire</span></div>
+    <p>Fournir la salle en bon état, nettoyage avant et après, tous les équipements mentionnés, garantir la sécurité des personnes et des biens, informer de tout changement affectant l'événement.</p>
+</div>
+
+<div class="no-refund">
+    <strong>⚠ ARTICLE 8 — ANNULATION & REMBOURSEMENT</strong><br>
+    En aucun cas, le Prestataire ne procédera au remboursement des sommes versées, quelle que soit la raison de l'annulation. L'acompte et toutes les sommes perçues sont définitivement acquis au Prestataire. Le Client peut modifier la date de l'événement sous réserve de disponibilité, sans frais supplémentaires, pourvu que la demande soit faite au moins 15 jours avant la date initiale.
+</div>
+
+<div class="signatures">
+    <div class="sig">
+        <div class="sig-label">Le Prestataire</div>
+        <div class="sig-name">{COMPANY_NAME}</div>
+        <div class="sig-line"></div>
+        <div class="sig-detail">Cachet de l'entreprise</div>
+    </div>
+    <div class="sig">
+        <div class="sig-label">Le Client</div>
+        <div class="sig-name">{event.get('client_name', '')}</div>
+        <div class="sig-line"></div>
+        <div class="sig-detail">« Lu et approuvé »</div>
+    </div>
+</div>
+
+<div class="footer">
+    Fait en deux (2) exemplaires, Constantine, le {format_date_fr(datetime.now().date())} — Droit algérien — Tribunaux de Constantine
+</div>
+
+</body>
+</html>
+"""
+    
+    # Generate PDF
+    pdf_bytes = HTML(string=html_content).write_pdf()
     return pdf_bytes
+
+
+def generate_contract_to_file(event, payments, total_paid, event_lines, filepath):
+    """Generate contract and save to file."""
+    pdf_bytes = generate_contract_pdf(event, payments, total_paid, event_lines)
+    with open(filepath, 'wb') as f:
+        f.write(pdf_bytes)
+    return filepath
