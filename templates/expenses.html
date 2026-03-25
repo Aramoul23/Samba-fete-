@@ -42,11 +42,6 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-elegant">Fournisseur / Bénéficiaire</label>
-                            <input type="text" name="vendor" class="form-input-elegant" 
-                                   placeholder="Nom du fournisseur">
-                        </div>
-                        <div class="mb-3">
                             <label class="form-label-elegant">Événement lié (optionnel)</label>
                             <select name="event_id" class="form-input-elegant">
                                 <option value="">-- Aucun --</option>
@@ -215,7 +210,6 @@
                                     <th>Catégorie</th>
                                     <th>Description</th>
                                     <th class="text-end">Montant</th>
-                                    <th>Fournisseur</th>
                                     <th>Événement</th>
                                     <th>Méthode</th>
                                     <th class="text-center">Actions</th>
@@ -234,7 +228,6 @@
                                     <td class="text-end" style="font-weight: 600; color: var(--danger); font-variant-numeric: tabular-nums;">
                                         {{ expense.amount | format_da }}
                                     </td>
-                                    <td>{{ expense.vendor or '—' }}</td>
                                     <td>
                                         {% if expense.event_id %}
                                         <a href="{{ url_for('event_detail', event_id=expense.event_id) }}" class="text-decoration-none">

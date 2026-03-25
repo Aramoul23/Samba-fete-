@@ -129,15 +129,15 @@ def export_payments_ods(payments, export_date):
 
 def export_expenses_ods(expenses, export_date):
     """Export expenses data to ODS format."""
-    headers = ['#', 'Date', 'Categorie', 'Description', 'Montant', 'Fournisseur', 'Evenement', 'Methode', 'Reference']
+    headers = ['#', 'Date', 'Categorie', 'Description', 'Montant', 'Evenement', 'Methode', 'Reference']
     rows = []
     total_amount = 0
-    
+
     for i, expense in enumerate(expenses, 1):
         amount = float(expense.get('amount', 0) or 0)
         total_amount += amount
         rows.append([i, expense.get('expense_date', ''), expense.get('category', ''),
-                     expense.get('description', '') or '', amount, expense.get('vendor', '') or '',
+                     expense.get('description', '') or '', amount,
                      expense.get('event_title', '') or '', expense.get('method', ''),
                      expense.get('reference', '') or ''])
     

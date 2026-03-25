@@ -1081,7 +1081,6 @@ def add_expense():
         category = request.form.get('category', '')
         description = request.form.get('description', '').strip()
         amount = request.form.get('amount', 0, type=float)
-        vendor = request.form.get('vendor', '').strip()
         event_id = request.form.get('event_id', type=int) or None
         method = request.form.get('method', 'espèces')
         reference = request.form.get('reference', '').strip()
@@ -1101,9 +1100,9 @@ def add_expense():
             description = f"Autre: {description}"
 
         db.execute(
-            "INSERT INTO expenses (expense_date, category, description, amount, vendor, event_id, method, reference, notes) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (expense_date, category, description, amount, vendor or None, event_id, method, reference, notes)
+            "INSERT INTO expenses (expense_date, category, description, amount, event_id, method, reference, notes) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (expense_date, category, description, amount, event_id, method, reference, notes)
         )
         db.commit()
         db.close()

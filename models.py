@@ -84,7 +84,6 @@ def init_db():
             category TEXT NOT NULL,
             description TEXT,
             amount REAL NOT NULL,
-            vendor TEXT,
             event_id INTEGER,
             method TEXT DEFAULT 'espèces',
             reference TEXT,
