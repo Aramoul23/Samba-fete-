@@ -846,7 +846,7 @@ def financials():
         "JOIN events e ON e.client_id = c.id "
         "LEFT JOIN payments p ON p.event_id = e.id "
         "WHERE e.event_date BETWEEN ? AND ? "
-        "GROUP BY c.id "
+        "GROUP BY c.id, c.name "
         "HAVING COALESCE(SUM(e.total_amount), 0) > 0 "
         "ORDER BY total_billed DESC "
         "LIMIT 10",
@@ -875,7 +875,7 @@ def financials():
         "JOIN clients c ON e.client_id = c.id "
         "LEFT JOIN event_lines el ON el.event_id = e.id "
         "WHERE e.event_date BETWEEN ? AND ? AND e.status != 'annulé' "
-        "GROUP BY e.id "
+        "GROUP BY e.id, e.title, e.event_date, e.event_type, e.status, e.total_amount, c.name "
         "ORDER BY e.event_date DESC",
         (start_date, end_date)
     ).fetchall()
@@ -1473,7 +1473,7 @@ def export_finances():
         "JOIN clients c ON e.client_id = c.id "
         "LEFT JOIN event_lines el ON el.event_id = e.id "
         "WHERE e.event_date BETWEEN ? AND ? AND e.status != 'annulé' "
-        "GROUP BY e.id "
+        "GROUP BY e.id, e.title, e.event_date, e.event_type, e.status, e.total_amount, c.name "
         "ORDER BY e.event_date DESC",
         (start_date, end_date)
     ).fetchall()
