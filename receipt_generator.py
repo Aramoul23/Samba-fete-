@@ -48,32 +48,32 @@ def generate_receipt_html(event, payment, total_paid_before, total_paid_after, r
 <style>
 @page {{ size: A5; margin: 0; }}
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; color: #1a1a1a; }}
+body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; color: #2c3e50; }}
 .receipt {{ width: 148mm; min-height: 210mm; background: white; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-.header {{ background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 15px 15px 12px; text-align: center; position: relative; }}
+.header {{ background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 15px 15px 12px; text-align: center; position: relative; }}
 .header::after {{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c9a227 0%, #e8d5a3 50%, #c9a227 100%); }}
 .header-decoration {{ color: #c9a227; font-size: 12pt; letter-spacing: 6px; margin-bottom: 3px; }}
 .header h1 {{ font-family: 'Georgia', serif; font-size: 16pt; font-weight: normal; color: #c9a227; letter-spacing: 4px; margin-bottom: 2px; text-transform: uppercase; }}
 .header .tagline {{ font-size: 7pt; color: #888; letter-spacing: 1px; text-transform: uppercase; }}
-.title-section {{ background: #faf8f5; padding: 12px; text-align: center; border-bottom: 1px solid #e8e0d5; }}
-.title-section h2 {{ font-size: 12pt; color: #1a1a1a; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; }}
+.title-section {{ background: #f8f6f3; padding: 12px; text-align: center; border-bottom: 1px solid #e8e0d5; }}
+.title-section h2 {{ font-size: 12pt; color: #2c3e50; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; }}
 .receipt-number {{ font-size: 10pt; color: #c9a227; font-weight: bold; margin-top: 3px; letter-spacing: 1px; }}
 .event-section {{ padding: 10px 15px; border-bottom: 1px solid #e8e0d5; }}
 .section-label {{ font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 6px; }}
 .info-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
 .info-item {{ font-size: 8pt; }}
 .info-item .label {{ color: #666; font-size: 6.5pt; text-transform: uppercase; }}
-.info-item .value {{ font-weight: bold; color: #1a1a1a; margin-top: 1px; }}
+.info-item .value {{ font-weight: bold; color: #2c3e50; margin-top: 1px; }}
 .center-amount {{ text-align: center; padding: 20px 15px; }}
 .paid-amount-box {{ display: inline-block; background: linear-gradient(135deg, #166534 0%, #15803d 100%); color: white; padding: 12px 25px; border-radius: 6px; text-align: center; }}
 .paid-amount-box .label {{ font-size: 8pt; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }}
 .paid-amount-box .value {{ font-size: 20pt; font-weight: bold; margin-top: 3px; }}
 .paid-stamp {{ display: inline-block; background: #166534; color: white; padding: 3px 10px; border-radius: 3px; font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }}
-.amount-section {{ padding: 12px 15px; background: #faf8f5; }}
+.amount-section {{ padding: 12px 15px; background: #f8f6f3; }}
 .amount-details {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
 .amount-box {{ background: white; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #e8e0d5; }}
 .amount-box .label {{ font-size: 6pt; text-transform: uppercase; color: #888; margin-bottom: 2px; }}
-.amount-box .value {{ font-size: 10pt; font-weight: bold; color: #1a1a1a; }}
+.amount-box .value {{ font-size: 10pt; font-weight: bold; color: #2c3e50; }}
 .amount-box.paid .value {{ color: #166534; }}
 .amount-box.due .value {{ color: #991b1b; }}
 .amount-box.total .value {{ font-size: 11pt; }}
@@ -81,12 +81,12 @@ body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; c
 .payment-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }}
 .payment-item {{ font-size: 8pt; }}
 .payment-item .label {{ color: #666; font-size: 6.5pt; text-transform: uppercase; }}
-.payment-item .value {{ font-weight: bold; color: #1a1a1a; margin-top: 1px; }}
-.signatures {{ display: flex; justify-content: space-around; padding: 15px; margin: 10px 15px; background: #faf8f5; border: 1px solid #e8e0d5; border-radius: 4px; }}
+.payment-item .value {{ font-weight: bold; color: #2c3e50; margin-top: 1px; }}
+.signatures {{ display: flex; justify-content: space-around; padding: 15px; margin: 10px 15px; background: #f8f6f3; border: 1px solid #e8e0d5; border-radius: 4px; }}
 .sig-block {{ text-align: center; width: 40%; }}
 .sig-line {{ border-top: 1px solid #333; margin-bottom: 4px; height: 30px; }}
 .sig-label {{ font-size: 6.5pt; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }}
-.footer {{ background: #1a1a1a; padding: 10px 15px; text-align: center; }}
+.footer {{ background: #2c3e50; padding: 10px 15px; text-align: center; }}
 .footer-brand {{ font-size: 8pt; color: #c9a227; letter-spacing: 2px; margin-bottom: 2px; }}
 .footer-text {{ font-size: 6pt; color: #888; }}
 @media print {{ body {{ background: white; padding: 0; }} .receipt {{ box-shadow: none; width: 100%; }} }}
