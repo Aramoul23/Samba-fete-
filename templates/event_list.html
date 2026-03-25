@@ -66,14 +66,16 @@
                             <th>Événement</th>
                             <th>Client</th>
                             <th>Lieu</th>
-                            <th>Créneau</th>
-                            <th>Invités</th>
-                            <th>Montant</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Reste</th>
                             <th>Statut</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for e in events %}
+                        {% set reste = e.total_amount - (e.total_paid or 0) %}
                         <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=e.id) }}'">
                             <td>
                                 <strong>{{ e.event_date[:10] }}</strong>
@@ -81,13 +83,24 @@
                             <td style="font-weight: 500;">{{ e.title }}</td>
                             <td>{{ e.client_name }}</td>
                             <td>{{ e.venue_name }}</td>
-                            <td><span class="badge-slot">{{ e.time_slot }}</span></td>
-                            <td style="font-variant-numeric: tabular-nums;">{{ e.guests_men + e.guests_women }}</td>
-                            <td style="font-variant-numeric: tabular-nums; font-weight: 600;">{{ e.total_amount | format_da }}</td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 600;">{{ e.total_amount | format_da }}</td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 600; color: var(--success);">{{ (e.total_paid or 0) | format_da }}</td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 700; color: {% if reste > 0 %}var(--danger){% else %}var(--success){% endif %};">
+                                {{ reste | format_da }}
+                            </td>
                             <td>
                                 <span class="badge-status status-{{ e.status | replace(' ', '-') }}">
                                     {{ e.status }}
                                 </span>
+                            </td>
+                            <td class="text-center" onclick="event.stopPropagation()">
+                                {% if reste > 0 %}
+                                <a href="{{ url_for('event_detail', event_id=e.id) }}#paymentSection" class="btn btn-success btn-sm">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                                </a>
+                                {% else %}
+                                <span class="badge-status status-confirmé" style="font-size: 0.65rem;">Soldé ✓</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

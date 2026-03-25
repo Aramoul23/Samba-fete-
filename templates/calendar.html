@@ -205,13 +205,24 @@ function showBookedError(dateStr) {
     const events = calendarEvents[dateStr] || [];
     let eventsHtml = '<div class="list-group">';
     events.forEach(ev => {
+        const evId = ev.id || '';
         eventsHtml += `
-            <div class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${ev.title}</strong><br>
-                    <small>${ev.time_slot}</small>
+            <div class="list-group-item list-group-item-danger">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>${ev.title}</strong><br>
+                        <small>${ev.time_slot}</small>
+                    </div>
+                    <span class="badge-status status-confirmé">${ev.status}</span>
                 </div>
-                <span class="badge-status status-confirmé">${ev.status}</span>
+                <div class="d-flex gap-2">
+                    <a href="/evenement/${evId}" class="btn btn-outline-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>Voir Détails
+                    </a>
+                    <a href="/evenement/${evId}#paymentSection" class="btn btn-success btn-sm flex-fill">
+                        <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                    </a>
+                </div>
             </div>`;
     });
     eventsHtml += '</div>';
@@ -230,13 +241,24 @@ function showPendingModal(dateStr) {
     const events = calendarEvents[dateStr] || [];
     let eventsHtml = '<div class="list-group">';
     events.forEach(ev => {
+        const evId = ev.id || '';
         eventsHtml += `
-            <div class="list-group-item list-group-item-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${ev.title}</strong><br>
-                    <small>${ev.time_slot}</small>
+            <div class="list-group-item list-group-item-warning">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>${ev.title}</strong><br>
+                        <small>${ev.time_slot}</small>
+                    </div>
+                    <span class="badge-status status-en-attente">${ev.status}</span>
                 </div>
-                <span class="badge-status status-en-attente">${ev.status}</span>
+                <div class="d-flex gap-2">
+                    <a href="/evenement/${evId}" class="btn btn-outline-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>Voir Détails
+                    </a>
+                    <a href="/evenement/${evId}#paymentSection" class="btn btn-success btn-sm flex-fill">
+                        <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                    </a>
+                </div>
             </div>`;
     });
     eventsHtml += '</div>';

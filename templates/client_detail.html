@@ -182,9 +182,17 @@
                                     {{ ev.status }}
                                 </span>
                             </td>
-                            <td>
+                            <td onclick="event.stopPropagation()">
+                                {% if ev_data.remaining > 0 %}
+                                <a href="{{ url_for('event_detail', event_id=ev.id) }}#paymentSection"
+                                   class="btn btn-sm btn-success" title="Encaisser un paiement">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </a>
+                                {% else %}
+                                <span class="badge-status status-confirmé" style="font-size: 0.6rem;">Soldé</span>
+                                {% endif %}
                                 <a href="{{ url_for('generate_contract', event_id=ev.id) }}"
-                                   class="btn btn-sm btn-outline-gold" target="_blank" title="Contrat PDF"
+                                   class="btn btn-sm btn-outline-gold ms-1" target="_blank" title="Contrat PDF"
                                    onclick="event.stopPropagation()">
                                     <i class="fas fa-file-pdf"></i>
                                 </a>

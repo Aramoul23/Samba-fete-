@@ -363,7 +363,7 @@ def calendar_view():
 
     venue_filter = request.args.get('venue', type=int)
     
-    query = "SELECT event_date, time_slot, title, status FROM events WHERE event_date >= ? AND event_date < ? AND status != 'annulé'"
+    query = "SELECT id, event_date, time_slot, title, status FROM events WHERE event_date >= ? AND event_date < ? AND status != 'annulé'"
     params = [first, last]
     
     if venue_filter:
@@ -846,7 +846,9 @@ def event_list():
     status_filter = request.args.get('status', '')
     search = request.args.get('q', '').strip()
 
-    query = ("SELECT e.*, c.name as client_name, v.name as venue_name FROM events e "
+    query = ("SELECT e.*, c.name as client_name, v.name as venue_name, "
+             "COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.event_id=e.id AND p.is_refunded=0), 0) as total_paid "
+             "FROM events e "
              "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id WHERE 1=1")
     params = []
 
