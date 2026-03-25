@@ -25,6 +25,11 @@
                 {% endif %}
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                {% if (event.total_amount - total_paid) > 0 %}
+                <a href="#paymentSection" class="btn btn-success btn-lg me-2">
+                    <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                </a>
+                {% endif %}
                 <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-primary me-2" target="_blank">
                     <i class="fas fa-file-pdf me-1"></i>Contrat
                 </a>
@@ -34,6 +39,49 @@
             </div>
         </div>
     </div>
+
+    <!-- Payment Status Banner (always visible at top) -->
+    {% if (event.total_amount - total_paid) > 0 %}
+    <div class="card-custom mb-4" style="border-left: 4px solid var(--danger); background: linear-gradient(135deg, rgba(239,71,111,0.05), rgba(255,255,255,1));">
+        <div class="card-body-custom py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-4">
+                        <div>
+                            <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase;">Reste à Payer</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--danger);">
+                                {{ (event.total_amount - total_paid) | format_da }}
+                            </div>
+                        </div>
+                        <div style="border-left: 1px solid var(--border-light); padding-left: 16px;">
+                            <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase;">Payé</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);">
+                                {{ total_paid | format_da }} / {{ event.total_amount | format_da }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                    <a href="#paymentSection" class="btn btn-success btn-lg" id="topEncaisserBtn">
+                        <i class="fas fa-hand-holding-usd me-2"></i>Encaisser un Paiement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card-custom mb-4" style="border-left: 4px solid var(--success); background: linear-gradient(135deg, rgba(6,214,160,0.05), rgba(255,255,255,1));">
+        <div class="card-body-custom py-3">
+            <div class="d-flex align-items-center gap-3">
+                <i class="fas fa-check-circle" style="font-size: 1.5rem; color: var(--success);"></i>
+                <div>
+                    <strong style="color: var(--success); font-size: 1.1rem;">Entièrement Payé</strong>
+                    <div class="text-muted" style="font-size: 0.85rem;">{{ total_paid | format_da }} / {{ event.total_amount | format_da }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Status Change Buttons -->
     <div class="card-custom mb-4">
@@ -339,7 +387,7 @@
             </div>
 
             <!-- Payments -->
-            <div class="card-custom">
+            <div class="card-custom" id="paymentSection">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements</h5>
                 </div>
@@ -409,28 +457,40 @@
                     {% endif %}
 
                     <!-- Add Payment Form -->
-                    <div class="add-payment-form">
-                        <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter un Paiement</h6>
+                    <div class="add-payment-form" style="background: linear-gradient(135deg, rgba(6,214,160,0.06), rgba(67,97,238,0.04)); border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--success-soft);">
+                        <h6 class="mb-3" style="color: var(--success); font-weight: 700;">
+                            <i class="fas fa-plus-circle me-2"></i>Encaisser un Paiement
+                        </h6>
                         
                         <!-- Quick Payment Buttons -->
                         <div class="mb-3">
                             <label class="form-label-elegant mb-2">Paiement Rapide</label>
                             <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-outline-primary btn-sm quick-pay" 
+                                <button type="button" class="btn btn-success btn-lg quick-pay" 
                                         data-amount="{{ event.total_amount - total_paid }}" 
                                         data-type="solde"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💰 Solde Complet ({{ "%.0f"|format(event.total_amount - total_paid) }} DA)
                                 </button>
-                                <button type="button" class="btn btn-outline-success btn-sm quick-pay" 
+                                <button type="button" class="btn btn-outline-primary quick-pay" 
                                         data-amount="20000" data-type="acompte"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
-                                    💵 Acompte 20,000 DA
+                                    💵 20,000 DA
                                 </button>
-                                <button type="button" class="btn btn-outline-info btn-sm quick-pay" 
+                                <button type="button" class="btn btn-outline-primary quick-pay" 
+                                        data-amount="30000" data-type="acompte"
+                                        {% if total_paid >= event.total_amount %}disabled{% endif %}>
+                                    💵 30,000 DA
+                                </button>
+                                <button type="button" class="btn btn-outline-primary quick-pay" 
                                         data-amount="50000" data-type="acompte"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💳 50,000 DA
+                                </button>
+                                <button type="button" class="btn btn-outline-info quick-pay" 
+                                        data-amount="100000" data-type="acompte"
+                                        {% if total_paid >= event.total_amount %}disabled{% endif %}>
+                                    💳 100,000 DA
                                 </button>
                             </div>
                         </div>
@@ -656,6 +716,21 @@
 
 {% block scripts %}
 <script>
+// Smooth scroll to payment section
+document.querySelectorAll('a[href="#paymentSection"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.getElementById('paymentSection');
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Focus the amount field after scroll
+            setTimeout(() => {
+                const amountInput = document.getElementById('paymentAmount');
+                if (amountInput) amountInput.focus();
+            }, 600);
+        }
+    });
+});
 function showDateChangeModal() {
     new bootstrap.Modal(document.getElementById('dateChangeModal')).show();
 }

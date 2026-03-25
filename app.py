@@ -563,7 +563,7 @@ def event_form(event_id=None):
                           (event_id, desc.strip(), amount, is_cost))
 
         db.commit()
-        flash("Événement enregistré avec succès!", "success")
+        flash("Événement créé avec succès! Vous pouvez maintenant encaisser un paiement.", "success")
         return redirect(url_for('event_detail', event_id=event_id))
 
     return render_template('event_form.html', event=event, client=client,
