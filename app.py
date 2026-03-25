@@ -549,7 +549,7 @@ def event_detail(event_id):
         (event_id,)
     ).fetchone()['s']
     
-    profit = total_revenue - total_costs
+    profit = float(total_revenue) - float(total_costs)
 
     # Get expenses linked to this event
     event_expenses = db.execute(
