@@ -39,8 +39,8 @@
                     <div class="card-body-custom">
                         {% for v in venues %}
                         <div class="venue-card mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">{{ v.name }}</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0" style="font-size: 0.9375rem; font-weight: 600;">{{ v.name }}</h6>
                                 <form method="POST" action="{{ url_for('delete_venue', venue_id=v.id) }}"
                                       onsubmit="return confirm('Supprimer ce lieu ?')" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -51,12 +51,12 @@
                             <input type="hidden" name="venue_id" value="{{ v.id }}">
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label-elegant small">Capacité Hommes</label>
+                                    <label class="form-label-elegant">Capacité Hommes</label>
                                     <input type="number" name="capacity_men_{{ v.id }}" class="form-input-elegant"
                                            value="{{ v.capacity_men }}" min="0">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label-elegant small">Capacité Femmes</label>
+                                    <label class="form-label-elegant">Capacité Femmes</label>
                                     <input type="number" name="capacity_women_{{ v.id }}" class="form-input-elegant"
                                            value="{{ v.capacity_women }}" min="0">
                                 </div>

@@ -11,7 +11,7 @@
                 <h1 class="welcome-title">Bienvenue sur {{ hall_name }}</h1>
                 <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — Gérez vos événements avec élégance</p>
             </div>
-            <div class="col-md-4 text-md-end">
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <a href="{{ url_for('event_form') }}" class="btn btn-gold btn-lg">
                     <i class="fas fa-plus me-2"></i>Nouvel Événement
                 </a>
@@ -71,7 +71,7 @@
     <div class="row g-4">
         <!-- Upcoming Events -->
         <div class="col-lg-8">
-            <div class="card-custom">
+            <div class="card-custom no-hover">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Événements à venir</h5>
                     <a href="{{ url_for('event_list') }}" class="btn btn-sm btn-outline-gold">Voir tout</a>
@@ -114,7 +114,9 @@
                     <div class="empty-state">
                         <i class="fas fa-calendar-plus"></i>
                         <p>Aucun événement à venir</p>
-                        <a href="{{ url_for('event_form') }}" class="btn btn-gold">Créer un événement</a>
+                        <a href="{{ url_for('event_form') }}" class="btn btn-gold">
+                            <i class="fas fa-plus me-2"></i>Créer un événement
+                        </a>
                     </div>
                     {% endif %}
                 </div>
@@ -124,7 +126,7 @@
         <!-- Recent Payments + Quick Actions -->
         <div class="col-lg-4">
             <!-- Quick Actions -->
-            <div class="card-custom mb-4">
+            <div class="card-custom mb-4 no-hover">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
                 </div>
@@ -144,7 +146,7 @@
             </div>
 
             <!-- Recent Payments -->
-            <div class="card-custom">
+            <div class="card-custom no-hover">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Paiements Récents</h5>
                 </div>

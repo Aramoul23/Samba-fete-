@@ -6,17 +6,17 @@
 <div class="container-fluid">
     <!-- Calendar Header -->
     <div class="calendar-header-bar mb-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div class="calendar-nav">
                 {% set prev_month = month - 1 if month > 1 else 12 %}
                 {% set prev_year = year if month > 1 else year - 1 %}
                 {% set next_month = month + 1 if month < 12 else 1 %}
                 {% set next_year = year if month < 12 else year + 1 %}
-                <a href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline-gold">
+                <a href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline-gold btn-sm">
                     <i class="fas fa-chevron-left"></i>
                 </a>
                 <span class="calendar-month-label">{{ month_name }} {{ year }}</span>
-                <a href="{{ url_for('calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline-gold">
+                <a href="{{ url_for('calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline-gold btn-sm">
                     <i class="fas fa-chevron-right"></i>
                 </a>
             </div>
@@ -110,14 +110,14 @@ function showDayDetail(dateStr) {
     if (events.length === 0) {
         body.innerHTML = `
             <div class="text-center py-4">
-                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                <i class="fas fa-check-circle fa-3x mb-3" style="color: var(--success);"></i>
                 <p class="text-muted">Ce jour est libre</p>
             </div>`;
     } else {
         let html = '';
         events.forEach(ev => {
-            const statusBadge = ev.status === 'confirmé' ? 'bg-success' :
-                               ev.status === 'en attente' ? 'bg-warning' : 'bg-secondary';
+            const statusBadge = ev.status === 'confirmé' ? 'status-confirmé' :
+                               ev.status === 'en attente' ? 'status-en-attente' : 'status-terminé';
             html += `
             <div class="day-event-card">
                 <div class="d-flex justify-content-between align-items-start">
@@ -125,7 +125,7 @@ function showDayDetail(dateStr) {
                         <h6 class="mb-1">${ev.title}</h6>
                         <span class="badge-slot">${ev.time_slot}</span>
                     </div>
-                    <span class="badge ${statusBadge}">${ev.status}</span>
+                    <span class="badge-status ${statusBadge}">${ev.status}</span>
                 </div>
             </div>`;
         });
