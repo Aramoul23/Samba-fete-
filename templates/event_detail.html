@@ -26,9 +26,9 @@
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 {% if (event.total_amount - total_paid) > 0 %}
-                <a href="#paymentSection" class="btn btn-success btn-lg me-2">
+                <button type="button" class="btn btn-success btn-lg me-2" data-bs-toggle="modal" data-bs-target="#quickPayModal">
                     <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
-                </a>
+                </button>
                 {% endif %}
                 <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-primary me-2" target="_blank">
                     <i class="fas fa-file-pdf me-1"></i>Contrat
@@ -62,9 +62,9 @@
                     </div>
                 </div>
                 <div class="col-md-6 text-md-end mt-2 mt-md-0">
-                    <a href="#paymentSection" class="btn btn-success btn-lg" id="topEncaisserBtn">
+                    <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#quickPayModal" id="topEncaisserBtn">
                         <i class="fas fa-hand-holding-usd me-2"></i>Encaisser un Paiement
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -409,7 +409,7 @@
                             <tbody>
                                 {% for p in payments %}
                                 <tr {% if p.is_refunded %}style="opacity: 0.6;"{% endif %}>
-                                    <td>{{ p.payment_date.strftime('%Y-%m-%d') if p.payment_date else 'N/A' }}</td>
+                                    <td>{{ p.payment_date[:10] if p.payment_date else 'N/A' }}</td>
                                     <td style="font-weight: 600; font-variant-numeric: tabular-nums;">
                                         {% if p.is_refunded %}<del>{% endif %}
                                         {{ p.amount | format_da }}
@@ -662,6 +662,78 @@
     </div>
 </div>
 
+<!-- Quick Payment Modal -->
+<div class="modal fade" id="quickPayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--success), #06d6a0); color: white;">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i>Encaisser un Paiement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}" id="quickPayForm">
+                <div class="modal-body">
+                    <!-- Quick Amount Buttons -->
+                    <div class="mb-3">
+                        <label class="form-label-elegant mb-2">Montant Rapide</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-success quick-amount" 
+                                    data-amount="{{ event.total_amount - total_paid }}" data-type="solde">
+                                💰 Solde ({{ "%.0f"|format(event.total_amount - total_paid) }} DA)
+                            </button>
+                            <button type="button" class="btn btn-outline-primary quick-amount" 
+                                    data-amount="20000" data-type="acompte">20,000</button>
+                            <button type="button" class="btn btn-outline-primary quick-amount" 
+                                    data-amount="30000" data-type="acompte">30,000</button>
+                            <button type="button" class="btn btn-outline-primary quick-amount" 
+                                    data-amount="50000" data-type="acompte">50,000</button>
+                            <button type="button" class="btn btn-outline-info quick-amount" 
+                                    data-amount="100000" data-type="acompte">100,000</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label-elegant">Montant (DA) *</label>
+                            <input type="number" name="amount" id="quickPayAmount" class="form-input-elegant" step="100" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-elegant">Méthode</label>
+                            <select name="method" class="form-input-elegant">
+                                <option value="espèces">💵 Espèces</option>
+                                <option value="chèque">📝 Chèque</option>
+                                <option value="virement">🏦 Virement</option>
+                                <option value="carte">💳 Carte</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-elegant">Type</label>
+                            <select name="payment_type" id="quickPayType" class="form-input-elegant">
+                                <option value="acompte">Acompte</option>
+                                <option value="solde">Solde</option>
+                                <option value="avance">Avance</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-elegant">Référence</label>
+                            <input type="text" name="reference" class="form-input-elegant" placeholder="N° chèque...">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-elegant">Notes</label>
+                            <input type="text" name="notes" class="form-input-elegant" placeholder="Optionnel">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-check-circle me-2"></i>Enregistrer le Paiement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Date Change Modal -->
 <div class="modal fade" id="dateChangeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -716,7 +788,21 @@
 
 {% block scripts %}
 <script>
-// Smooth scroll to payment section
+// Quick payment modal buttons
+document.querySelectorAll('#quickPayModal .quick-amount').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('quickPayAmount').value = this.dataset.amount;
+        document.getElementById('quickPayType').value = this.dataset.type;
+        document.getElementById('quickPayAmount').focus();
+        document.getElementById('quickPayAmount').select();
+        
+        // Highlight selected button
+        document.querySelectorAll('#quickPayModal .quick-amount').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Smooth scroll to payment section (for inline form)
 document.querySelectorAll('a[href="#paymentSection"]').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
