@@ -911,6 +911,7 @@ def add_payment(event_id):
 
         if amount <= 0:
             flash("Montant invalide", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
         else:
             db.execute(
                 "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) VALUES (?,?,?,?,?,?)",
@@ -945,8 +946,10 @@ def refund_payment(event_id, payment_id):
 
         if not payment:
             flash("Paiement introuvable", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
         elif payment["is_refunded"]:
             flash("Ce paiement a déjà été remboursé", "warning")
+            return redirect(url_for("event_detail", event_id=event_id))
         else:
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             # Append refund info to notes (cross-db compatible concatenation)

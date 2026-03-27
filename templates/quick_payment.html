@@ -32,7 +32,7 @@
             <!-- Search Results -->
             {% if clients %}
             <div class="mt-4">
-                <p class="text-muted mb-3">{{ clients.length }} résultat(s) trouvé(s)</p>
+                <p class="text-muted mb-3">{{ clients|length }} résultat(s) trouvé(s)</p>
                 <div class="row g-3">
                     {% for c in clients %}
                     <div class="col-md-4">

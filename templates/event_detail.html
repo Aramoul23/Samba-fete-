@@ -842,7 +842,7 @@ function confirmDateChange() {
 
 function showRefundModal(paymentId, amount) {
     document.getElementById('refundAmount').textContent = formatDA(amount);
-    document.getElementById('refundForm').action = `{{ url_for('event_detail', event_id=event.id) }}`.replace('event_detail', 'refund_payment').replace('{{ event.id }}', {{ event.id }}) + '/' + paymentId + '/rembourser';
+    document.getElementById('refundForm').action = '/evenement/{{ event.id }}/paiement/' + paymentId + '/rembourser';
     new bootstrap.Modal(document.getElementById('refundModal')).show();
 }
 
