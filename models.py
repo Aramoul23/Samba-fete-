@@ -144,7 +144,7 @@ def get_db():
         import psycopg2
 
         conn = psycopg2.connect(DATABASE_URL)
-        conn.autocommit = False
+        conn.autocommit = True
         return DB(conn, True)
     else:
         import sqlite3
