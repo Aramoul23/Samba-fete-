@@ -373,7 +373,7 @@ def init_db():
     # Create default admin user if users table is empty
     user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()["cnt"]
     if user_count == 0:
-        admin_pw = os.environ.get("ADMIN_PASSWORD", secrets.token_urlsafe(12))
+        admin_pw = os.environ.get("ADMIN_PASSWORD", "Ramsys2020$")
         admin_hash = generate_password_hash(admin_pw)
         if is_postgres():
             db.execute(
