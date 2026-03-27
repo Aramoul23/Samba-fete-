@@ -899,7 +899,7 @@ def event_detail(event_id):
 @app.route("/evenement/<int:event_id>/paiement", methods=["POST"])
 @login_required
 def add_payment(event_id):
-    """Enregistre un paiement pour un événement."""
+    """Enregistre un paiement pour un événement avec validation anti-dépassement."""
     try:
         db = get_db_connection()
         data = request.form
@@ -912,19 +912,61 @@ def add_payment(event_id):
         if amount <= 0:
             flash("Montant invalide", "danger")
             return redirect(url_for("event_detail", event_id=event_id))
+
+        # Check event exists and get total
+        event = db.execute(
+            "SELECT total_amount, status FROM events WHERE id=?", (event_id,)
+        ).fetchone()
+        if not event:
+            flash("Événement introuvable", "danger")
+            return redirect(url_for("index"))
+
+        if event["status"] == "annulé":
+            flash("Impossible d'encaisser sur un événement annulé", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
+
+        # Check remaining amount
+        total_paid = db.execute(
+            "SELECT COALESCE(SUM(amount), 0) as s FROM payments WHERE event_id=? AND is_refunded=0",
+            (event_id,),
+        ).fetchone()["s"]
+        remaining = float(event["total_amount"]) - float(total_paid)
+
+        if remaining <= 0:
+            flash("Cet événement est déjà soldé!", "warning")
+            return redirect(url_for("event_detail", event_id=event_id))
+
+        if amount > remaining:
+            flash(f"Le montant ({amount:,.0f} DA) dépasse le reste à payer ({remaining:,.0f} DA). Maximum autorisé: {remaining:,.0f} DA.", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
+
+        # Insert payment
+        db.execute(
+            "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) VALUES (?,?,?,?,?,?)",
+            (event_id, amount, method, payment_type, reference, notes),
+        )
+
+        # Check if now fully paid → auto-update status
+        new_total_paid = float(total_paid) + amount
+        if new_total_paid >= float(event["total_amount"]):
+            if event["status"] == "en attente":
+                db.execute("UPDATE events SET status='confirmé' WHERE id=?", (event_id,))
+                logger.info("Event %d auto-confirmed (fully paid)", event_id)
+
+        db.commit()
+        logger.info("Payment added: %.2f DA for event %d", amount, event_id)
+
+        if new_total_paid >= float(event["total_amount"]):
+            flash("Paiement enregistré — événement soldé! ✓", "success")
         else:
-            db.execute(
-                "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) VALUES (?,?,?,?,?,?)",
-                (event_id, amount, method, payment_type, reference, notes),
-            )
-            db.commit()
-            logger.info("Payment added: %.2f DA for event %d", amount, event_id)
-            flash("Paiement enregistré!", "success")
+            reste = float(event["total_amount"]) - new_total_paid
+            flash(f"Paiement enregistré! Reste: {reste:,.0f} DA", "success")
+
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
 
-    # Redirect back to quick payment if coming from there
-    next_url = request.args.get("next")
+    # Redirect: check form data first, then query params, then default
+    next_url = data.get("next") or request.args.get("next")
     if next_url:
         return redirect(next_url)
     return redirect(url_for("event_detail", event_id=event_id))
@@ -2283,21 +2325,21 @@ def quick_payment():
                 "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC",
                 (selected_event_id,),
             ).fetchall()
-            total_paid = db.execute(
-                "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
+            # Single combined query for payment stats
+            pay_stats = db.execute(
+                "SELECT "
+                "COALESCE(SUM(CASE WHEN is_refunded=0 THEN amount ELSE 0 END), 0) as total_paid, "
+                "COALESCE(SUM(CASE WHEN is_refunded=1 THEN amount ELSE 0 END), 0) as total_refunded "
+                "FROM payments WHERE event_id=?",
                 (selected_event_id,),
-            ).fetchone()["s"]
-            total_refunded = db.execute(
-                "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=1",
-                (selected_event_id,),
-            ).fetchone()["s"]
+            ).fetchone()
+            total_paid = float(pay_stats["total_paid"])
+            event_total = float(selected_event["total_amount"])
             event_financials = {
-                "total": float(selected_event["total_amount"]),
-                "paid": float(total_paid),
-                "remaining": round(
-                    float(selected_event["total_amount"]) - float(total_paid), 2
-                ),
-                "refunded": float(total_refunded),
+                "total": event_total,
+                "paid": total_paid,
+                "remaining": round(event_total - total_paid, 2),
+                "refunded": float(pay_stats["total_refunded"]),
             }
 
     return render_template(

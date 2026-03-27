@@ -466,12 +466,17 @@
                         <div class="mb-3">
                             <label class="form-label-elegant mb-2">Paiement Rapide</label>
                             <div class="d-flex gap-2 flex-wrap">
+                                {% if event.total_amount - total_paid > 0 %}
                                 <button type="button" class="btn btn-success btn-lg quick-pay" 
                                         data-amount="{{ event.total_amount - total_paid }}" 
-                                        data-type="solde"
-                                        {% if total_paid >= event.total_amount %}disabled{% endif %}>
+                                        data-type="solde">
                                     💰 Solde Complet ({{ "%.0f"|format(event.total_amount - total_paid) }} DA)
                                 </button>
+                                {% else %}
+                                <button type="button" class="btn btn-success btn-lg" disabled>
+                                    ✅ Soldé
+                                </button>
+                                {% endif %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
                                         data-amount="20000" data-type="acompte"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
@@ -482,16 +487,23 @@
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💵 30,000 DA
                                 </button>
+                                {% if event.total_amount - total_paid >= 50000 %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="50000" data-type="acompte"
-                                        {% if total_paid >= event.total_amount %}disabled{% endif %}>
+                                        data-amount="50000" data-type="acompte">
                                     💳 50,000 DA
                                 </button>
+                                {% elif event.total_amount - total_paid > 0 %}
+                                <button type="button" class="btn btn-outline-primary quick-pay" 
+                                        data-amount="{{ event.total_amount - total_paid }}" data-type="acompte">
+                                    💳 {{ "%.0f"|format(event.total_amount - total_paid) }} DA
+                                </button>
+                                {% endif %}
+                                {% if event.total_amount - total_paid >= 100000 %}
                                 <button type="button" class="btn btn-outline-info quick-pay" 
-                                        data-amount="100000" data-type="acompte"
-                                        {% if total_paid >= event.total_amount %}disabled{% endif %}>
+                                        data-amount="100000" data-type="acompte">
                                     💳 100,000 DA
                                 </button>
+                                {% endif %}
                             </div>
                         </div>
                         
@@ -545,6 +557,25 @@
                                 document.getElementById('paymentAmount').focus();
                             });
                         });
+
+                        // Validate amount before submit
+                        const detailForm = document.getElementById('paymentForm');
+                        if (detailForm) {
+                            const remaining = {{ event.total_amount - total_paid }};
+                            detailForm.addEventListener('submit', function(e) {
+                                const val = parseFloat(document.getElementById('paymentAmount').value) || 0;
+                                if (val <= 0) {
+                                    e.preventDefault();
+                                    alert('Le montant doit être supérieur à 0');
+                                    return;
+                                }
+                                if (val > remaining) {
+                                    e.preventDefault();
+                                    alert('Le montant dépasse le reste à payer (' + remaining.toLocaleString() + ' DA max)');
+                                    return;
+                                }
+                            });
+                        }
                         </script>
                     </div>
                 </div>
@@ -676,26 +707,43 @@
                     <div class="mb-4">
                         <label class="form-label-elegant mb-2" style="font-size: 0.9rem; font-weight: 600;">💰 Montant Rapide</label>
                         <div class="d-grid gap-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            {% if event.total_amount - total_paid > 0 %}
                             <button type="button" class="quick-amount btn btn-success" 
                                     data-amount="{{ event.total_amount - total_paid }}" data-type="solde"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 700; border-radius: 12px; min-height: 56px;">
                                 💰 Solde<br><small style="font-weight: 400; opacity: 0.9;">{{ "%.0f"|format(event.total_amount - total_paid) }} DA</small>
                             </button>
+                            {% else %}
+                            <button type="button" class="btn btn-success" disabled
+                                    style="padding: 16px 12px; font-size: 1.1rem; font-weight: 700; border-radius: 12px; min-height: 56px;">
+                                ✅ Soldé
+                            </button>
+                            {% endif %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
                                     data-amount="20000" data-type="acompte"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 20,000 DA
                             </button>
+                            {% if event.total_amount - total_paid >= 50000 %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
                                     data-amount="50000" data-type="acompte"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 50,000 DA
                             </button>
+                            {% elif event.total_amount - total_paid > 0 %}
+                            <button type="button" class="quick-amount btn btn-outline-primary" 
+                                    data-amount="{{ event.total_amount - total_paid }}" data-type="acompte"
+                                    style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
+                                {{ "%.0f"|format(event.total_amount - total_paid) }} DA
+                            </button>
+                            {% endif %}
+                            {% if event.total_amount - total_paid >= 100000 %}
                             <button type="button" class="quick-amount btn btn-outline-info" 
                                     data-amount="100000" data-type="acompte"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 100,000 DA
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -808,6 +856,25 @@
 
 {% block scripts %}
 <script>
+// Validate modal form before submit
+const quickPayForm = document.getElementById('quickPayForm');
+if (quickPayForm) {
+    const remaining = {{ event.total_amount - total_paid }};
+    quickPayForm.addEventListener('submit', function(e) {
+        const val = parseFloat(document.getElementById('quickPayAmount').value) || 0;
+        if (val <= 0) {
+            e.preventDefault();
+            alert('Le montant doit être supérieur à 0');
+            return;
+        }
+        if (val > remaining) {
+            e.preventDefault();
+            alert('Le montant dépasse le reste à payer (' + remaining.toLocaleString() + ' DA max)');
+            return;
+        }
+    });
+}
+
 // Quick payment modal - amount buttons
 document.querySelectorAll('#quickPayModal .quick-amount').forEach(btn => {
     btn.addEventListener('click', function() {

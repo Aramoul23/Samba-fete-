@@ -186,10 +186,15 @@
                                 <small style="font-size: 0.75rem;">{{ event_financials.remaining | format_da }}</small>
                             </button>
                             {% endif %}
-                            {% if event_financials.remaining > 50000 %}
+                            {% if event_financials.remaining >= 50000 %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
                                     data-amount="50000" data-type="acompte">
                                 💵 50,000 DA
+                            </button>
+                            {% elif event_financials.remaining > 0 %}
+                            <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
+                                    data-amount="{{ event_financials.remaining }}" data-type="acompte">
+                                💵 {{ event_financials.remaining | format_da }}
                             </button>
                             {% endif %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
@@ -204,7 +209,8 @@
                     </div>
 
                     <!-- Payment Form -->
-                    <form method="POST" action="{{ url_for('add_payment', event_id=selected_event.id) }}?next={{ url_for('quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}" id="quickPaymentForm">
+                    <form method="POST" action="{{ url_for('add_payment', event_id=selected_event.id) }}" id="quickPaymentForm">
+                        <input type="hidden" name="next" value="{{ url_for('quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Montant (DA) *</label>
@@ -369,6 +375,25 @@ document.querySelectorAll('.quick-pay-btn').forEach(btn => {
 const amountInput = document.getElementById('paymentAmount');
 if (amountInput) {
     amountInput.focus();
+}
+
+// Validate amount before submit
+const form = document.getElementById('quickPaymentForm');
+if (form) {
+    const remaining = {{ event_financials.remaining if event_financials else 0 }};
+    form.addEventListener('submit', function(e) {
+        const val = parseFloat(amountInput.value) || 0;
+        if (val <= 0) {
+            e.preventDefault();
+            alert('Le montant doit être supérieur à 0');
+            return;
+        }
+        if (val > remaining) {
+            e.preventDefault();
+            alert('Le montant dépasse le reste à payer (' + remaining.toLocaleString() + ' DA)');
+            return;
+        }
+    });
 }
 </script>
 
