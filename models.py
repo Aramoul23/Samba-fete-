@@ -119,9 +119,23 @@ class DB:
         self.conn.commit()
         return self
 
+    def rollback(self):
+        """Annule les modifications non validées."""
+        self.conn.rollback()
+        return self
+
     def close(self):
         """Ferme la connexion à la base de données."""
         self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.conn.rollback()
+        self.close()
+        return False
 
 
 def get_db():
@@ -130,7 +144,7 @@ def get_db():
         import psycopg2
 
         conn = psycopg2.connect(DATABASE_URL)
-        conn.autocommit = True
+        conn.autocommit = False
         return DB(conn, True)
     else:
         import sqlite3
@@ -380,103 +394,116 @@ def init_db():
         )
 
     db.conn.commit()
+    db.close()
 
 
 def get_user_by_id(user_id):
     """Get user by ID for Flask-Login."""
     db = get_db()
-    row = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
-    db.close()
-    if row:
-        return User(
-            row["id"],
-            row["username"],
-            row["password_hash"],
-            row["role"],
-            row["is_active"],
-        )
-    return None
+    try:
+        row = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+        if row:
+            return User(
+                row["id"],
+                row["username"],
+                row["password_hash"],
+                row["role"],
+                row["is_active"],
+            )
+        return None
+    finally:
+        db.close()
 
 
 def get_user_by_username(username):
     """Get user by username."""
     db = get_db()
-    row = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-    db.close()
-    if row:
-        return User(
-            row["id"],
-            row["username"],
-            row["password_hash"],
-            row["role"],
-            row["is_active"],
-        )
-    return None
+    try:
+        row = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        if row:
+            return User(
+                row["id"],
+                row["username"],
+                row["password_hash"],
+                row["role"],
+                row["is_active"],
+            )
+        return None
+    finally:
+        db.close()
 
 
 def get_all_users():
     """Get all users."""
     db = get_db()
-    users = db.execute(
-        "SELECT id, username, role, is_active, created_at FROM users ORDER BY id"
-    ).fetchall()
-    db.close()
-    return users
+    try:
+        users = db.execute(
+            "SELECT id, username, role, is_active, created_at FROM users ORDER BY id"
+        ).fetchall()
+        return users
+    finally:
+        db.close()
 
 
 def create_user(username, password, role="manager"):
     """Create a new user."""
     db = get_db()
-    password_hash = generate_password_hash(password)
-    if is_postgres():
-        db.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-            (username, password_hash, role),
-        )
-    else:
-        db.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            (username, password_hash, role),
-        )
-    db.commit()
-    db.close()
+    try:
+        password_hash = generate_password_hash(password)
+        if is_postgres():
+            db.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                (username, password_hash, role),
+            )
+        else:
+            db.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                (username, password_hash, role),
+            )
+        db.commit()
+    finally:
+        db.close()
 
 
 def update_user(user_id, username=None, password=None, role=None, is_active=None):
     """Update user fields."""
     db = get_db()
-    updates = []
-    params = []
+    try:
+        updates = []
+        params = []
 
-    if username:
-        updates.append("username=?")
-        params.append(username)
-    if password:
-        updates.append("password_hash=?")
-        params.append(generate_password_hash(password))
-    if role:
-        updates.append("role=?")
-        params.append(role)
-    if is_active is not None:
-        updates.append("is_active=?")
-        params.append(1 if is_active else 0)
+        if username:
+            updates.append("username=?")
+            params.append(username)
+        if password:
+            updates.append("password_hash=?")
+            params.append(generate_password_hash(password))
+        if role:
+            updates.append("role=?")
+            params.append(role)
+        if is_active is not None:
+            updates.append("is_active=?")
+            params.append(1 if is_active else 0)
 
-    if updates:
-        params.append(user_id)
-        sql = f"UPDATE users SET {', '.join(updates)} WHERE id=?"
-        if is_postgres():
-            sql = sql.replace("?", "%s")
-        db.execute(sql, params)
-        db.commit()
-    db.close()
+        if updates:
+            params.append(user_id)
+            sql = f"UPDATE users SET {', '.join(updates)} WHERE id=?"
+            if is_postgres():
+                sql = sql.replace("?", "%s")
+            db.execute(sql, params)
+            db.commit()
+    finally:
+        db.close()
 
 
 def delete_user(user_id):
     """Delete a user."""
     db = get_db()
-    db.execute("DELETE FROM users WHERE id=?", (user_id,))
-    db.commit()
-    db.close()
+    try:
+        db.execute("DELETE FROM users WHERE id=?", (user_id,))
+        db.commit()
+    finally:
+        db.close()
 
 
 def _executescript_pg(conn, sql):
@@ -490,22 +517,26 @@ def _executescript_pg(conn, sql):
 def get_setting(key, default=""):
     """Récupère la valeur d'un paramètre de configuration."""
     db = get_db()
-    row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
-    db.close()
-    return row["value"] if row else default
+    try:
+        row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+        return row["value"] if row else default
+    finally:
+        db.close()
 
 
 def set_setting(key, value):
     """Enregistre ou met à jour un paramètre de configuration."""
     db = get_db()
-    if is_postgres():
-        db.execute(
-            "INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value=%s",
-            (key, value, value),
-        )
-    else:
-        db.execute(
-            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
-        )
-    db.commit()
-    db.close()
+    try:
+        if is_postgres():
+            db.execute(
+                "INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value=%s",
+                (key, value, value),
+            )
+        else:
+            db.execute(
+                "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
+            )
+        db.commit()
+    finally:
+        db.close()

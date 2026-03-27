@@ -45,6 +45,7 @@ import io
 import logging
 import os
 import secrets
+import sqlite3
 
 from logging.handlers import RotatingFileHandler
 
@@ -57,6 +58,14 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger(__name__)
+
+# ─── Database Error Helper ──────────────────────────────────────────
+try:
+    import psycopg2
+
+    DatabaseError = (sqlite3.Error, psycopg2.Error)
+except ImportError:
+    DatabaseError = (sqlite3.Error,)
 
 app = Flask(__name__)
 _secret = os.environ.get("SECRET_KEY")
@@ -266,14 +275,14 @@ def ensure_default_data():
         venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()["c"]
 
         if venue_count == 0:
-            print("Initializing default venues...")
+            logger.info("Initializing default venues...")
             for v in DEFAULT_VENUES:
                 db.execute(
                     "INSERT INTO venues (name, capacity_men, capacity_women, is_active) VALUES (?, ?, ?, 1)",
                     (v["name"], v["capacity_men"], v["capacity_women"]),
                 )
             db.commit()
-            print(f"Created {len(DEFAULT_VENUES)} default venues.")
+            logger.info("Created %d default venues.", len(DEFAULT_VENUES))
 
         settings = db.execute(
             "SELECT key FROM settings WHERE key IN ('hall_name', 'currency', 'deposit_min')"
@@ -287,7 +296,7 @@ def ensure_default_data():
         if "deposit_min" not in existing_keys:
             set_setting("deposit_min", "20000")
 
-        print("Default data check complete.")
+        logger.info("Default data check complete.")
     finally:
         db.close()
 
@@ -1028,8 +1037,10 @@ def add_payment(event_id):
             reste = float(event["total_amount"]) - new_total_paid
             flash(f"Paiement enregistré! Reste: {reste:,.0f} DA", "success")
 
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except (DatabaseError, ValueError) as e:
+        db.rollback()
+        logger.exception("Failed to add payment for event %s", event_id)
+        flash("Une erreur est survenue lors de l'enregistrement du paiement.", "danger")
 
     # Redirect: check form data first, then query params, then default
     next_url = data.get("next") or request.args.get("next")
@@ -1072,8 +1083,10 @@ def refund_payment(event_id, payment_id):
             )
             db.commit()
             flash("Paiement marqué comme remboursé", "success")
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except DatabaseError as e:
+        db.rollback()
+        logger.exception("Failed to refund payment %s for event %s", payment_id, event_id)
+        flash("Une erreur est survenue lors du remboursement.", "danger")
     return redirect(url_for("event_detail", event_id=event_id))
 
 
@@ -1114,8 +1127,10 @@ def update_event_status(event_id):
             flash(status_messages.get(new_status, "Statut mis à jour"), "success")
 
         db.commit()
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except DatabaseError as e:
+        db.rollback()
+        logger.exception("Failed to update status for event %s", event_id)
+        flash("Une erreur est survenue lors de la mise à jour du statut.", "danger")
     return redirect(url_for("event_detail", event_id=event_id))
 
 
@@ -1135,8 +1150,10 @@ def delete_event(event_id):
         db.commit()
         logger.info("Event deleted: %d", event_id)
         flash("Événement supprimé", "success")
-    except Exception as e:
-        flash(f"Erreur lors de la suppression: {str(e)}", "danger")
+    except DatabaseError as e:
+        db.rollback()
+        logger.exception("Failed to delete event %s", event_id)
+        flash("Une erreur est survenue lors de la suppression.", "danger")
     return redirect(url_for("index"))
 
 
@@ -1192,8 +1209,10 @@ def add_event_expense(event_id):
             flash(f"{categories_added} dépense(s) enregistrée(s)!", "success")
         else:
             flash("Sélectionnez au moins une catégorie avec un montant", "warning")
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except (DatabaseError, ValueError) as e:
+        db.rollback()
+        logger.exception("Failed to add expense for event %s", event_id)
+        flash("Une erreur est survenue lors de l'enregistrement de la dépense.", "danger")
     return redirect(url_for("event_detail", event_id=event_id))
 
 
@@ -1215,8 +1234,10 @@ def delete_expense(expense_id):
                 return redirect(url_for("event_detail", event_id=event_id))
         else:
             flash("Dépense introuvable", "danger")
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except DatabaseError as e:
+        db.rollback()
+        logger.exception("Failed to delete expense %s", expense_id)
+        flash("Une erreur est survenue lors de la suppression.", "danger")
     return redirect(url_for("expenses"))
 
 
@@ -1519,13 +1540,13 @@ def client_detail(client_id):
             eid = ev["id"]
             rev = revenue_map.get(eid, 0.0)
             cst = cost_map.get(eid, 0.0)
-            pd = paid_map.get(eid, 0.0)
+            paid_val = paid_map.get(eid, 0.0)
             event_financials[eid] = {
                 "revenue": rev,
                 "costs": cst,
                 "profit": rev - cst,
-                "paid": pd,
-                "remaining": round(float(ev["total_amount"]) - pd, 2),
+                "paid": paid_val,
+                "remaining": round(float(ev["total_amount"]) - paid_val, 2),
             }
 
     return render_template(
@@ -1667,8 +1688,10 @@ def add_expense():
         db.commit()
 
         flash("Dépense enregistrée!", "success")
-    except Exception as e:
-        flash(f"Erreur: {str(e)}", "danger")
+    except (DatabaseError, ValueError) as e:
+        db.rollback()
+        logger.exception("Failed to add expense")
+        flash("Une erreur est survenue lors de l'enregistrement de la dépense.", "danger")
     return redirect(url_for("expenses"))
 
 

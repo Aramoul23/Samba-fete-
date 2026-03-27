@@ -34,5 +34,5 @@ def format_date_fr(date_str):
         else:
             d = date_str
         return f"{d.day} {MONTHS_FR.get(d.month, '')} {d.year}"
-    except Exception:
+    except (ValueError, TypeError):
         return str(date_str)
