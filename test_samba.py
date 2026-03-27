@@ -199,7 +199,8 @@ class TestInitDb:
         assert row is not None
         assert row["role"] == "admin"
         assert row["is_active"] == 1
-        assert check_password_hash(row["password_hash"], "admin123")
+        # Password is now randomly generated, just verify hash is valid
+        assert row["password_hash"].startswith(("scrypt:", "pbkdf2:"))
 
 
 # ═══════════════════════════════════════════════════════════════════════════

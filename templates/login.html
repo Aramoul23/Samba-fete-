@@ -244,6 +244,7 @@
                 {% endwith %}
                 
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-floating-custom">
                         <input type="text" id="username" name="username" placeholder=" " required autofocus autocomplete="username">
                         <label for="username"><i class="fas fa-user me-1"></i> Nom d'utilisateur</label>

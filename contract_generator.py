@@ -3,7 +3,6 @@ Beautiful Wedding Contract PDF Generator for Samba Fête.
 Elegant, print-optimized design with wedding hall branding.
 """
 
-from weasyprint import HTML
 from datetime import datetime
 from utils import format_da, format_date_fr
 
@@ -46,8 +45,7 @@ def get_time_slot_display(slot_input):
     slot_lower = slot_input.lower().strip()
     for key, value in TIME_SLOTS.items():
         if key in slot_lower:
-            value_display = value.replace(" - ", "h – ").replace("h00", "h")
-            return value
+            return value.replace(" - ", "h – ").replace("h00", "h")
     return slot_input
 
 
@@ -252,6 +250,8 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 </div>
 </body>
 </html>"""
+
+    from weasyprint import HTML
 
     pdf_bytes = HTML(string=html_content).write_pdf()
     return pdf_bytes
