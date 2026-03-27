@@ -4,50 +4,54 @@ import psycopg2.extras
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
 
 def is_postgres():
-    return DATABASE_URL.startswith('postgresql://')
+    return DATABASE_URL.startswith("postgresql://")
+
 
 class User:
     """User model for Flask-Login."""
+
     def __init__(self, id, username, password_hash, role, is_active=1):
         self.id = id
         self.username = username
         self.password_hash = password_hash
         self.role = role
         self._is_active = bool(is_active)
-    
+
     @property
     def is_active(self):
         return self._is_active
-    
+
     @property
     def is_authenticated(self):
         return True
-    
+
     @property
     def is_anonymous(self):
         return False
-    
+
     @property
     def is_admin(self):
-        return self.role == 'admin'
-    
+        return self.role == "admin"
+
     def get_id(self):
         return str(self.id)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
 class DB:
     """Database wrapper that works with both SQLite and PostgreSQL."""
-    
+
     def __init__(self, conn, is_pg):
         self.conn = conn
         self.is_pg = is_pg
         self._lastrowid = None
-    
+
     @property
     def lastrowid(self):
         """Return the last inserted row ID."""
@@ -59,12 +63,12 @@ class DB:
         else:
             cur.execute("SELECT LAST_INSERT_ROWID()")
         return cur.fetchone()[0]
-    
+
     def execute(self, sql, params=None):
         """Execute SQL and return self for chaining."""
         if self.is_pg:
             # Convert ? to %s for PostgreSQL
-            sql = sql.replace('?', '%s')
+            sql = sql.replace("?", "%s")
         cur = self.conn.cursor()
         if params:
             cur.execute(sql, params)
@@ -72,17 +76,17 @@ class DB:
             cur.execute(sql)
         self._cur = cur
         # Store lastrowid for INSERT statements
-        if sql.strip().upper().startswith('INSERT'):
+        if sql.strip().upper().startswith("INSERT"):
             if self.is_pg:
                 cur.execute("SELECT LASTVAL()")
             else:
                 pass  # SQLite will use LAST_INSERT_ROWID() via property
             try:
                 self._lastrowid = cur.fetchone()[0] if self.is_pg else None
-            except:
+            except (TypeError, IndexError):
                 self._lastrowid = None
         return self
-    
+
     def fetchone(self):
         """Fetch one row as dict."""
         row = self._cur.fetchone()
@@ -92,7 +96,7 @@ class DB:
             return dict(zip([col[0] for col in self._cur.description], row))
         else:
             return dict(row)
-    
+
     def fetchall(self):
         """Fetch all rows as list of dicts."""
         rows = self._cur.fetchall()
@@ -101,13 +105,14 @@ class DB:
             return [dict(zip(columns, row)) for row in rows]
         else:
             return [dict(row) for row in rows]
-    
+
     def commit(self):
         self.conn.commit()
         return self
-    
+
     def close(self):
         self.conn.close()
+
 
 def get_db():
     if is_postgres():
@@ -116,15 +121,19 @@ def get_db():
         return DB(conn, True)
     else:
         import sqlite3
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'samba_fete.db')
+
+        db_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "samba_fete.db"
+        )
         conn = sqlite3.connect(db_path, timeout=10)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return DB(conn, False)
 
+
 def init_db():
     db = get_db()
-    
+
     if is_postgres():
         sqls = """
             CREATE TABLE IF NOT EXISTS venues (
@@ -204,7 +213,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """
-        for sql in sqls.split(';'):
+        for sql in sqls.split(";"):
             sql = sql.strip()
             if sql:
                 db.conn.cursor().execute(sql)
@@ -293,47 +302,62 @@ def init_db():
                 created_at TEXT DEFAULT (datetime('now','localtime'))
             );
         """)
-    
+
     # Insert default data if empty
-    count = db.execute("SELECT COUNT(*) as cnt FROM venues").fetchone()['cnt']
+    count = db.execute("SELECT COUNT(*) as cnt FROM venues").fetchone()["cnt"]
     if count == 0:
         if is_postgres():
-            db.execute("INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Grande Salle', 400, 270)")
-            db.execute("INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Jardin', 200, 150)")
-            db.execute("INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Salle VIP', 50, 30)")
+            db.execute(
+                "INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Grande Salle', 400, 270)"
+            )
+            db.execute(
+                "INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Jardin', 200, 150)"
+            )
+            db.execute(
+                "INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Salle VIP', 50, 30)"
+            )
         else:
             db.conn.executescript("""
                 INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Grande Salle', 400, 270);
                 INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Jardin', 200, 150);
                 INSERT INTO venues (name, capacity_men, capacity_women) VALUES ('Salle VIP', 50, 30);
             """)
-    
-    count = db.execute("SELECT COUNT(*) as cnt FROM settings").fetchone()['cnt']
+
+    count = db.execute("SELECT COUNT(*) as cnt FROM settings").fetchone()["cnt"]
     if count == 0:
         if is_postgres():
-            db.execute("INSERT INTO settings (key, value) VALUES ('deposit_min', '20000')")
+            db.execute(
+                "INSERT INTO settings (key, value) VALUES ('deposit_min', '20000')"
+            )
             db.execute("INSERT INTO settings (key, value) VALUES ('currency', 'DA')")
-            db.execute("INSERT INTO settings (key, value) VALUES ('hall_name', 'Samba Fête')")
+            db.execute(
+                "INSERT INTO settings (key, value) VALUES ('hall_name', 'Samba Fête')"
+            )
         else:
             db.conn.executescript("""
                 INSERT INTO settings (key, value) VALUES ('deposit_min', '20000');
                 INSERT INTO settings (key, value) VALUES ('currency', 'DA');
                 INSERT INTO settings (key, value) VALUES ('hall_name', 'Samba Fête');
             """)
-    
+
     # Create default admin user if users table is empty
-    user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()['cnt']
+    user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()["cnt"]
     if user_count == 0:
-        admin_hash = generate_password_hash('admin123')
+        admin_hash = generate_password_hash("admin123")
         if is_postgres():
-            db.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-                      ('admin', admin_hash, 'admin'))
+            db.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                ("admin", admin_hash, "admin"),
+            )
         else:
-            db.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                      ('admin', admin_hash, 'admin'))
+            db.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                ("admin", admin_hash, "admin"),
+            )
         print("Created default admin user (admin/admin123)")
-    
+
     db.conn.commit()
+
 
 def get_user_by_id(user_id):
     """Get user by ID for Flask-Login."""
@@ -341,8 +365,15 @@ def get_user_by_id(user_id):
     row = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     db.close()
     if row:
-        return User(row['id'], row['username'], row['password_hash'], row['role'], row['is_active'])
+        return User(
+            row["id"],
+            row["username"],
+            row["password_hash"],
+            row["role"],
+            row["is_active"],
+        )
     return None
+
 
 def get_user_by_username(username):
     """Get user by username."""
@@ -350,35 +381,50 @@ def get_user_by_username(username):
     row = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
     db.close()
     if row:
-        return User(row['id'], row['username'], row['password_hash'], row['role'], row['is_active'])
+        return User(
+            row["id"],
+            row["username"],
+            row["password_hash"],
+            row["role"],
+            row["is_active"],
+        )
     return None
+
 
 def get_all_users():
     """Get all users."""
     db = get_db()
-    users = db.execute("SELECT id, username, role, is_active, created_at FROM users ORDER BY id").fetchall()
+    users = db.execute(
+        "SELECT id, username, role, is_active, created_at FROM users ORDER BY id"
+    ).fetchall()
     db.close()
     return users
 
-def create_user(username, password, role='manager'):
+
+def create_user(username, password, role="manager"):
     """Create a new user."""
     db = get_db()
     password_hash = generate_password_hash(password)
     if is_postgres():
-        db.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-                  (username, password_hash, role))
+        db.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+            (username, password_hash, role),
+        )
     else:
-        db.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                  (username, password_hash, role))
+        db.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username, password_hash, role),
+        )
     db.commit()
     db.close()
+
 
 def update_user(user_id, username=None, password=None, role=None, is_active=None):
     """Update user fields."""
     db = get_db()
     updates = []
     params = []
-    
+
     if username:
         updates.append("username=?")
         params.append(username)
@@ -391,15 +437,16 @@ def update_user(user_id, username=None, password=None, role=None, is_active=None
     if is_active is not None:
         updates.append("is_active=?")
         params.append(1 if is_active else 0)
-    
+
     if updates:
         params.append(user_id)
         sql = f"UPDATE users SET {', '.join(updates)} WHERE id=?"
         if is_postgres():
-            sql = sql.replace('?', '%s')
+            sql = sql.replace("?", "%s")
         db.execute(sql, params)
         db.commit()
     db.close()
+
 
 def delete_user(user_id):
     """Delete a user."""
@@ -408,23 +455,31 @@ def delete_user(user_id):
     db.commit()
     db.close()
 
+
 def _executescript_pg(conn, sql):
-    for statement in sql.split(';'):
+    for statement in sql.split(";"):
         statement = statement.strip()
         if statement:
             conn.cursor().execute(statement)
 
-def get_setting(key, default=''):
+
+def get_setting(key, default=""):
     db = get_db()
     row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
     db.close()
-    return row['value'] if row else default
+    return row["value"] if row else default
+
 
 def set_setting(key, value):
     db = get_db()
     if is_postgres():
-        db.execute("INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value=%s", (key, value, value))
+        db.execute(
+            "INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value=%s",
+            (key, value, value),
+        )
     else:
-        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+        db.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
+        )
     db.commit()
     db.close()

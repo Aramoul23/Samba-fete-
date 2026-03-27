@@ -3,42 +3,51 @@ Beautiful Payment Receipt PDF Generator for Samba Fête.
 Elegant, print-optimized design with wedding hall branding.
 """
 
-MONTH_NAMES_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+from utils import format_da, format_date_fr
+
+MONTH_NAMES_FR = [
+    "",
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
+]
 
 COMPANY_NAME = "SAMBA FÊTE"
 COMPANY_TAGLINE = "Salle de Réception"
 COMPANY_ADDRESS = "102 ZAM, Nouvelle Ville, Constantine"
 COMPANY_TEL = "0550 50 37 67"
 
-def format_da(amount):
-    try:
-        return f"{float(amount):,.0f} DA".replace(",", " ")
-    except (ValueError, TypeError):
-        return "0 DA"
 
-def format_date_fr(date_str):
-    try:
-        date_str = str(date_str)
-        d = date_str[:10]
-        year, month, day = d.split('-')
-        return f"{int(day)} {MONTH_NAMES_FR[int(month)]} {year}"
-    except Exception:
-        return str(date_str)
 
 METHOD_NAMES = {
-    'espèces': 'Espèces',
-    'chèque': 'Chèque',
-    'virement': 'Virement',
-    'carte': 'Carte bancaire',
+    "espèces": "Espèces",
+    "chèque": "Chèque",
+    "virement": "Virement",
+    "carte": "Carte bancaire",
 }
 
-def generate_receipt_html(event, payment, total_paid_before, total_paid_after, remaining, receipt_no):
-    method_name = METHOD_NAMES.get(payment.get('method', ''), payment.get('method', ''))
-    
-    payment_type = payment.get('payment_type', 'acompte').lower()
-    payment_type_display = {'acompte': 'Acompte', 'solde': 'Solde', 'avance': 'Avance'}.get(payment_type, payment_type.capitalize())
-    
+
+def generate_receipt_html(
+    event, payment, total_paid_before, total_paid_after, remaining, receipt_no
+):
+    method_name = METHOD_NAMES.get(payment.get("method", ""), payment.get("method", ""))
+
+    payment_type = payment.get("payment_type", "acompte").lower()
+    payment_type_display = {
+        "acompte": "Acompte",
+        "solde": "Solde",
+        "avance": "Avance",
+    }.get(payment_type, payment_type.capitalize())
+
     is_paid_off = remaining <= 0
 
     html = f"""<!DOCTYPE html>
@@ -106,35 +115,35 @@ body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; c
     <div class="event-section">
         <div class="section-label">Détails de l'Événement</div>
         <div class="info-grid">
-            <div class="info-item"><div class="label">Client</div><div class="value">{event.get('client_name', 'N/A')}</div></div>
-            <div class="info-item"><div class="label">Type</div><div class="value">{event.get('event_type', 'N/A')}</div></div>
-            <div class="info-item"><div class="label">Événement</div><div class="value">{event.get('title', 'N/A')}</div></div>
-            <div class="info-item"><div class="label">Date</div><div class="value">{format_date_fr(event.get('event_date', ''))}</div></div>
+            <div class="info-item"><div class="label">Client</div><div class="value">{event.get("client_name", "N/A")}</div></div>
+            <div class="info-item"><div class="label">Type</div><div class="value">{event.get("event_type", "N/A")}</div></div>
+            <div class="info-item"><div class="label">Événement</div><div class="value">{event.get("title", "N/A")}</div></div>
+            <div class="info-item"><div class="label">Date</div><div class="value">{format_date_fr(event.get("event_date", ""))}</div></div>
         </div>
     </div>
     <div class="center-amount">
         <div class="paid-amount-box">
             <div class="label">Montant Reçu</div>
-            <div class="value">{format_da(payment.get('amount', 0))}</div>
+            <div class="value">{format_da(payment.get("amount", 0))}</div>
             <div class="paid-stamp">✓ Payé</div>
         </div>
     </div>
     <div class="amount-section">
         <div class="section-label">Récapitulatif Financier</div>
         <div class="amount-details">
-            <div class="amount-box total"><div class="label">Montant Total</div><div class="value">{format_da(event.get('total_amount', 0))}</div></div>
+            <div class="amount-box total"><div class="label">Montant Total</div><div class="value">{format_da(event.get("total_amount", 0))}</div></div>
             <div class="amount-box paid"><div class="label">Acompte Versé</div><div class="value">{format_da(total_paid_after)}</div></div>
             <div class="amount-box"><div class="label">Payé Avant</div><div class="value">{format_da(total_paid_before)}</div></div>
-            <div class="amount-box {'due' if remaining > 0 else 'paid'}"><div class="label">Reste à Payer</div><div class="value">{format_da(max(remaining, 0))}</div></div>
+            <div class="amount-box {"due" if remaining > 0 else "paid"}"><div class="label">Reste à Payer</div><div class="value">{format_da(max(remaining, 0))}</div></div>
         </div>
     </div>
     <div class="payment-section">
         <div class="section-label">Détails du Paiement</div>
         <div class="payment-grid">
-            <div class="payment-item"><div class="label">Date de Paiement</div><div class="value">{format_date_fr(str(payment.get('payment_date', ''))[:10])}</div></div>
+            <div class="payment-item"><div class="label">Date de Paiement</div><div class="value">{format_date_fr(str(payment.get("payment_date", ""))[:10])}</div></div>
             <div class="payment-item"><div class="label">Mode de Paiement</div><div class="value">{method_name}</div></div>
             <div class="payment-item"><div class="label">Type de Paiement</div><div class="value">{payment_type_display}</div></div>
-            {"<div class='payment-item'><div class='label'>Référence</div><div class='value'>" + str(payment.get('reference', '')) + "</div></div>" if payment.get('reference') else ''}
+            {"<div class='payment-item'><div class='label'>Référence</div><div class='value'>" + str(payment.get("reference", "")) + "</div></div>" if payment.get("reference") else ""}
         </div>
     </div>
     <div class="signatures">
@@ -151,7 +160,13 @@ body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; c
 
     return html
 
-def generate_receipt_pdf(event, payment, total_paid_before, total_paid_after, remaining, receipt_no):
+
+def generate_receipt_pdf(
+    event, payment, total_paid_before, total_paid_after, remaining, receipt_no
+):
     from weasyprint import HTML
-    html_content = generate_receipt_html(event, payment, total_paid_before, total_paid_after, remaining, receipt_no)
+
+    html_content = generate_receipt_html(
+        event, payment, total_paid_before, total_paid_after, remaining, receipt_no
+    )
     return HTML(string=html_content).write_pdf()

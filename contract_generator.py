@@ -5,6 +5,7 @@ Elegant, print-optimized design with wedding hall branding.
 
 from weasyprint import HTML
 from datetime import datetime
+from utils import format_da, format_date_fr
 
 COMPANY_NAME = "SAMBA FÊTE"
 COMPANY_TAGLINE = "Salle de Réception & Organisation d'Événements"
@@ -14,85 +15,81 @@ COMPANY_RC = "034275305A"
 COMPANY_NIF = "1635"
 
 MONTHS_FR = {
-    1: 'Janvier', 2: 'Février', 3: 'Mars', 4: 'Avril',
-    5: 'Mai', 6: 'Juin', 7: 'Juillet', 8: 'Août',
-    9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
+    1: "Janvier",
+    2: "Février",
+    3: "Mars",
+    4: "Avril",
+    5: "Mai",
+    6: "Juin",
+    7: "Juillet",
+    8: "Août",
+    9: "Septembre",
+    10: "Octobre",
+    11: "Novembre",
+    12: "Décembre",
 }
 
 TIME_SLOTS = {
-    'déjeuner': '10h00 - 18h00',
-    'dejeuner': '10h00 - 18h00',
-    'après-midi': '12h00 - 18h00',
-    'dîner': '12h00 - 00h00',
-    'diner': '12h00 - 00h00',
-    'nuit': '18h00 - 06h00',
+    "déjeuner": "10h00 - 18h00",
+    "dejeuner": "10h00 - 18h00",
+    "après-midi": "12h00 - 18h00",
+    "dîner": "12h00 - 00h00",
+    "diner": "12h00 - 00h00",
+    "nuit": "18h00 - 06h00",
 }
 
-def format_da(amount):
-    try:
-        return f"{float(amount):,.0f} DA".replace(",", " ")
-    except (ValueError, TypeError):
-        return "0 DA"
 
-def format_date_fr(date_str):
-    try:
-        if isinstance(date_str, str):
-            d = datetime.strptime(date_str[:10], '%Y-%m-%d')
-        else:
-            d = date_str
-        return f"{d.day} {MONTHS_FR.get(d.month, '')} {d.year}"
-    except Exception:
-        return str(date_str)
 
 def get_time_slot_display(slot_input):
     if not slot_input:
-        return 'N/A'
+        return "N/A"
     slot_lower = slot_input.lower().strip()
     for key, value in TIME_SLOTS.items():
         if key in slot_lower:
-            value_display = value.replace(' - ', 'h – ').replace('h00', 'h')
+            value_display = value.replace(" - ", "h – ").replace("h00", "h")
             return value
     return slot_input
 
+
 def generate_contract_pdf(event, payments, total_paid, event_lines):
-    remaining = float(event.get('total_amount', 0)) - float(total_paid)
-    contract_num = event.get('id', '000')
+    remaining = float(event.get("total_amount", 0)) - float(total_paid)
+    contract_num = event.get("id", "000")
     if isinstance(contract_num, int):
         contract_num = f"{contract_num:04d}"
-    
-    time_display = get_time_slot_display(event.get('time_slot', ''))
-    venue = event.get('venue_name', 'N/A')
-    if event.get('venue2_name'):
+
+    time_display = get_time_slot_display(event.get("time_slot", ""))
+    venue = event.get("venue_name", "N/A")
+    if event.get("venue2_name"):
         venue += f" + {event['venue2_name']}"
-    
-    total_guests = event.get('guests_men', 0) + event.get('guests_women', 0)
-    
+
+    total_guests = event.get("guests_men", 0) + event.get("guests_women", 0)
+
     services_rows = ""
-    for line in (event_lines or []):
+    for line in event_lines or []:
         services_rows += f"""
         <tr>
-            <td>{line.get('description', '')}</td>
-            <td class="amount">{format_da(line.get('amount', 0))}</td>
+            <td>{line.get("description", "")}</td>
+            <td class="amount">{format_da(line.get("amount", 0))}</td>
         </tr>"""
-    
+
     if not services_rows:
         services_rows = f"""
         <tr>
             <td>Location de la salle</td>
-            <td class="amount">{format_da(event.get('total_amount', 0))}</td>
+            <td class="amount">{format_da(event.get("total_amount", 0))}</td>
         </tr>"""
-    
+
     phone_info = f"{event.get('phone', 'N/A')}"
-    if event.get('phone2'):
+    if event.get("phone2"):
         phone_info += f" / {event['phone2']}"
-    
-    event_type = event.get('event_type', 'Événement')
+
+    event_type = event.get("event_type", "Événement")
     event_type_icon = {
-        'Mariage': '💍',
-        'Fiançailles': '💎',
-        'Anniversaire': '🎂',
-        'Conférence': '🏢',
-    }.get(event_type, '✨')
+        "Mariage": "💍",
+        "Fiançailles": "💎",
+        "Anniversaire": "🎂",
+        "Conférence": "🏢",
+    }.get(event_type, "✨")
 
     html_content = f"""
 <!DOCTYPE html>
@@ -192,20 +189,20 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
     </div>
     <div class="party client">
         <div class="party-label">Le Client</div>
-        <div class="party-name">{event.get('client_name', 'N/A')}</div>
-        <div class="party-detail">Tél: {phone_info}<br>{f"Email: {event.get('email', '')}" if event.get('email') else ''}</div>
+        <div class="party-name">{event.get("client_name", "N/A")}</div>
+        <div class="party-detail">Tél: {phone_info}<br>{f"Email: {event.get('email', '')}" if event.get("email") else ""}</div>
     </div>
 </div>
 <div class="event-section">
     <div class="section-title">Détails de l'Événement</div>
     <div class="event-grid">
         <div class="event-item"><div class="event-item-label">Type</div><div class="event-item-value">{event_type} {event_type_icon}</div></div>
-        <div class="event-item"><div class="event-item-label">Date</div><div class="event-item-value">{format_date_fr(event.get('event_date', ''))}</div></div>
+        <div class="event-item"><div class="event-item-label">Date</div><div class="event-item-value">{format_date_fr(event.get("event_date", ""))}</div></div>
         <div class="event-item"><div class="event-item-label">Horaire</div><div class="event-item-value">{time_display}</div></div>
         <div class="event-item"><div class="event-item-label">Salle(s)</div><div class="event-item-value">{venue}</div></div>
-        <div class="event-item"><div class="event-item-label">Invités (Hommes)</div><div class="event-item-value">{event.get('guests_men', 0)}</div></div>
-        <div class="event-item"><div class="event-item-label">Invités (Femmes)</div><div class="event-item-value">{event.get('guests_women', 0)}</div></div>
-        <div class="event-item"><div class="event-item-label">Intitulé</div><div class="event-item-value" style="font-size:8pt;">{event.get('title', 'N/A')}</div></div>
+        <div class="event-item"><div class="event-item-label">Invités (Hommes)</div><div class="event-item-value">{event.get("guests_men", 0)}</div></div>
+        <div class="event-item"><div class="event-item-label">Invités (Femmes)</div><div class="event-item-value">{event.get("guests_women", 0)}</div></div>
+        <div class="event-item"><div class="event-item-label">Intitulé</div><div class="event-item-value" style="font-size:8pt;">{event.get("title", "N/A")}</div></div>
         <div class="event-item highlight"><div class="event-item-label">Total Invités</div><div class="event-item-value">{total_guests} personnes</div></div>
     </div>
 </div>
@@ -215,17 +212,17 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
         <thead><tr><th style="width:70%">Description</th><th style="width:30%">Montant</th></tr></thead>
         <tbody>
             {services_rows}
-            <tr class="total-row"><td><strong>MONTANT TOTAL</strong></td><td class="amount"><strong>{format_da(event.get('total_amount', 0))}</strong></td></tr>
+            <tr class="total-row"><td><strong>MONTANT TOTAL</strong></td><td class="amount"><strong>{format_da(event.get("total_amount", 0))}</strong></td></tr>
         </tbody>
     </table>
 </div>
 <div class="financial-section">
     <div class="section-title">Conditions Financières</div>
     <div class="financial-grid">
-        <div class="financial-box total"><div class="fin-label">Total</div><div class="fin-value">{format_da(event.get('total_amount', 0))}</div></div>
+        <div class="financial-box total"><div class="fin-label">Total</div><div class="fin-value">{format_da(event.get("total_amount", 0))}</div></div>
         <div class="financial-box paid"><div class="fin-label">Acompte Payé</div><div class="fin-value">{format_da(total_paid)}</div></div>
-        <div class="financial-box {'due' if remaining > 0 else 'paid'}"><div class="fin-label">Reste à Payer</div><div class="fin-value">{format_da(remaining)}</div></div>
-        <div class="financial-box"><div class="fin-label">Caution</div><div class="fin-value">{format_da(event.get('deposit_required', 0))}</div></div>
+        <div class="financial-box {"due" if remaining > 0 else "paid"}"><div class="fin-label">Reste à Payer</div><div class="fin-value">{format_da(remaining)}</div></div>
+        <div class="financial-box"><div class="fin-label">Caution</div><div class="fin-value">{format_da(event.get("deposit_required", 0))}</div></div>
     </div>
 </div>
 <div class="terms-section">
@@ -246,7 +243,7 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 </div>
 <div class="signatures">
     <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Le Prestataire</div><div class="sig-name">{COMPANY_NAME}</div></div>
-    <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Le Client</div><div class="sig-name">{event.get('client_name', '')}</div></div>
+    <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Le Client</div><div class="sig-name">{event.get("client_name", "")}</div></div>
 </div>
 <div class="footer">
     <div class="footer-brand">✦ SAMBA FÊTE ✦</div>
@@ -254,6 +251,6 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 </div>
 </body>
 </html>"""
-    
+
     pdf_bytes = HTML(string=html_content).write_pdf()
     return pdf_bytes
