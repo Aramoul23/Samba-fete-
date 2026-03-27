@@ -7,3 +7,4 @@ psycopg2-binary>=2.9.0
 weasyprint>=68.0
 html5lib>=1.1
 cairocffi>=1.6.0
+gunicorn>=21.2.0
