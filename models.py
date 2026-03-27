@@ -8,6 +8,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
 def is_postgres():
+    """Vérifie si la base de données est PostgreSQL."""
     return DATABASE_URL.startswith("postgresql://")
 
 
@@ -15,6 +16,7 @@ class User:
     """User model for Flask-Login."""
 
     def __init__(self, id, username, password_hash, role, is_active=1):
+        """Initialise un utilisateur avec ses attributs."""
         self.id = id
         self.username = username
         self.password_hash = password_hash
@@ -23,24 +25,30 @@ class User:
 
     @property
     def is_active(self):
+        """Retourne si l'utilisateur est actif."""
         return self._is_active
 
     @property
     def is_authenticated(self):
+        """Retourne si l'utilisateur est authentifié."""
         return True
 
     @property
     def is_anonymous(self):
+        """Retourne si l'utilisateur est anonyme."""
         return False
 
     @property
     def is_admin(self):
+        """Retourne si l'utilisateur est administrateur."""
         return self.role == "admin"
 
     def get_id(self):
+        """Retourne l'identifiant de l'utilisateur."""
         return str(self.id)
 
     def check_password(self, password):
+        """Vérifie si le mot de passe est correct."""
         return check_password_hash(self.password_hash, password)
 
 
@@ -48,6 +56,7 @@ class DB:
     """Database wrapper that works with both SQLite and PostgreSQL."""
 
     def __init__(self, conn, is_pg):
+        """Initialise la connexion à la base de données."""
         self.conn = conn
         self.is_pg = is_pg
         self._lastrowid = None
@@ -107,14 +116,17 @@ class DB:
             return [dict(row) for row in rows]
 
     def commit(self):
+        """Valide les modifications dans la base de données."""
         self.conn.commit()
         return self
 
     def close(self):
+        """Ferme la connexion à la base de données."""
         self.conn.close()
 
 
 def get_db():
+    """Établit et retourne une connexion à la base de données."""
     if is_postgres():
         conn = psycopg2.connect(DATABASE_URL)
         conn.autocommit = True
@@ -132,6 +144,7 @@ def get_db():
 
 
 def init_db():
+    """Initialise la base de données et crée les tables par défaut."""
     db = get_db()
 
     if is_postgres():
@@ -457,6 +470,7 @@ def delete_user(user_id):
 
 
 def _executescript_pg(conn, sql):
+    """Exécute un script SQL sur une connexion PostgreSQL."""
     for statement in sql.split(";"):
         statement = statement.strip()
         if statement:
@@ -464,6 +478,7 @@ def _executescript_pg(conn, sql):
 
 
 def get_setting(key, default=""):
+    """Récupère la valeur d'un paramètre de configuration."""
     db = get_db()
     row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
     db.close()
@@ -471,6 +486,7 @@ def get_setting(key, default=""):
 
 
 def set_setting(key, value):
+    """Enregistre ou met à jour un paramètre de configuration."""
     db = get_db()
     if is_postgres():
         db.execute(

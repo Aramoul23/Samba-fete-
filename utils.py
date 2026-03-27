@@ -19,6 +19,7 @@ MONTHS_FR = {
 
 
 def format_da(amount):
+    """Formate un montant en dinars algériens (DA)."""
     try:
         return f"{float(amount):,.0f} DA".replace(",", " ")
     except (ValueError, TypeError):
@@ -26,6 +27,7 @@ def format_da(amount):
 
 
 def format_date_fr(date_str):
+    """Formate une date au format français (jour mois année)."""
     try:
         if isinstance(date_str, str):
             d = datetime.strptime(date_str[:10], "%Y-%m-%d")

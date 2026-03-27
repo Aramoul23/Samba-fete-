@@ -27,7 +27,6 @@ COMPANY_ADDRESS = "102 ZAM, Nouvelle Ville, Constantine"
 COMPANY_TEL = "0550 50 37 67"
 
 
-
 METHOD_NAMES = {
     "espèces": "Espèces",
     "chèque": "Chèque",
@@ -39,6 +38,7 @@ METHOD_NAMES = {
 def generate_receipt_html(
     event, payment, total_paid_before, total_paid_after, remaining, receipt_no
 ):
+    """Génère le HTML pour un reçu de paiement."""
     method_name = METHOD_NAMES.get(payment.get("method", ""), payment.get("method", ""))
 
     payment_type = payment.get("payment_type", "acompte").lower()
@@ -164,6 +164,7 @@ body {{ font-family: 'Georgia', 'Times New Roman', serif; background: #f5f3ef; c
 def generate_receipt_pdf(
     event, payment, total_paid_before, total_paid_after, remaining, receipt_no
 ):
+    """Génère un reçu de paiement PDF."""
     from weasyprint import HTML
 
     html_content = generate_receipt_html(

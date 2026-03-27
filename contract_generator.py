@@ -39,8 +39,8 @@ TIME_SLOTS = {
 }
 
 
-
 def get_time_slot_display(slot_input):
+    """Affiche horablement lisible pour un créneau horaire."""
     if not slot_input:
         return "N/A"
     slot_lower = slot_input.lower().strip()
@@ -52,6 +52,7 @@ def get_time_slot_display(slot_input):
 
 
 def generate_contract_pdf(event, payments, total_paid, event_lines):
+    """Génère un contrat PDF pour un événement."""
     remaining = float(event.get("total_amount", 0)) - float(total_paid)
     contract_num = event.get("id", "000")
     if isinstance(contract_num, int):
