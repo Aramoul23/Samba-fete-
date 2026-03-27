@@ -189,7 +189,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_individuel" name="price_individuel" value="5000" step="100" min="0"
+                                               id="price_individuel" name="price_individuel"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Service individuel') | map(attribute='amount') | first | default(5000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Service individuel') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -206,7 +208,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_cafe" name="price_cafe" value="10000" step="100" min="0"
+                                               id="price_cafe" name="price_cafe"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Service café') | map(attribute='amount') | first | default(10000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Service café') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -223,7 +227,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_groupe" name="price_groupe" value="15000" step="100" min="0"
+                                               id="price_groupe" name="price_groupe"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Groupe interdit') | map(attribute='amount') | first | default(15000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Groupe interdit') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -240,7 +246,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_photo" name="price_photo" value="8000" step="100" min="0"
+                                               id="price_photo" name="price_photo"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Photo') | map(attribute='amount') | first | default(8000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Photo') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -257,7 +265,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_deco" name="price_deco" value="25000" step="100" min="0"
+                                               id="price_deco" name="price_deco"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Déco el Hana') | map(attribute='amount') | first | default(25000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Déco el Hana') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -274,7 +284,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_panneaux" name="price_panneaux" value="12000" step="100" min="0"
+                                               id="price_panneaux" name="price_panneaux"
+                                               value="{{ event_lines | selectattr('description', 'equalto', 'Panneaux de réception') | map(attribute='amount') | first | default(12000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', 'Panneaux de réception') | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -291,7 +303,9 @@
                                     </div>
                                     <div class="input-group" style="width: 150px;">
                                         <input type="number" class="form-input-elegant form-control-sm"
-                                               id="price_table" name="price_table" value="7000" step="100" min="0"
+                                               id="price_table" name="price_table"
+                                               value="{{ event_lines | selectattr('description', 'equalto', "Table d'honneur") | map(attribute='amount') | first | default(7000) }}"
+                                               step="100" min="0"
                                                {% if not (event_lines | selectattr('description', 'equalto', "Table d'honneur") | list) %}disabled{% endif %}>
                                         <span class="input-group-text">DA</span>
                                     </div>
@@ -478,17 +492,20 @@
 
                 {% if event %}
                 <div class="mt-4">
-                    <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}"
-                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')">
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="fas fa-trash me-2"></i>Supprimer l'événement
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-outline-danger w-100"
+                            onclick="if(confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) { document.getElementById('deleteForm').submit(); }">
+                        <i class="fas fa-trash me-2"></i>Supprimer l'événement
+                    </button>
                 </div>
                 {% endif %}
             </div>
         </div>
     </form>
+
+    {% if event %}
+    <!-- Delete form must be OUTSIDE the main event form (no nested forms in HTML) -->
+    <form method="POST" id="deleteForm" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:none;"></form>
+    {% endif %}
 </div>
 {% endblock %}
 

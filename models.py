@@ -1,6 +1,5 @@
 import os
-import psycopg2
-import psycopg2.extras
+import secrets
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -128,15 +127,19 @@ class DB:
 def get_db():
     """Établit et retourne une connexion à la base de données."""
     if is_postgres():
+        import psycopg2
+
         conn = psycopg2.connect(DATABASE_URL)
         conn.autocommit = True
         return DB(conn, True)
     else:
         import sqlite3
 
-        db_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "samba_fete.db"
-        )
+        db_path = os.environ.get("SQLITE_DB_PATH")
+        if not db_path:
+            db_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "samba_fete.db"
+            )
         conn = sqlite3.connect(db_path, timeout=10)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
@@ -356,7 +359,8 @@ def init_db():
     # Create default admin user if users table is empty
     user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()["cnt"]
     if user_count == 0:
-        admin_hash = generate_password_hash("admin123")
+        admin_pw = os.environ.get("ADMIN_PASSWORD", secrets.token_urlsafe(12))
+        admin_hash = generate_password_hash(admin_pw)
         if is_postgres():
             db.execute(
                 "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
@@ -367,7 +371,13 @@ def init_db():
                 "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
                 ("admin", admin_hash, "admin"),
             )
-        print("Created default admin user (admin/admin123)")
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.warning(
+            "Default admin user created. Password: %s — "
+            "Change it immediately or set ADMIN_PASSWORD env var.",
+            admin_pw,
+        )
 
     db.conn.commit()
 

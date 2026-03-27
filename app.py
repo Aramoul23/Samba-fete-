@@ -8,7 +8,9 @@ from flask import (
     jsonify,
     make_response,
     g,
+    session,
 )
+from urllib.parse import urlparse
 from flask_login import (
     LoginManager,
     login_user,
@@ -36,26 +38,34 @@ from export_functions import (
     export_expenses_ods,
     export_pl_report_ods,
 )
+from utils import format_da
 import calendar
 import csv
 import io
 import logging
 import os
+import secrets
 
-app = Flask(__name__)
-app.secret_key = os.environ.get(
-    "SECRET_KEY", "samba-fete-2026-secret-key-change-in-production"
-)
+from logging.handlers import RotatingFileHandler
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("app.log"),
+        RotatingFileHandler("app.log", maxBytes=5 * 1024 * 1024, backupCount=3),
     ],
 )
 logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+_secret = os.environ.get("SECRET_KEY")
+if not _secret:
+    _secret = secrets.token_hex(32)
+    logger.warning(
+        "SECRET_KEY not set — using random key (sessions will not persist across restarts)"
+    )
+app.secret_key = _secret
 
 # ─── Flask-Login Setup ─────────────────────────────────────────────
 login_manager = LoginManager()
@@ -132,14 +142,6 @@ DEFAULT_VENUES = [
 ]
 
 
-def format_da(amount):
-    """Formate un montant en dinars algériens (DA)."""
-    try:
-        return f"{float(amount):,.0f} DA".replace(",", " ")
-    except (ValueError, TypeError):
-        return "0 DA"
-
-
 app.jinja_env.filters["format_da"] = format_da
 
 
@@ -147,6 +149,39 @@ app.jinja_env.filters["format_da"] = format_da
 def inject_year():
     """Injecte l'année courante dans les templates Jinja2."""
     return {"current_year": datetime.now().year}
+
+
+# ─── CSRF Protection ───────────────────────────────────────────────
+def generate_csrf_token():
+    """Generate a CSRF token and store it in the session."""
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(32)
+    return session["csrf_token"]
+
+
+@app.context_processor
+def inject_csrf_token():
+    """Make csrf_token() available in all templates."""
+    return {"csrf_token": generate_csrf_token}
+
+
+@app.before_request
+def csrf_protect():
+    """Validate CSRF token on POST requests."""
+    if request.method == "POST":
+        # Skip CSRF for login (session not yet established)
+        if request.endpoint == "login":
+            return
+        token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
+        session_token = session.get("csrf_token")
+        if not token or not session_token or token != session_token:
+            logger.warning(
+                "CSRF token mismatch from %s on %s",
+                request.remote_addr,
+                request.endpoint,
+            )
+            flash("Session expirée ou invalide. Veuillez réessayer.", "danger")
+            return redirect(request.url)
 
 
 def check_pending_events():
@@ -171,7 +206,11 @@ def check_pending_events():
 def get_event_financials(event_id):
     """Get complete financial data for an event."""
     db = get_db_connection()
+    return _get_event_financials_db(db, event_id)
 
+
+def _get_event_financials_db(db, event_id):
+    """Get complete financial data for an event using an existing DB connection."""
     # Get revenue lines (income)
     revenue_lines = db.execute(
         "SELECT COALESCE(SUM(amount), 0) as total FROM event_lines WHERE event_id=? AND is_cost=0",
@@ -210,6 +249,12 @@ def get_event_financials(event_id):
         "remaining": round(float(event_total) - float(total_paid), 2),
         "refunded": float(total_refunded),
     }
+
+
+def get_setting_db(db, key, default=""):
+    """Get a setting value using an existing DB connection."""
+    row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else default
 
 
 def ensure_default_data():
@@ -266,6 +311,11 @@ def login():
             login_user(user, remember=True)
             logger.info("Successful login: %s", user.username)
             next_page = request.args.get("next")
+            # Validate next_page to prevent open redirect
+            if next_page:
+                parsed = urlparse(next_page)
+                if parsed.netloc and parsed.netloc != request.host:
+                    next_page = None  # External URL — reject
             flash(f"Bienvenue, {user.username}!", "success")
             return redirect(next_page or url_for("index"))
         else:
@@ -417,19 +467,26 @@ def index():
         chart_expenses.append(float(m_exp))
         chart_profits.append(float(m_rev) - float(m_exp))
 
-    # Upcoming events with revenue
+    # Upcoming events with revenue (single query instead of N+1)
+    upcoming_ids = [ev["id"] for ev in upcoming]
+    payments_map = {}
+    if upcoming_ids:
+        placeholders = ",".join("?" * len(upcoming_ids))
+        rows = db.execute(
+            f"SELECT event_id, COALESCE(SUM(amount),0) as total_paid FROM payments "
+            f"WHERE event_id IN ({placeholders}) AND is_refunded=0 GROUP BY event_id",
+            upcoming_ids,
+        ).fetchall()
+        payments_map = {r["event_id"]: float(r["total_paid"]) for r in rows}
+
     upcoming_with_revenue = []
     for ev in upcoming:
         ev_dict = ev
-        ev_rev = db.execute(
-            "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
-            (ev["id"],),
-        ).fetchone()["s"]
-        ev_dict["paid"] = float(ev_rev)
+        ev_dict["paid"] = payments_map.get(ev["id"], 0.0)
         upcoming_with_revenue.append(ev_dict)
 
-    hall_name = get_setting("hall_name", "Samba Fête")
-    currency = get_setting("currency", "DA")
+    hall_name = get_setting_db(db, "hall_name", "Samba Fête")
+    currency = get_setting_db(db, "currency", "DA")
     pending_needs_attention = check_pending_events()
 
     return render_template(
@@ -865,7 +922,11 @@ def event_detail(event_id):
     needs_confirmation = False
     if event["status"] == "en attente":
         try:
-            created_at = event["created_at"] if "created_at" in event.keys() else None
+            created_at = None
+            try:
+                created_at = event["created_at"]
+            except (KeyError, IndexError):
+                pass
             if created_at:
                 if isinstance(created_at, str):
                     created = datetime.strptime(created_at[:19], "%Y-%m-%d %H:%M:%S")
@@ -937,7 +998,10 @@ def add_payment(event_id):
             return redirect(url_for("event_detail", event_id=event_id))
 
         if amount > remaining:
-            flash(f"Le montant ({amount:,.0f} DA) dépasse le reste à payer ({remaining:,.0f} DA). Maximum autorisé: {remaining:,.0f} DA.", "danger")
+            flash(
+                f"Le montant ({amount:,.0f} DA) dépasse le reste à payer ({remaining:,.0f} DA). Maximum autorisé: {remaining:,.0f} DA.",
+                "danger",
+            )
             return redirect(url_for("event_detail", event_id=event_id))
 
         # Insert payment
@@ -950,7 +1014,9 @@ def add_payment(event_id):
         new_total_paid = float(total_paid) + amount
         if new_total_paid >= float(event["total_amount"]):
             if event["status"] == "en attente":
-                db.execute("UPDATE events SET status='confirmé' WHERE id=?", (event_id,))
+                db.execute(
+                    "UPDATE events SET status='confirmé' WHERE id=?", (event_id,)
+                )
                 logger.info("Event %d auto-confirmed (fully paid)", event_id)
 
         db.commit()
@@ -968,7 +1034,9 @@ def add_payment(event_id):
     # Redirect: check form data first, then query params, then default
     next_url = data.get("next") or request.args.get("next")
     if next_url:
-        return redirect(next_url)
+        parsed = urlparse(next_url)
+        if not parsed.netloc or parsed.netloc == request.host:
+            return redirect(next_url)
     return redirect(url_for("event_detail", event_id=event_id))
 
 
@@ -1054,7 +1122,10 @@ def update_event_status(event_id):
 @app.route("/evenement/<int:event_id>/supprimer", methods=["POST"])
 @login_required
 def delete_event(event_id):
-    """Supprime un événement et toutes ses données associées."""
+    """Supprime un événement et toutes ses données associées (admin uniquement)."""
+    if not is_admin():
+        flash("Seuls les administrateurs peuvent supprimer des événements", "danger")
+        return redirect(url_for("event_detail", event_id=event_id))
     try:
         db = get_db_connection()
         db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
@@ -1414,34 +1485,48 @@ def client_detail(client_id):
         (client_id,),
     ).fetchall()
 
-    # Detailed financials per event
+    # Detailed financials per event (batch queries instead of N+1)
     event_financials = {}
-    for ev in events:
-        # Revenue from lines
-        revenue = db.execute(
-            "SELECT COALESCE(SUM(amount),0) as s FROM event_lines WHERE event_id=? AND is_cost=0",
-            (ev["id"],),
-        ).fetchone()["s"]
+    event_ids = [ev["id"] for ev in events]
+    if event_ids:
+        placeholders = ",".join("?" * len(event_ids))
 
-        # Costs from lines
-        costs = db.execute(
-            "SELECT COALESCE(SUM(amount),0) as s FROM event_lines WHERE event_id=? AND is_cost=1",
-            (ev["id"],),
-        ).fetchone()["s"]
+        # Revenue lines per event
+        revenue_rows = db.execute(
+            f"SELECT event_id, COALESCE(SUM(amount),0) as total FROM event_lines "
+            f"WHERE event_id IN ({placeholders}) AND is_cost=0 GROUP BY event_id",
+            event_ids,
+        ).fetchall()
+        revenue_map = {r["event_id"]: float(r["total"]) for r in revenue_rows}
 
-        # Paid (excluding refunded)
-        paid = db.execute(
-            "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
-            (ev["id"],),
-        ).fetchone()["s"]
+        # Cost lines per event
+        cost_rows = db.execute(
+            f"SELECT event_id, COALESCE(SUM(amount),0) as total FROM event_lines "
+            f"WHERE event_id IN ({placeholders}) AND is_cost=1 GROUP BY event_id",
+            event_ids,
+        ).fetchall()
+        cost_map = {r["event_id"]: float(r["total"]) for r in cost_rows}
 
-        event_financials[ev["id"]] = {
-            "revenue": float(revenue),
-            "costs": float(costs),
-            "profit": float(revenue) - float(costs),
-            "paid": float(paid),
-            "remaining": round(float(ev["total_amount"]) - float(paid), 2),
-        }
+        # Paid per event
+        paid_rows = db.execute(
+            f"SELECT event_id, COALESCE(SUM(amount),0) as total FROM payments "
+            f"WHERE event_id IN ({placeholders}) AND is_refunded=0 GROUP BY event_id",
+            event_ids,
+        ).fetchall()
+        paid_map = {r["event_id"]: float(r["total"]) for r in paid_rows}
+
+        for ev in events:
+            eid = ev["id"]
+            rev = revenue_map.get(eid, 0.0)
+            cst = cost_map.get(eid, 0.0)
+            pd = paid_map.get(eid, 0.0)
+            event_financials[eid] = {
+                "revenue": rev,
+                "costs": cst,
+                "profit": rev - cst,
+                "paid": pd,
+                "remaining": round(float(ev["total_amount"]) - pd, 2),
+            }
 
     return render_template(
         "client_detail.html",
@@ -2361,7 +2446,5 @@ def quick_payment():
 if __name__ == "__main__":
     init_db()
     ensure_default_data()
-    app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)
-# Force redeploy Wed Mar 25 19:34:15 WAT 2026
-# redeploy Wed Mar 25 21:45:18 WAT 2026
-# force deploy Wed Mar 25 22:25:56 WAT 2026
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

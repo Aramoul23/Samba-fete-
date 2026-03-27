@@ -2,5 +2,9 @@ __pycache__/
 *.pyc
 *.db
 .pytest_cache/
+.ruff_cache/
 app.log
+app.log.*
 .venv/
+*.Zone.Identifier
+flask_output.log
