@@ -39,12 +39,23 @@ from export_functions import (
 import calendar
 import csv
 import io
+import logging
 import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get(
     "SECRET_KEY", "samba-fete-2026-secret-key-change-in-production"
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("app.log"),
+    ],
+)
+logger = logging.getLogger(__name__)
 
 # ─── Flask-Login Setup ─────────────────────────────────────────────
 login_manager = LoginManager()
@@ -203,6 +214,7 @@ def get_event_financials(event_id):
 
 def ensure_default_data():
     """Ensure database has default venues and settings."""
+    logger.info("Initializing default data...")
     db = get_db()
 
     try:
@@ -252,6 +264,7 @@ def login():
                 flash("Ce compte est désactivé", "danger")
                 return render_template("login.html")
             login_user(user, remember=True)
+            logger.info("Successful login: %s", user.username)
             next_page = request.args.get("next")
             flash(f"Bienvenue, {user.username}!", "success")
             return redirect(next_page or url_for("index"))
@@ -265,6 +278,7 @@ def login():
 @login_required
 def logout():
     """Déconnecte l'utilisateur actuel."""
+    logger.info("User logged out: %s", current_user.username)
     logout_user()
     flash("Vous avez été déconnecté", "info")
     return redirect(url_for("login"))
@@ -903,6 +917,7 @@ def add_payment(event_id):
                 (event_id, amount, method, payment_type, reference, notes),
             )
             db.commit()
+            logger.info("Payment added: %.2f DA for event %d", amount, event_id)
             flash("Paiement enregistré!", "success")
     except Exception as e:
         flash(f"Erreur: {str(e)}", "danger")
@@ -1002,6 +1017,7 @@ def delete_event(event_id):
         db.execute("DELETE FROM expenses WHERE event_id=?", (event_id,))
         db.execute("DELETE FROM events WHERE id=?", (event_id,))
         db.commit()
+        logger.info("Event deleted: %d", event_id)
         flash("Événement supprimé", "success")
     except Exception as e:
         flash(f"Erreur lors de la suppression: {str(e)}", "danger")
