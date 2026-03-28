@@ -527,17 +527,73 @@ function removeLine(btn) {
     }
 }
 
-// ─── Date Picker (Flatpickr) ──────────────────────────────
+// ─── Date Picker (Flatpickr) with Availability ──────────
+let calendarEvents = {};
+
+function loadCalendarEvents(year, month, fp) {
+    fetch(`/api/calendar-events?year=${year}&month=${month}`)
+        .then(r => r.json())
+        .then(events => {
+            calendarEvents = {};
+            events.forEach(ev => {
+                if (ev.event_date) {
+                    calendarEvents[ev.event_date] = ev.status;
+                }
+            });
+            fp.redraw();
+        })
+        .catch(() => {
+            calendarEvents = {};
+        });
+}
+
 const datepicker = flatpickr("#eventDatePicker", {
     locale: "fr",
     dateFormat: "Y-m-d",
-    minDate: "today",
+    minDate: new Date().fp_incr(1), // tomorrow — can't book today
     defaultDate: document.getElementById('eventDatePicker').value || null,
     inline: false,
     disableMobile: false,
-    theme: "dark",
     monthSelectorType: "static",
     animate: true,
+    onReady: function(selectedDates, dateStr, instance) {
+        const d = new Date();
+        loadCalendarEvents(d.getFullYear(), d.getMonth() + 1, instance);
+    },
+    onMonthChange: function(selectedDates, dateStr, instance) {
+        loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
+    },
+    onYearChange: function(selectedDates, dateStr, instance) {
+        loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
+    },
+    onDayCreate: function(dObj, dStr, fp, dayElem) {
+        const date = dayElem.dateObj;
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const status = calendarEvents[dateStr];
+        
+        if (status === 'confirmé' || status === 'terminé') {
+            dayElem.style.background = 'rgba(255,180,171,0.2)';
+            dayElem.style.color = 'var(--danger)';
+            dayElem.style.fontWeight = '700';
+            dayElem.style.borderRadius = '50%';
+            dayElem.title = dateStr + ' — Confirmé ✕';
+            // Don't disable — let them see but warn
+        } else if (status === 'en attente') {
+            dayElem.style.background = 'rgba(255,209,102,0.15)';
+            dayElem.style.color = 'var(--warning)';
+            dayElem.style.fontWeight = '600';
+            dayElem.style.borderRadius = '50%';
+            dayElem.title = dateStr + ' — En attente ⚠';
+        }
+    },
+    onChange: function(selectedDates, dateStr) {
+        const status = calendarEvents[dateStr];
+        if (status === 'confirmé' || status === 'terminé') {
+            if (!confirm(`⚠️ Le ${dateStr} a déjà un événement confirmé. Voulez-vous vraiment réserver cette date?`)) {
+                this.clear();
+            }
+        }
+    }
 });
 
 function calculateServicesTotal() {
