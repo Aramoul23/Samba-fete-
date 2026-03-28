@@ -764,8 +764,11 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     
     .services-grid { max-height: none; }
     
-    /* Availability calendar */
-    .avail-calendar { display: none; }
+    /* Availability calendar — compact on mobile */
+    .avail-cal-day { font-size: 0.7rem; }
+    .avail-cal-dayname { font-size: 0.55rem; }
+    .avail-cal-header { margin-bottom: 6px; }
+    .avail-cal-header span { font-size: 0.85rem; }
     
     /* Sticky sidebar — not sticky on mobile */
     .sticky-sidebar { position: static; }
