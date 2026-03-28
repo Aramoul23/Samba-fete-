@@ -742,14 +742,17 @@ def event_form(event_id=None):
         # Check date conflict — no double booking on same date (any venue)
         if event_date:
             conflict = db.execute(
-                "SELECT e.id, e.title, COALESCE(v.name, '') as venue_name FROM events e "
+                "SELECT e.id, e.title, e.status, COALESCE(v.name, '') as venue_name FROM events e "
                 "LEFT JOIN venues v ON e.venue_id = v.id "
                 "WHERE e.event_date = ? AND e.status IN ('confirmé', 'en attente') AND e.id != ?",
                 (event_date, event_id or 0)
             ).fetchone()
             if conflict:
                 venue_label = f" ({conflict['venue_name']})" if conflict['venue_name'] else ""
-                errors.append(f"⛔ Date déjà réservée! '{conflict['title']}' est prévu le {event_date}{venue_label}.")
+                if conflict['status'] == 'confirmé':
+                    errors.append(f"⛔ Date déjà réservée! '{conflict['title']}' est prévu le {event_date}{venue_label} — 🔒 Cette date est verrouillée")
+                else:
+                    errors.append(f"⚠️ Attention! '{conflict['title']}' est en attente pour le {event_date}{venue_label} — La validation est en cours")
 
         if errors:
             for e in errors:

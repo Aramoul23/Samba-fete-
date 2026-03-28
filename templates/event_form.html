@@ -75,6 +75,12 @@
                                 <input type="text" name="event_date" id="eventDatePicker" class="form-input-elegant" required
                                        value="{{ event.event_date if event else request.args.get('date', '') }}"
                                        placeholder="Choisir une date" readonly>
+                                <!-- Date Availability Legend -->
+                                <div class="date-picker-legend mt-2">
+                                    <span class="legend-item"><span class="legend-dot available"></span>Disponible</span>
+                                    <span class="legend-item"><span class="legend-dot pending"></span>En attente</span>
+                                    <span class="legend-item"><span class="legend-dot booked"></span>Réservé</span>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Créneau horaire</label>
@@ -468,6 +474,45 @@
         </div>
     </form>
 
+    <!-- Pending Date Warning Modal -->
+    <div class="modal fade" id="pendingDateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--bg-elevated); border: 1px solid var(--border-light);">
+                <div class="modal-header" style="background: var(--warning-soft); border-bottom: 1px solid var(--border-light);">
+                    <h5 class="modal-title text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>⚠️ Attention - Date en Attente
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 24px;">
+                    <p style="color: var(--text); font-size: 1rem;">
+                        La date sélectionnée (<strong id="pendingDateText" style="color: var(--warning);"></strong>) est actuellement en attente de confirmation pour :
+                    </p>
+                    <div style="background: var(--bg-subtle); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin: 16px 0;">
+                        <p style="margin: 0; color: var(--text); font-weight: 600;">
+                            <i class="fas fa-calendar-alt me-2" style="color: var(--warning);"></i>
+                            <span id="pendingEventTitle" style="color: var(--primary);"></span>
+                        </p>
+                        <p style="margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.875rem;">
+                            Statut actuel: <span class="badge-status status-en-attente">En attente</span>
+                        </p>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9375rem;">
+                        Cette date pourrait être annulée ou confirmée. Voulez-vous continuer malgré tout ?
+                    </p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-light); padding: 16px 24px;">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-arrow-left me-2"></i>Choisir une autre date
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmPendingDate">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Continuer quand même
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if event %}
     <!-- Delete form must be OUTSIDE the main event form (no nested forms in HTML) -->
     <form method="POST" id="deleteForm" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:none;"></form>
@@ -528,74 +573,139 @@ function removeLine(btn) {
 }
 
 // ─── Date Picker (Flatpickr) with Availability ──────────
-let calendarEvents = {};
+let calendarEvents = {};  // status -> 'confirmé', 'en attente', 'terminé'
+let calendarEventTitles = {};  // date -> event title
 
 function loadCalendarEvents(year, month, fp) {
     fetch(`/api/calendar-events?year=${year}&month=${month}`)
         .then(r => r.json())
         .then(events => {
             calendarEvents = {};
+            calendarEventTitles = {};
+            const disableDates = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Build event status map
             events.forEach(ev => {
                 if (ev.event_date) {
                     calendarEvents[ev.event_date] = ev.status;
+                    calendarEventTitles[ev.event_date] = ev.title;
+                    
+                    // Disable confirmed and terminated dates
+                    if (ev.status === 'confirmé' || ev.status === 'terminé') {
+                        disableDates.push(new Date(ev.event_date));
+                    }
                 }
             });
+            
+            // Update flatpickr disable array
+            fp.set('disable', disableDates);
+            fp.set('minDate', today);
             fp.redraw();
         })
         .catch(() => {
             calendarEvents = {};
+            calendarEventTitles = {};
         });
 }
 
-const datepicker = flatpickr("#eventDatePicker", {
-    locale: "fr",
-    dateFormat: "Y-m-d",
-    minDate: new Date().fp_incr(1), // tomorrow — can't book today
-    defaultDate: document.getElementById('eventDatePicker').value || null,
-    inline: false,
-    disableMobile: false,
-    monthSelectorType: "static",
-    animate: true,
-    onReady: function(selectedDates, dateStr, instance) {
-        const d = new Date();
-        loadCalendarEvents(d.getFullYear(), d.getMonth() + 1, instance);
-    },
-    onMonthChange: function(selectedDates, dateStr, instance) {
-        loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
-    },
-    onYearChange: function(selectedDates, dateStr, instance) {
-        loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
-    },
-    onDayCreate: function(dObj, dStr, fp, dayElem) {
-        const date = dayElem.dateObj;
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-        const status = calendarEvents[dateStr];
-        
-        if (status === 'confirmé' || status === 'terminé') {
-            dayElem.style.background = 'rgba(255,80,80,0.2)';
-            dayElem.style.color = '#ff5050';
-            dayElem.style.fontWeight = '700';
-            dayElem.style.borderRadius = '50%';
-            dayElem.style.textDecoration = 'line-through';
-            dayElem.style.opacity = '0.5';
-            dayElem.style.cursor = 'not-allowed';
-            dayElem.classList.add('flatpickr-disabled');
-            dayElem.title = dateStr + ' — Réservé ✕';
-        } else if (status === 'en attente') {
-            dayElem.style.background = 'rgba(255,209,102,0.15)';
-            dayElem.style.color = 'var(--warning)';
-            dayElem.style.fontWeight = '600';
-            dayElem.style.borderRadius = '50%';
-            dayElem.title = dateStr + ' — En attente ⚠';
+// Track pending date selection for modal
+let pendingDateSelection = null;
+let pendingModal = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modal
+    pendingModal = new bootstrap.Modal(document.getElementById('pendingDateModal'));
+    
+    const datepicker = flatpickr("#eventDatePicker", {
+        locale: "fr",
+        dateFormat: "Y-m-d",
+        minDate: new Date().fp_incr(1), // tomorrow — can't book today
+        defaultDate: document.getElementById('eventDatePicker').value || null,
+        inline: false,
+        disableMobile: false,
+        monthSelectorType: "static",
+        animate: true,
+        onReady: function(selectedDates, dateStr, instance) {
+            const d = new Date();
+            loadCalendarEvents(d.getFullYear(), d.getMonth() + 1, instance);
+        },
+        onMonthChange: function(selectedDates, dateStr, instance) {
+            loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
+        },
+        onYearChange: function(selectedDates, dateStr, instance) {
+            loadCalendarEvents(instance.currentYear, instance.currentMonth + 1, instance);
+        },
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const date = dayElem.dateObj;
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+            const status = calendarEvents[dateStr];
+            const title = calendarEventTitles[dateStr] || 'Événement';
+            
+            if (status === 'confirmé' || status === 'terminé') {
+                // Booked date - bright red with strikethrough
+                dayElem.style.background = 'linear-gradient(135deg, rgba(255,80,80,0.25) 0%, rgba(255,50,50,0.15) 100%)';
+                dayElem.style.color = '#ff6b6b';
+                dayElem.style.fontWeight = '700';
+                dayElem.style.borderRadius = '50%';
+                dayElem.style.textDecoration = 'line-through';
+                dayElem.style.opacity = '0.6';
+                dayElem.innerHTML = `<span style="opacity:0.7">${date.getDate()}</span><i class="fas fa-times" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:8px;opacity:0.5;"></i>`;
+                dayElem.title = `🚫 ${dateStr} — Réservé: "${title}"`;
+                dayElem.classList.add('flatpickr-disabled');
+            } else if (status === 'en attente') {
+                // Pending date - amber warning color
+                dayElem.style.background = 'linear-gradient(135deg, rgba(255,209,102,0.25) 0%, rgba(255,193,7,0.15) 100%)';
+                dayElem.style.color = '#ffc107';
+                dayElem.style.fontWeight = '700';
+                dayElem.style.borderRadius = '50%';
+                dayElem.style.boxShadow = '0 0 8px rgba(255,193,7,0.3)';
+                dayElem.innerHTML = `<span>${date.getDate()}</span><i class="fas fa-exclamation-circle" style="position:absolute;bottom:2px;right:2px;font-size:6px;color:#ffc107;"></i>`;
+                dayElem.title = `⚠️ ${dateStr} — En attente: "${title}"`;
+            } else {
+                // Available date - gold glow effect
+                dayElem.style.background = 'rgba(233,195,73,0.08)';
+                dayElem.style.color = 'var(--text)';
+                dayElem.style.fontWeight = '500';
+                dayElem.innerHTML = `<span>${date.getDate()}</span>`;
+                dayElem.classList.add('available-date');
+            }
+        },
+        onChange: function(selectedDates, dateStr) {
+            const status = calendarEvents[dateStr];
+            const title = calendarEventTitles[dateStr] || 'Événement';
+            
+            if (status === 'confirmé' || status === 'terminé') {
+                // This shouldn't happen since dates are disabled, but just in case
+                alert('⛔ Cette date est déjà réservés! impossible de choisir cette date.');
+                this.clear();
+            } else if (status === 'en attente') {
+                // Show warning modal for pending dates
+                pendingDateSelection = { dateStr, title };
+                document.getElementById('pendingDateText').textContent = dateStr;
+                document.getElementById('pendingEventTitle').textContent = title;
+                this.flatpickrInstance = this;
+                pendingModal.show();
+                // Don't clear - let user decide in modal
+            }
         }
-    },
-    onChange: function(selectedDates, dateStr) {
-        const status = calendarEvents[dateStr];
-        if (status === 'confirmé' || status === 'terminé') {
-            alert('⛔ Cette date est déjà réservée! Veuillez choisir une autre date.');
-            this.clear();
+    });
+    
+    // Handle modal confirm button
+    document.getElementById('confirmPendingDate').addEventListener('click', function() {
+        if (pendingDateSelection) {
+            pendingModal.hide();
+            // Date stays selected - user chose to proceed
+            pendingDateSelection = null;
         }
-    }
+    });
+    
+    // Handle modal cancel - clear the date
+    document.getElementById('pendingDateModal').addEventListener('hidden.bs.modal', function() {
+        // Optional: Clear date if user chose not to proceed
+        // document.getElementById('eventDatePicker').value = '';
+    });
 });
 
 function calculateServicesTotal() {

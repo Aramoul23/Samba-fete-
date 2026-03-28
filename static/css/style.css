@@ -858,3 +858,325 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     border-top: 1px solid var(--border-light) !important;
     background: var(--bg-subtle) !important;
 }
+
+/* ═══════════════════════════════════════════════════════
+   Mobile Bottom Navigation (FAB-style)
+   ═══════════════════════════════════════════════════════ */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    z-index: 1050;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    gap: 4px;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-sm);
+    min-width: 56px;
+    position: relative;
+}
+.mobile-nav-item i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+.mobile-nav-item.active {
+    color: var(--primary);
+}
+.mobile-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 0 8px var(--primary-glow);
+}
+.mobile-nav-item:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+/* Hide desktop elements on mobile nav area considerations */
+@media (min-width: 992px) {
+    .main-content {
+        padding-bottom: 0 !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .mobile-nav {
+        padding-bottom: 8px;
+    }
+    .mobile-nav-item {
+        padding: 6px 10px;
+        min-width: 48px;
+    }
+    .mobile-nav-item i {
+        font-size: 1.1rem;
+    }
+    .mobile-nav-item span {
+        font-size: 0.6rem;
+    }
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toast-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    animation: slideInRight 0.3s var(--ease-out);
+    max-width: 320px;
+}
+.toast-item i {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.toast-success {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid rgba(6,214,160,0.25);
+}
+.toast-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid rgba(255,209,102,0.25);
+}
+.toast-info {
+    background: var(--info-soft);
+    color: var(--info);
+    border: 1px solid rgba(185,199,228,0.25);
+}
+.toast-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid rgba(255,180,171,0.25);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Date Picker Legend & Enhanced Flatpickr Styling
+   ═══════════════════════════════════════════════════════ */
+
+/* Legend Bar */
+.date-picker-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+.date-picker-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.date-picker-legend .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.date-picker-legend .legend-dot.available {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(6, 214, 160, 0.5);
+}
+.date-picker-legend .legend-dot.pending {
+    background: var(--warning);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+}
+.date-picker-legend .legend-dot.booked {
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+}
+
+/* Enhanced Flatpickr Day Styles */
+.flatpickr-day.available-date {
+    animation: pulseAvailable 2s ease-in-out infinite;
+}
+@keyframes pulseAvailable {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(233,195,73,0);
+    }
+    50% {
+        box-shadow: 0 0 12px rgba(233,195,73,0.3);
+    }
+}
+
+/* Flatpickr Day States */
+.flatpickr-day {
+    transition: all 0.2s ease;
+}
+.flatpickr-day:hover:not(.flatpickr-disabled) {
+    background: var(--primary-soft) !important;
+    border-color: var(--primary) !important;
+    transform: scale(1.1);
+}
+
+/* Disabled dates (booked) */
+.flatpickr-day.flatpickr-disabled {
+    cursor: not-allowed !important;
+}
+.flatpickr-day.flatpickr-disabled:hover {
+    transform: none;
+    background: linear-gradient(135deg, rgba(255,80,80,0.25) 0%, rgba(255,50,50,0.15) 100%) !important;
+}
+
+/* Pending dates (en attente) */
+.flatpickr-day.pending-day {
+    cursor: pointer;
+}
+.flatpickr-day.pending-day:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(255, 193, 7, 0.5) !important;
+    background: rgba(255,209,102,0.3) !important;
+}
+
+/* Flatpickr Calendar Container */
+.flatpickr-calendar {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-xl) !important;
+    padding: 8px;
+}
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after {
+    border-bottom-color: var(--border-light) !important;
+}
+
+/* Current Month Header */
+.flatpickr-months .flatpickr-month {
+    background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg-elevated) 100%) !important;
+    border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: var(--bg-elevated) !important;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+/* Weekdays */
+.flatpickr-weekdays {
+    background: var(--bg-subtle) !important;
+    padding: 8px 0;
+}
+.flatpickr-weekday {
+    color: var(--text-tertiary) !important;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+/* Days Grid */
+.flatpickr-days {
+    padding: 8px;
+}
+.dayContainer {
+    gap: 2px;
+}
+
+/* Today */
+.flatpickr-day.today {
+    border-color: var(--primary) !important;
+    background: var(--primary-soft) !important;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+/* Selected */
+.flatpickr-day.selected {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+    border-color: var(--primary) !important;
+    color: #041329 !important;
+    font-weight: 700;
+    box-shadow: var(--shadow-primary);
+}
+
+/* Open Calendar Position */
+.flatpickr-wrapper {
+    width: 100%;
+}
+
+/* Modal Warning Styling */
+#pendingDateModal .modal-header {
+    background: linear-gradient(135deg, rgba(255,193,7,0.15) 0%, rgba(255,193,7,0.05) 100%) !important;
+    border-bottom: 2px solid var(--warning) !important;
+}
+#pendingDateModal .modal-title {
+    color: var(--warning) !important;
+    font-weight: 700;
+}
+#pendingDateModal .btn-warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #e6ac00 100%);
+    color: #041329;
+    font-weight: 700;
+    border: none;
+}
+#pendingDateModal .btn-warning:hover {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    box-shadow: 0 4px 15px rgba(255,193,7,0.4);
+}
+
+/* Mobile Date Picker Styles */
+@media (max-width: 575.98px) {
+    .date-picker-legend {
+        font-size: 0.65rem;
+        gap: 8px;
+        padding: 6px 8px;
+    }
+    .date-picker-legend .legend-dot {
+        width: 8px;
+        height: 8px;
+    }
+}
