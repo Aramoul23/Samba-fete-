@@ -367,6 +367,22 @@
                         <h5>Total & Avance</h5>
                     </div>
                     <div class="card-body-custom">
+                        <!-- Confirmation Option for New Events -->
+                        {% if not event %}
+                        <div class="mb-3 p-3" style="background: var(--bg); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="confirmEventCheck" onchange="toggleConfirmStatus()">
+                                <label class="form-check-label fw-bold" for="confirmEventCheck">
+                                    <i class="fas fa-check-circle me-1" style="color: var(--success);"></i>
+                                    Confirmer l'événement maintenant
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                Si coché, l'événement sera confirmé dès la création
+                            </small>
+                        </div>
+                        {% endif %}
+                        
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label-elegant">Montant Total (DA)</label>
@@ -378,6 +394,17 @@
                                 </div>
                                 <small style="color: var(--text-tertiary); font-size: 0.7rem;">Calculé automatiquement depuis les services</small>
                             </div>
+                            {% if not event %}
+                            <div class="col-12">
+                                <label class="form-label-elegant">Avance (Premier Paiement)</label>
+                                <div class="input-group">
+                                    <input type="number" name="deposit_required" class="form-input-elegant avance-input"
+                                           value="{{ event.deposit_required if event else 0 }}" step="100" min="0" placeholder="0">
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small style="color: var(--text-tertiary); font-size: 0.7rem;">Premier paiement - sera déduit du total</small>
+                            </div>
+                            {% else %}
                             <div class="col-12">
                                 <label class="form-label-elegant">Avance (Premier Paiement)</label>
                                 <div class="input-group">
@@ -387,9 +414,12 @@
                                 </div>
                                 <small style="color: var(--text-tertiary); font-size: 0.7rem;">Premier paiement - sera déduit du total</small>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
+
+</div>
 
                 <!-- Submit Buttons -->
                 <div class="d-grid gap-2">
@@ -722,13 +752,31 @@ document.addEventListener('DOMContentLoaded', function() {
     handleStatusChange();
 });
 
-// Form validation: Avance cannot exceed Total
+// Form validation
 document.getElementById('eventForm').addEventListener('submit', function(e) {
     const totalInput = document.getElementById('totalAmountInput');
     const avanceInput = document.querySelector('input[name="deposit_required"]');
+    const dateInput = document.getElementById('eventDatePicker');
+    const statusSelect = document.getElementById('statusSelect');
     
+    // Check total
+    const total = parseFloat(totalInput.value) || 0;
+    if (total <= 0) {
+        e.preventDefault();
+        alert('⚠️ Veuillez sélectionner au moins un service et entrer son prix. Le montant total doit être supérieur à 0.');
+        return false;
+    }
+    
+    // Check date selected
+    const selectedDate = dateInput ? dateInput.value : '';
+    if (!selectedDate || selectedDate.trim() === '') {
+        e.preventDefault();
+        alert('⚠️ Veuillez sélectionner une date pour l\'événement.');
+        return false;
+    }
+    
+    // Validate avance
     if (totalInput && avanceInput) {
-        const total = parseFloat(totalInput.value) || 0;
         const avance = parseFloat(avanceInput.value) || 0;
         
         if (avance > total) {
@@ -736,7 +784,37 @@ document.getElementById('eventForm').addEventListener('submit', function(e) {
             alert('⚠️ L\'avance (' + avance.toLocaleString() + ' DA) ne peut pas dépasser le montant total (' + total.toLocaleString() + ' DA)');
             return false;
         }
+        
+        // Check if trying to confirm without avance
+        if (statusSelect && statusSelect.value === 'confirmé' && avance <= 0) {
+            if (!confirm('⚠️ Vous êtes sur le point de confirmer un événement sans avance. Voulez-vous continuer?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
     }
 });
+
+// Toggle confirm status
+function toggleConfirmStatus() {
+    const checkbox = document.getElementById('confirmEventCheck');
+    const statusSelect = document.getElementById('statusSelect');
+    const avanceInput = document.querySelector('.avance-input');
+    
+    if (checkbox && statusSelect) {
+        if (checkbox.checked) {
+            statusSelect.value = 'confirmé';
+            if (avanceInput) {
+                avanceInput.value = Math.max(parseFloat(avanceInput.value) || 0, 1);
+                avanceInput.min = 1;
+            }
+        } else {
+            statusSelect.value = 'en attente';
+            if (avanceInput) {
+                avanceInput.min = 0;
+            }
+        }
+    }
+}
 </script>
 {% endblock %}

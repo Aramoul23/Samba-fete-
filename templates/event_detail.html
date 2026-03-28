@@ -77,19 +77,26 @@
             <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
         </div>
         <div class="card-body-custom">
-            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
-                <div class="col-md-8">
+            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusFormConfirm" class="row g-3 align-items-end">
+                <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="btn btn-warning" onclick="showDateChangeModal()" style="background: var(--warning); color: #2d3436; border: none;">
                             <i class="fas fa-calendar-alt me-1"></i>Changer de date
                         </button>
-                        <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
-                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement? Cette action est irréversible.')">
+                        <button type="submit" name="status" value="terminé" class="btn btn-secondary">
+                            <i class="fas fa-check-double me-1"></i>Terminé
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="if(confirm('Êtes-vous sûr de vouloir annuler cet événement? Cette action est irréversible.')) { document.getElementById('statusFormConfirm').submit(); }">
                             <i class="fas fa-times me-1"></i>Annuler l'événement
                         </button>
-                    </div>
-                </div>
-                <input type="hidden" name="new_date" id="newDateInput">
+
+</think>
+
+Also let's make sure for "en attente" there are proper confirm and annuler buttons:
+<minimax:tool_call>
+<invoke name="read">
+<parameter name="filePath">/home/ali_r/Samba-fete/templates/event_detail.html
             </form>
         </div>
     </div>
@@ -99,14 +106,14 @@
             <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
         </div>
         <div class="card-body-custom">
-            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
-                <div class="col-md-8">
+            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusFormEnAttente" class="row g-3 align-items-end">
+                <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2">
                         <button type="submit" name="status" value="confirmé" class="btn btn-success">
                             <i class="fas fa-check me-1"></i>Confirmer l'événement
                         </button>
-                        <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
-                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement?')">
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="if(confirm('Êtes-vous sûr de vouloir annuler cet événement?')) { document.getElementById('statusFormEnAttente').submit(); }">
                             <i class="fas fa-times me-1"></i>Annuler
                         </button>
                     </div>
