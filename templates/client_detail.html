@@ -101,7 +101,7 @@
             <div class="payment-timeline">
                 {% for p in all_payments %}
                 <div class="timeline-item {% if p.is_refunded %}refunded{% endif %}">
-                    <div class="timeline-marker {% if p.is_refunded %}refunded{% elif p.payment_type == 'dépôt' %}deposit{% elif p.payment_type == 'solde' %}final{% endif %}"></div>
+                    <div class="timeline-marker {% if p.is_refunded %}refunded{% elif p.payment_type == 'avance' %}deposit{% elif p.payment_type == 'solde' %}final{% endif %}"></div>
                     <div class="timeline-content">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>

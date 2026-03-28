@@ -367,22 +367,6 @@
                         <h5>Total & Avance</h5>
                     </div>
                     <div class="card-body-custom">
-                        <!-- Confirmation Option for New Events -->
-                        {% if not event %}
-                        <div class="mb-3 p-3" style="background: var(--bg); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="confirmEventCheck" onchange="toggleConfirmStatus()">
-                                <label class="form-check-label fw-bold" for="confirmEventCheck">
-                                    <i class="fas fa-check-circle me-1" style="color: var(--success);"></i>
-                                    Confirmer l'événement maintenant
-                                </label>
-                            </div>
-                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
-                                Si coché, l'événement sera confirmé dès la création
-                            </small>
-                        </div>
-                        {% endif %}
-                        
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label-elegant">Montant Total (DA)</label>
@@ -794,27 +778,5 @@ document.getElementById('eventForm').addEventListener('submit', function(e) {
         }
     }
 });
-
-// Toggle confirm status
-function toggleConfirmStatus() {
-    const checkbox = document.getElementById('confirmEventCheck');
-    const statusSelect = document.getElementById('statusSelect');
-    const avanceInput = document.querySelector('.avance-input');
-    
-    if (checkbox && statusSelect) {
-        if (checkbox.checked) {
-            statusSelect.value = 'confirmé';
-            if (avanceInput) {
-                avanceInput.value = Math.max(parseFloat(avanceInput.value) || 0, 1);
-                avanceInput.min = 1;
-            }
-        } else {
-            statusSelect.value = 'en attente';
-            if (avanceInput) {
-                avanceInput.min = 0;
-            }
-        }
-    }
-}
 </script>
 {% endblock %}
