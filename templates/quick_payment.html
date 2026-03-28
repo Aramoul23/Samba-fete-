@@ -181,28 +181,28 @@
                         <div class="d-flex gap-2 flex-wrap">
                             {% if event_financials.remaining > 0 %}
                             <button type="button" class="btn btn-success btn-lg quick-pay-btn" 
-                                    data-amount="{{ event_financials.remaining }}" data-type="solde">
+                                    data-amount="{{ event_financials.remaining }}">
                                 💰 Solde Complet<br>
                                 <small style="font-size: 0.75rem;">{{ event_financials.remaining | format_da }}</small>
                             </button>
                             {% endif %}
                             {% if event_financials.remaining >= 50000 %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="50000" data-type="dépôt">
+                                    data-amount="50000">
                                 💵 50,000 DA
                             </button>
                             {% elif event_financials.remaining > 0 %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="{{ event_financials.remaining }}" data-type="dépôt">
+                                    data-amount="{{ event_financials.remaining }}">
                                 💵 {{ event_financials.remaining | format_da }}
                             </button>
                             {% endif %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="20000" data-type="dépôt">
+                                    data-amount="20000">
                                 💵 20,000 DA
                             </button>
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="30000" data-type="dépôt">
+                                    data-amount="30000">
                                 💵 30,000 DA
                             </button>
                         </div>
@@ -231,11 +231,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Type</label>
-                                <select name="payment_type" id="paymentType" class="form-input-elegant form-control-lg">
-                                    <option value="dépôt">Dépôt</option>
-                                    <option value="solde">Solde</option>
-                                    <option value="avance">Avance</option>
-                                </select>
+                                <input type="text" class="form-input-elegant form-control-lg" id="paymentTypeDisplay" value="Avance" readonly style="background: var(--bg-subtle); cursor: default;">
+                                <input type="hidden" name="payment_type" id="paymentType" value="avance">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label-elegant">Référence</label>
@@ -356,14 +353,35 @@
 {% block scripts %}
 <script>
 // Quick payment buttons
+const remaining = {{ event_financials.remaining if event_financials else 0 }};
+
+function updatePaymentType() {
+    const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const typeInput = document.getElementById('paymentType');
+    const typeDisplay = document.getElementById('paymentTypeDisplay');
+    
+    if (remaining > 0 && amount >= remaining) {
+        typeInput.value = 'solde';
+        typeDisplay.value = 'Solde ✓';
+        typeDisplay.style.color = 'var(--success)';
+    } else if (amount > 0) {
+        typeInput.value = 'avance';
+        typeDisplay.value = 'Avance';
+        typeDisplay.style.color = 'var(--warning)';
+    } else {
+        typeInput.value = 'avance';
+        typeDisplay.value = 'Avance';
+        typeDisplay.style.color = 'var(--text)';
+    }
+}
+
 document.querySelectorAll('.quick-pay-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const amount = this.dataset.amount;
-        const type = this.dataset.type;
         document.getElementById('paymentAmount').value = amount;
-        document.getElementById('paymentType').value = type;
         document.getElementById('paymentAmount').focus();
         document.getElementById('paymentAmount').select();
+        updatePaymentType();
         
         // Highlight selected button
         document.querySelectorAll('.quick-pay-btn').forEach(b => b.classList.remove('active'));
@@ -371,9 +389,10 @@ document.querySelectorAll('.quick-pay-btn').forEach(btn => {
     });
 });
 
-// Auto-focus amount field
+// Auto-detect type when amount changes
 const amountInput = document.getElementById('paymentAmount');
 if (amountInput) {
+    amountInput.addEventListener('input', updatePaymentType);
     amountInput.focus();
 }
 

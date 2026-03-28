@@ -452,7 +452,7 @@
                                 {% if event.total_amount - total_paid > 0 %}
                                 <button type="button" class="btn btn-success btn-lg quick-pay" 
                                         data-amount="{{ event.total_amount - total_paid }}" 
-                                        data-type="solde">
+                                       >
                                     💰 Solde Complet ({{ "%.0f"|format(event.total_amount - total_paid) }} DA)
                                 </button>
                                 {% else %}
@@ -461,29 +461,29 @@
                                 </button>
                                 {% endif %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="20000" data-type="dépôt"
+                                        data-amount="20000"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💵 20,000 DA
                                 </button>
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="30000" data-type="dépôt"
+                                        data-amount="30000"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💵 30,000 DA
                                 </button>
                                 {% if event.total_amount - total_paid >= 50000 %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="50000" data-type="dépôt">
+                                        data-amount="50000">
                                     💳 50,000 DA
                                 </button>
                                 {% elif event.total_amount - total_paid > 0 %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="{{ event.total_amount - total_paid }}" data-type="dépôt">
+                                        data-amount="{{ event.total_amount - total_paid }}">
                                     💳 {{ "%.0f"|format(event.total_amount - total_paid) }} DA
                                 </button>
                                 {% endif %}
                                 {% if event.total_amount - total_paid >= 100000 %}
                                 <button type="button" class="btn btn-outline-info quick-pay" 
-                                        data-amount="100000" data-type="dépôt">
+                                        data-amount="100000">
                                     💳 100,000 DA
                                 </button>
                                 {% endif %}
@@ -510,11 +510,8 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Type</label>
-                                    <select name="payment_type" id="paymentType" class="form-input-elegant">
-                                        <option value="dépôt">Dépôt</option>
-                                        <option value="solde">Solde</option>
-                                        <option value="autre">Autre</option>
-                                    </select>
+                                    <input type="text" class="form-input-elegant" id="paymentTypeDisplay" value="Avance" readonly style="background: var(--bg-subtle); cursor: default;">
+                                    <input type="hidden" name="payment_type" id="paymentType" value="avance">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Référence</label>
@@ -692,7 +689,7 @@
                         <div class="d-grid gap-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             {% if event.total_amount - total_paid > 0 %}
                             <button type="button" class="quick-amount btn btn-success" 
-                                    data-amount="{{ event.total_amount - total_paid }}" data-type="solde"
+                                    data-amount="{{ event.total_amount - total_paid }}"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 700; border-radius: 12px; min-height: 56px;">
                                 💰 Solde<br><small style="font-weight: 400; opacity: 0.9;">{{ "%.0f"|format(event.total_amount - total_paid) }} DA</small>
                             </button>
@@ -703,26 +700,26 @@
                             </button>
                             {% endif %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="20000" data-type="dépôt"
+                                    data-amount="20000"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 20,000 DA
                             </button>
                             {% if event.total_amount - total_paid >= 50000 %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="50000" data-type="dépôt"
+                                    data-amount="50000"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 50,000 DA
                             </button>
                             {% elif event.total_amount - total_paid > 0 %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="{{ event.total_amount - total_paid }}" data-type="dépôt"
+                                    data-amount="{{ event.total_amount - total_paid }}"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 {{ "%.0f"|format(event.total_amount - total_paid) }} DA
                             </button>
                             {% endif %}
                             {% if event.total_amount - total_paid >= 100000 %}
                             <button type="button" class="quick-amount btn btn-outline-info" 
-                                    data-amount="100000" data-type="dépôt"
+                                    data-amount="100000"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 100,000 DA
                             </button>
@@ -772,7 +769,7 @@
                                    style="padding: 12px 14px; border-radius: 10px;">
                         </div>
                     </details>
-                    <input type="hidden" name="payment_type" id="quickPayType" value="dépôt">
+                    <input type="hidden" name="payment_type" id="quickPayType" value="avance">
                 </div>
                 <div class="modal-footer" style="padding: 16px 20px;">
                     <button type="submit" class="btn btn-success btn-lg w-100"
@@ -859,12 +856,27 @@ if (quickPayForm) {
 }
 
 // Quick payment modal - amount buttons
+const eventRemaining = {{ event.total_amount - total_paid }};
+
+function updateEventPaymentType() {
+    const amount = parseFloat(document.getElementById('quickPayAmount').value) || 0;
+    const typeInput = document.getElementById('quickPayType');
+    const typeDisplay = document.getElementById('paymentTypeDisplay');
+    
+    if (eventRemaining > 0 && amount >= eventRemaining) {
+        typeInput.value = 'solde';
+        if (typeDisplay) { typeDisplay.value = 'Solde ✓'; typeDisplay.style.color = 'var(--success)'; }
+    } else if (amount > 0) {
+        typeInput.value = 'avance';
+        if (typeDisplay) { typeDisplay.value = 'Avance'; typeDisplay.style.color = 'var(--warning)'; }
+    }
+}
+
 document.querySelectorAll('#quickPayModal .quick-amount').forEach(btn => {
     btn.addEventListener('click', function() {
         const amount = this.dataset.amount;
-        const type = this.dataset.type;
         document.getElementById('quickPayAmount').value = amount;
-        document.getElementById('quickPayType').value = type;
+        updateEventPaymentType();
         
         // Highlight selected button
         document.querySelectorAll('#quickPayModal .quick-amount').forEach(b => {
@@ -877,6 +889,12 @@ document.querySelectorAll('#quickPayModal .quick-amount').forEach(btn => {
         this.style.background = 'rgba(6,214,160,0.1)';
     });
 });
+
+// Auto-detect type on amount change
+const quickPayAmountInput = document.getElementById('quickPayAmount');
+if (quickPayAmountInput) {
+    quickPayAmountInput.addEventListener('input', updateEventPaymentType);
+}
 
 // Quick payment modal - method buttons
 document.querySelectorAll('#quickPayModal .quick-method').forEach(btn => {
