@@ -155,6 +155,21 @@ DEFAULT_VENUES = [
 app.jinja_env.filters["format_da"] = format_da
 
 
+def date_only(value):
+    """Extract YYYY-MM-DD from a datetime object or string."""
+    if value is None:
+        return "N/A"
+    if isinstance(value, str):
+        return value[:10]
+    try:
+        return value.strftime("%Y-%m-%d")
+    except (AttributeError, TypeError):
+        return str(value)[:10]
+
+
+app.jinja_env.filters["date_only"] = date_only
+
+
 @app.context_processor
 def inject_year():
     """Injecte l'année courante dans les templates Jinja2."""

@@ -78,7 +78,7 @@
                         {% set reste = e.total_amount - (e.total_paid or 0) %}
                         <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=e.id) }}'">
                             <td>
-                                <strong>{{ e.event_date[:10] }}</strong>
+                                <strong>{{ e.event_date|date_only }}</strong>
                             </td>
                             <td style="font-weight: 500;">{{ e.title }}</td>
                             <td>{{ e.client_name }}</td>

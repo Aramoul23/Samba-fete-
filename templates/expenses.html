@@ -46,7 +46,7 @@
                             <select name="event_id" class="form-input-elegant">
                                 <option value="">-- Aucun --</option>
                                 {% for event in recent_events %}
-                                <option value="{{ event.id }}">{{ event.title }} ({{ event.event_date[:10] }})</option>
+                                <option value="{{ event.id }}">{{ event.title }} ({{ event.event_date|date_only }})</option>
                                 {% endfor %}
                             </select>
                         </div>

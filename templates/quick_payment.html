@@ -116,7 +116,7 @@
                         {% set reste = ev.total_amount - ev.total_paid %}
                         <tr {% if selected_event_id == ev.id %}style="background: var(--primary-soft);"{% endif %}>
                             <td style="font-weight: 500;">{{ ev.title }}</td>
-                            <td>{{ ev.event_date[:10] }}</td>
+                            <td>{{ ev.event_date|date_only }}</td>
                             <td>{{ ev.venue_name }}</td>
                             <td class="text-end" style="font-weight: 600;">{{ ev.total_amount | format_da }}</td>
                             <td class="text-end" style="font-weight: 600; color: var(--success);">{{ ev.total_paid | format_da }}</td>
@@ -169,7 +169,7 @@
                         <div class="text-muted">
                             <i class="fas fa-user me-1"></i>{{ selected_event.client_name }}
                             <span class="mx-2">·</span>
-                            <i class="fas fa-calendar me-1"></i>{{ selected_event.event_date[:10] }}
+                            <i class="fas fa-calendar me-1"></i>{{ selected_event.event_date|date_only }}
                             <span class="mx-2">·</span>
                             <i class="fas fa-map-marker-alt me-1"></i>{{ selected_event.venue_name }}
                         </div>
@@ -322,7 +322,7 @@
                                     {% if p.is_refunded %}</del>{% endif %}
                                 </strong>
                                 <small class="text-muted d-block">
-                                    {{ p.payment_date[:10] if p.payment_date else 'N/A' }} · {{ p.method }} · {{ p.payment_type }}
+                                    {{ p.payment_date|date_only }} · {{ p.method }} · {{ p.payment_type }}
                                 </small>
                                 {% if p.is_refunded %}
                                 <span class="badge-status" style="background: var(--danger); font-size: 0.6rem;">Remboursé</span>

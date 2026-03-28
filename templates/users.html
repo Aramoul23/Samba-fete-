@@ -109,7 +109,7 @@
                                         </span>
                                     </td>
                                     <td style="padding: 14px 18px; color: #888; font-size: 0.875rem;">
-                                        {{ (user.created_at|string)[:10] if user.created_at else 'N/A' }}
+                                        {{ user.created_at|date_only }}
                                     </td>
                                     <td style="padding: 14px 18px;">
                                         <div class="d-flex gap-1">
