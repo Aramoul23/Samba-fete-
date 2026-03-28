@@ -559,12 +559,12 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
 .popover { background-color: var(--bg-elevated); border-color: var(--border-light); }
 .popover-header { background-color: var(--bg-subtle); border-color: var(--border-light); color: var(--text); }
 
-/* ─── Mobile Bottom Nav ────────────────────────────── */
+/* ─── MOBILE RESPONSIVE — COMPREHENSIVE FIX ─────────── */
 @media (max-width: 991.98px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
     .sidebar.open + .main-content .sidebar-overlay, .sidebar-overlay.active { display: block; }
-    .main-content { margin-left: 0; padding-bottom: 80px; }
+    .main-content { margin-left: 0; padding-bottom: 90px; }
     .calendar-day { min-height: 80px; padding: 8px; }
     .day-events { display: none; }
     .calendar-day.booked-day::after, .calendar-day.pending-day::after {
@@ -574,23 +574,129 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     .calendar-day.booked-day::after { background: var(--danger); color: var(--danger); }
     .calendar-day.pending-day::after { background: var(--warning); color: var(--warning); }
     .calendar-month-label { font-size: 1.125rem; min-width: auto; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .welcome-banner { padding: 28px 32px; }
-    .welcome-title { font-size: 1.375rem; }
-    .stat-card { padding: 20px; }
-    .stat-icon { width: 48px; height: 48px; }
-}
-@media (max-width: 575.98px) {
-    .stats-grid { grid-template-columns: 1fr; gap: 14px; }
-    .page-content { padding: 20px; }
-    .calendar-grid { gap: 4px; }
-    .calendar-day-header { font-size: 0.625rem; padding: 8px 0; }
-    .day-number { font-size: 0.875rem; }
-    .topbar { padding: 0 20px; }
-    .welcome-banner { padding: 24px; border-radius: var(--radius-xl); }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .stat-card { padding: 18px; }
+    .stat-icon { width: 44px; height: 44px; font-size: 1.1rem; }
+    .stat-value { font-size: 1.35rem; }
+    .welcome-banner { padding: 24px; }
     .welcome-title { font-size: 1.25rem; }
-    .event-header-bar { padding: 24px; border-radius: var(--radius-xl); }
-    .event-title { font-size: 1.25rem; }
+    .page-content { padding: 20px; }
+
+    /* Tables — horizontal scroll with fade indicator */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius-lg);
+        position: relative;
+    }
+    .table-responsive::after {
+        content: '';
+        position: absolute; top: 0; right: 0; bottom: 0; width: 30px;
+        background: linear-gradient(to right, transparent, var(--bg-elevated));
+        pointer-events: none;
+        opacity: 0.8;
+    }
+    .table-elegant { min-width: 700px; }
+    .table-elegant thead th { padding: 12px 14px; font-size: 0.625rem; }
+    .table-elegant tbody td { padding: 12px 14px; font-size: 0.8rem; }
+
+    /* Event detail header — stack on mobile */
+    .event-header-bar { padding: 20px; }
+    .event-title { font-size: 1.15rem; }
+    .event-meta { flex-direction: column; gap: 8px !important; }
+    .event-meta .ms-3 { margin-left: 0 !important; }
+    .event-header-bar .btn { margin-bottom: 6px; margin-right: 0 !important; }
+    .event-header-bar .col-md-4 { text-align: left !important; }
+
+    /* Status change buttons — wrap */
+    .card-body-custom .d-flex.flex-wrap { gap: 8px; }
+    .card-body-custom .d-flex.flex-wrap .btn { flex: 0 0 auto; font-size: 0.8rem; padding: 8px 14px; }
+
+    /* Payment status banner */
+    .card-custom[style*="border-left"] .row { flex-direction: column; }
+    .card-custom[style*="border-left"] .col-md-6 { width: 100%; }
+    .card-custom[style*="border-left"] .text-md-end { text-align: left !important; margin-top: 12px; }
+    .card-custom[style*="border-left"] .btn-lg { width: 100%; }
+
+    /* Financial filter form */
+    .card-body-custom form.row { gap: 8px; }
+    .card-body-custom form.row .col-md-2,
+    .card-body-custom form.row .col-md-3,
+    .card-body-custom form.row .col-md-4,
+    .card-body-custom form.row .col-md-8 {
+        width: 100%; flex: 0 0 100%; max-width: 100%;
+    }
+    .card-body-custom form.row .col-md-2 .btn,
+    .card-body-custom form.row .col-md-3 .btn,
+    .card-body-custom form.row .col-md-4 .btn { width: 100%; }
+    .card-body-custom form.row .col-md-4.text-end { text-align: left !important; }
+    .card-body-custom form.row .col-md-4 .dropdown { display: block; margin-top: 8px; }
+    .card-body-custom form.row .col-md-4 .dropdown .btn { width: 100%; }
+
+    /* Charts — smaller on mobile */
+    .chart-card canvas { max-height: 200px; }
+
+    /* Two-column layouts — stack */
+    .row.g-4 .col-lg-8,
+    .row.g-4 .col-lg-6,
+    .row.g-4 .col-lg-4 { flex: 0 0 100%; max-width: 100%; }
+
+    /* Cards — more spacing */
+    .card-custom { margin-bottom: 16px; }
+    .card-header-custom { padding: 16px 18px; flex-wrap: wrap; gap: 8px; }
+    .card-body-custom { padding: 18px; }
+
+    /* Detail values — better on mobile */
+    .detail-label { font-size: 0.625rem; }
+    .detail-value { font-size: 0.9rem; }
+
+    /* Event list filter — stack */
+    .card-body-custom form.row.g-2 .col-md-4,
+    .card-body-custom form.row.g-2 .col-md-3,
+    .card-body-custom form.row.g-2 .col-md-2,
+    .card-body-custom form.row.g-2 .col-md-1 {
+        width: 100%; flex: 0 0 100%; max-width: 100%;
+    }
+    .card-body-custom form.row.g-2 .btn { width: 100%; margin-top: 4px; }
+
+    /* Payment history table columns */
+    .payment-history-table .hide-mobile { display: none; }
+}
+
+@media (max-width: 575.98px) {
+    .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+    .stat-card-gradient { padding: 16px; border-radius: 14px; }
+    .stat-card-number { font-size: 22px; }
+    .stat-card-label { font-size: 11px; }
+    .stat-icon-circle { width: 36px; height: 36px; font-size: 16px; }
+    .page-content { padding: 16px; padding-bottom: 90px; }
+    .calendar-grid { gap: 3px; }
+    .calendar-day-header { font-size: 0.55rem; padding: 6px 0; }
+    .day-number { font-size: 0.8rem; }
+    .topbar { padding: 0 16px; height: 56px; }
+    .topbar-title { font-size: 0.95rem; }
+    .welcome-banner { padding: 20px; border-radius: var(--radius-lg); }
+    .welcome-title { font-size: 1.1rem; }
+    .welcome-subtitle { font-size: 0.8rem; }
+    .event-header-bar { padding: 16px; border-radius: var(--radius-lg); }
+    .event-title { font-size: 1rem; }
+    .event-meta { font-size: 0.8rem; }
+    .btn-lg { padding: 10px 18px; font-size: 0.85rem; }
+    .card-custom { border-radius: var(--radius-md); }
+    .card-header-custom h5 { font-size: 0.85rem; }
+    .card-body-custom { padding: 14px; }
+
+    /* Tables — more compact */
+    .table-elegant { min-width: 600px; }
+    .table-elegant thead th { padding: 10px 10px; font-size: 0.6rem; }
+    .table-elegant tbody td { padding: 10px 10px; font-size: 0.75rem; }
+    .badge-status { font-size: 0.65rem; padding: 3px 8px; }
+
+    /* Financial stat cards */
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-value { font-size: 1.1rem !important; }
+    .stat-label { font-size: 0.7rem; }
+    .stat-icon { width: 38px; height: 38px; font-size: 0.95rem; }
 }
 
 /* ─── Print ────────────────────────────────────────── */

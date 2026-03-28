@@ -64,13 +64,13 @@
                         <tr>
                             <th>Date</th>
                             <th>Événement</th>
-                            <th>Client</th>
-                            <th>Lieu</th>
-                            <th class="text-end">Total</th>
+                            <th class="d-none d-md-table-cell">Client</th>
+                            <th class="d-none d-lg-table-cell">Lieu</th>
+                            <th class="text-end d-none d-md-table-cell">Total</th>
                             <th class="text-end">Payé</th>
                             <th class="text-end">Reste</th>
                             <th>Statut</th>
-                            <th class="text-center">Action</th>
+                            <th class="text-center d-none d-md-table-cell">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -81,9 +81,9 @@
                                 <strong>{{ e.event_date|date_only }}</strong>
                             </td>
                             <td style="font-weight: 500;">{{ e.title }}</td>
-                            <td>{{ e.client_name }}</td>
-                            <td>{{ e.venue_name }}</td>
-                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 600;">{{ e.total_amount | format_da }}</td>
+                            <td class="d-none d-md-table-cell">{{ e.client_name }}</td>
+                            <td class="d-none d-lg-table-cell">{{ e.venue_name }}</td>
+                            <td class="text-end d-none d-md-table-cell" style="font-variant-numeric: tabular-nums; font-weight: 600;">{{ e.total_amount | format_da }}</td>
                             <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 600; color: var(--success);">{{ (e.total_paid or 0) | format_da }}</td>
                             <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 700; color: {% if reste > 0 %}var(--danger){% else %}var(--success){% endif %};">
                                 {{ reste | format_da }}
@@ -93,7 +93,7 @@
                                     {{ e.status }}
                                 </span>
                             </td>
-                            <td class="text-center" onclick="event.stopPropagation()">
+                            <td class="text-center d-none d-md-table-cell" onclick="event.stopPropagation()">
                                 {% if reste > 0 %}
                                 <a href="{{ url_for('event_detail', event_id=e.id) }}#paymentSection" class="btn btn-success btn-sm">
                                     <i class="fas fa-hand-holding-usd me-1"></i>Encaisser

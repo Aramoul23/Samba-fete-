@@ -185,11 +185,11 @@
                         <tr>
                             <th>Date</th>
                             <th>Événement</th>
-                            <th>Client</th>
+                            <th class="d-none d-md-table-cell">Client</th>
                             <th class="text-end">Montant</th>
-                            <th>Méthode</th>
-                            <th>Type</th>
-                            <th>Référence</th>
+                            <th class="d-none d-md-table-cell">Méthode</th>
+                            <th class="d-none d-lg-table-cell">Type</th>
+                            <th class="d-none d-lg-table-cell">Référence</th>
                             <th>Statut</th>
                         </tr>
                     </thead>
@@ -202,17 +202,17 @@
                                     {{ p.title }}
                                 </a>
                             </td>
-                            <td>{{ p.client_name }}</td>
+                            <td class="d-none d-md-table-cell">{{ p.client_name }}</td>
                             <td class="text-end" style="font-weight: 600; font-variant-numeric: tabular-nums;">
                                 {% if p.is_refunded %}<del>{% endif %}
                                 {{ p.amount | format_da }}
                                 {% if p.is_refunded %}</del>{% endif %}
                             </td>
-                            <td>{{ p.method }}</td>
-                            <td>
+                            <td class="d-none d-md-table-cell">{{ p.method }}</td>
+                            <td class="d-none d-lg-table-cell">
                                 <span class="badge-slot">{{ p.payment_type }}</span>
                             </td>
-                            <td>{{ p.reference or '—' }}</td>
+                            <td class="d-none d-lg-table-cell">{{ p.reference or '—' }}</td>
                             <td>
                                 {% if p.is_refunded %}
                                 <span class="badge-status" style="background: var(--danger);">
@@ -249,14 +249,14 @@
                         <tr>
                             <th>Date</th>
                             <th>Événement</th>
-                            <th>Client</th>
-                            <th>Type</th>
+                            <th class="d-none d-md-table-cell">Client</th>
+                            <th class="d-none d-lg-table-cell">Type</th>
                             <th class="text-end">Revenus</th>
-                            <th class="text-end">Coûts</th>
+                            <th class="text-end d-none d-md-table-cell">Coûts</th>
                             <th class="text-end">Bénéfice</th>
-                            <th class="text-end">Payé</th>
+                            <th class="text-end d-none d-lg-table-cell">Payé</th>
                             <th class="text-end">Reste</th>
-                            <th>Statut</th>
+                            <th class="d-none d-md-table-cell">Statut</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -264,18 +264,18 @@
                         <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ef.id) }}'">
                             <td><strong>{{ ef.event_date|date_only }}</strong></td>
                             <td style="font-weight: 500;">{{ ef.title }}</td>
-                            <td>{{ ef.client_name }}</td>
-                            <td>{{ ef.event_type }}</td>
+                            <td class="d-none d-md-table-cell">{{ ef.client_name }}</td>
+                            <td class="d-none d-lg-table-cell">{{ ef.event_type }}</td>
                             <td class="text-end text-success">{{ ef.total_revenue | format_da }}</td>
-                            <td class="text-end text-danger">{{ ef.total_costs | format_da }}</td>
+                            <td class="text-end text-danger d-none d-md-table-cell">{{ ef.total_costs | format_da }}</td>
                             <td class="text-end" style="font-weight: 700; {% if ef.profit > 0 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
                                 {{ ef.profit | format_da }}
                             </td>
-                            <td class="text-end">{{ ef.total_paid | format_da }}</td>
+                            <td class="text-end d-none d-lg-table-cell">{{ ef.total_paid | format_da }}</td>
                             <td class="text-end {% if ef.remaining > 0 %}text-danger{% endif %}">
                                 {{ ef.remaining | format_da }}
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <span class="badge-status status-{{ ef.status | replace(' ', '-') }}">
                                     {{ ef.status }}
                                 </span>

@@ -141,8 +141,8 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Événement</th>
-                                    <th>Client</th>
-                                    <th>Lieu</th>
+                                    <th class="d-none d-md-table-cell">Client</th>
+                                    <th class="d-none d-lg-table-cell">Lieu</th>
                                     <th>Statut</th>
                                     <th class="text-end">Payé</th>
                                 </tr>
@@ -152,8 +152,8 @@
                                 <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ev.id) }}'">
                                     <td><strong>{{ ev.event_date|date_only }}</strong></td>
                                     <td style="font-weight: 500;">{{ ev.title }}</td>
-                                    <td>{{ ev.client_name }}</td>
-                                    <td>{{ ev.venue_name }}</td>
+                                    <td class="d-none d-md-table-cell">{{ ev.client_name }}</td>
+                                    <td class="d-none d-lg-table-cell">{{ ev.venue_name }}</td>
                                     <td>
                                         <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
                                             {{ ev.status }}
