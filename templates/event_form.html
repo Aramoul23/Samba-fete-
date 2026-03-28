@@ -706,29 +706,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── Status Change Handler ──────────────────────────────
 function handleStatusChange() {
+    // No minimum validation anymore - any avance amount is allowed
     const statusSelect = document.getElementById('statusSelect');
     const depositInput = document.querySelector('input[name="deposit_required"]');
-    const depositHelp = document.getElementById('depositHelp');
     
     if (!statusSelect || !depositInput) return;
     
-    const isConfirmed = statusSelect.value === 'confirmé';
-    
-    if (isConfirmed) {
-        depositInput.value = Math.max(parseFloat(depositInput.value) || 0, 20000);
-        depositInput.min = 20000;
-        depositInput.placeholder = "Minimum 20,000 DA";
-        if (depositHelp) depositHelp.style.display = 'block';
-    } else {
-        depositInput.min = 0;
-        depositInput.placeholder = "0 si non confirmé";
-        if (depositHelp) depositHelp.style.display = 'none';
-    }
+    // Just ensure minimum is 0 (no minimum required)
+    depositInput.min = 0;
+    depositInput.placeholder = "0";
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     handleStatusChange();
+});
+
+// Form validation: Avance cannot exceed Total
+document.getElementById('eventForm').addEventListener('submit', function(e) {
+    const totalInput = document.getElementById('totalAmountInput');
+    const avanceInput = document.querySelector('input[name="deposit_required"]');
+    
+    if (totalInput && avanceInput) {
+        const total = parseFloat(totalInput.value) || 0;
+        const avance = parseFloat(avanceInput.value) || 0;
+        
+        if (avance > total) {
+            e.preventDefault();
+            alert('⚠️ L\'avance (' + avance.toLocaleString() + ' DA) ne peut pas dépasser le montant total (' + total.toLocaleString() + ' DA)');
+            return false;
+        }
+    }
 });
 </script>
 {% endblock %}

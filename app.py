@@ -847,6 +847,14 @@ def event_form(event_id=None):
             )
             event_id = cur.lastrowid
 
+        # Auto-create payment record if avance (deposit_required) > 0
+        if deposit_required and deposit_required > 0:
+            db.execute(
+                "INSERT INTO payments (event_id, amount, payment_type, method, payment_date) VALUES (?, ?, 'avance', 'espèces', ?)",
+                (event_id, deposit_required, now_str),
+            )
+            logger.info("Auto-created avance payment of %s for event %s", deposit_required, event_id)
+
         # Insert service lines
         if price_location > 0:
             db.execute(

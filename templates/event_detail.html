@@ -70,7 +70,7 @@
     </div>
     {% endif %}
 
-    <!-- Status Change Buttons (Only for confirmed events: can cancel) -->
+    <!-- Status Change Buttons -->
     {% if event.status == 'confirmé' %}
     <div class="card-custom mb-4" style="border-left: 4px solid var(--success);">
         <div class="card-header-custom">
@@ -80,6 +80,9 @@
             <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
                 <div class="col-md-8">
                     <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-warning" onclick="showDateChangeModal()" style="background: var(--warning); color: #2d3436; border: none;">
+                            <i class="fas fa-calendar-alt me-1"></i>Changer de date
+                        </button>
                         <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
                                 onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement? Cette action est irréversible.')">
                             <i class="fas fa-times me-1"></i>Annuler l'événement
