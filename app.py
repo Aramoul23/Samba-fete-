@@ -346,17 +346,21 @@ def logout():
 @app.route("/reset-admin/<secret>", methods=["GET"])
 def reset_admin_password(secret):
     """One-time admin password reset. Use the secret from ADMIN_RESET_SECRET env var."""
-    reset_secret = os.environ.get("ADMIN_RESET_SECRET", "samba-reset-2026")
-    if secret != reset_secret:
-        flash("Invalid reset secret", "danger")
-        return redirect(url_for("login"))
+    try:
+        reset_secret = os.environ.get("ADMIN_RESET_SECRET", "samba-reset-2026")
+        if secret != reset_secret:
+            flash("Invalid reset secret", "danger")
+            return redirect(url_for("login"))
 
-    db = get_db_connection()
-    admin_hash = generate_password_hash("Ramsys2020$")
-    db.execute("UPDATE users SET password_hash=? WHERE username='admin'", (admin_hash,))
-    db.commit()
-    logger.warning("Admin password has been reset via reset route")
-    flash("Admin password reset to Ramsys2020$. Change it after login!", "success")
+        db = get_db_connection()
+        admin_hash = generate_password_hash("Ramsys2020$")
+        db.execute("UPDATE users SET password_hash=? WHERE username='admin'", (admin_hash,))
+        db.commit()
+        logger.warning("Admin password has been reset via reset route")
+        flash("Admin password reset to Ramsys2020$. Change it after login!", "success")
+    except Exception as e:
+        logger.error("Password reset failed: %s", str(e))
+        flash(f"Reset failed: {str(e)}", "danger")
     return redirect(url_for("login"))
 
 
