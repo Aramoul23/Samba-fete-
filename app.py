@@ -957,7 +957,7 @@ def event_detail(event_id):
     ).fetchone()["s"]
 
     deposit = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_type='acompte' AND is_refunded=0",
+        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND payment_type='dépôt' AND is_refunded=0",
         (event_id,),
     ).fetchone()["s"]
 
@@ -1035,7 +1035,7 @@ def add_payment(event_id):
         data = request.form
         amount = data.get("amount", 0, type=float)
         method = data.get("method", "espèces")
-        payment_type = data.get("payment_type", "acompte").lower()
+        payment_type = data.get("payment_type", "dépôt").lower()
         reference = data.get("reference", "").strip()
         notes = data.get("notes", "").strip()
 

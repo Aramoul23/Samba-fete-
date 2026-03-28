@@ -219,9 +219,8 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
     <div class="section-title">Conditions Financières</div>
     <div class="financial-grid">
         <div class="financial-box total"><div class="fin-label">Total</div><div class="fin-value">{format_da(event.get("total_amount", 0))}</div></div>
-        <div class="financial-box paid"><div class="fin-label">Acompte Payé</div><div class="fin-value">{format_da(total_paid)}</div></div>
+        <div class="financial-box paid"><div class="fin-label">Dépôt Payé</div><div class="fin-value">{format_da(total_paid)}</div></div>
         <div class="financial-box {"due" if remaining > 0 else "paid"}"><div class="fin-label">Reste à Payer</div><div class="fin-value">{format_da(remaining)}</div></div>
-        <div class="financial-box"><div class="fin-label">Caution</div><div class="fin-value">{format_da(event.get("deposit_required", 0))}</div></div>
     </div>
 </div>
 <div class="terms-section">
@@ -238,7 +237,7 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 </div>
 <div class="cancel-box">
     <strong>Politique d'Annulation</strong>
-    L'acompte versé est non remboursable en cas d'annulation. Toute modification de date doit être effectuée au moins 15 jours avant l'événement, sous réserve de disponibilité.
+    L'dépôt versé est non remboursable en cas d'annulation. Toute modification de date doit être effectuée au moins 15 jours avant l'événement, sous réserve de disponibilité.
 </div>
 <div class="signatures">
     <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Le Prestataire</div><div class="sig-name">{COMPANY_NAME}</div></div>

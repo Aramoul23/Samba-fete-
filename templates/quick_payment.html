@@ -188,21 +188,21 @@
                             {% endif %}
                             {% if event_financials.remaining >= 50000 %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="50000" data-type="acompte">
+                                    data-amount="50000" data-type="dépôt">
                                 💵 50,000 DA
                             </button>
                             {% elif event_financials.remaining > 0 %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="{{ event_financials.remaining }}" data-type="acompte">
+                                    data-amount="{{ event_financials.remaining }}" data-type="dépôt">
                                 💵 {{ event_financials.remaining | format_da }}
                             </button>
                             {% endif %}
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="20000" data-type="acompte">
+                                    data-amount="20000" data-type="dépôt">
                                 💵 20,000 DA
                             </button>
                             <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
-                                    data-amount="30000" data-type="acompte">
+                                    data-amount="30000" data-type="dépôt">
                                 💵 30,000 DA
                             </button>
                         </div>
@@ -232,7 +232,7 @@
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Type</label>
                                 <select name="payment_type" id="paymentType" class="form-input-elegant form-control-lg">
-                                    <option value="acompte">Acompte</option>
+                                    <option value="dépôt">Dépôt</option>
                                     <option value="solde">Solde</option>
                                     <option value="avance">Avance</option>
                                 </select>

@@ -404,8 +404,8 @@
                                     </td>
                                     <td>{{ p.method }}</td>
                                     <td>
-                                        {% if p.payment_type == 'acompte' %}
-                                        <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Acompte</span>
+                                        {% if p.payment_type == 'dépôt' %}
+                                        <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Dépôt</span>
                                         {% elif p.payment_type == 'solde' %}
                                         <span class="badge-slot" style="background: var(--info-soft); color: var(--primary-dark);">Solde</span>
                                         {% else %}
@@ -465,29 +465,29 @@
                                 </button>
                                 {% endif %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="20000" data-type="acompte"
+                                        data-amount="20000" data-type="dépôt"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💵 20,000 DA
                                 </button>
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="30000" data-type="acompte"
+                                        data-amount="30000" data-type="dépôt"
                                         {% if total_paid >= event.total_amount %}disabled{% endif %}>
                                     💵 30,000 DA
                                 </button>
                                 {% if event.total_amount - total_paid >= 50000 %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="50000" data-type="acompte">
+                                        data-amount="50000" data-type="dépôt">
                                     💳 50,000 DA
                                 </button>
                                 {% elif event.total_amount - total_paid > 0 %}
                                 <button type="button" class="btn btn-outline-primary quick-pay" 
-                                        data-amount="{{ event.total_amount - total_paid }}" data-type="acompte">
+                                        data-amount="{{ event.total_amount - total_paid }}" data-type="dépôt">
                                     💳 {{ "%.0f"|format(event.total_amount - total_paid) }} DA
                                 </button>
                                 {% endif %}
                                 {% if event.total_amount - total_paid >= 100000 %}
                                 <button type="button" class="btn btn-outline-info quick-pay" 
-                                        data-amount="100000" data-type="acompte">
+                                        data-amount="100000" data-type="dépôt">
                                     💳 100,000 DA
                                 </button>
                                 {% endif %}
@@ -515,7 +515,7 @@
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Type</label>
                                     <select name="payment_type" id="paymentType" class="form-input-elegant">
-                                        <option value="acompte">Acompte</option>
+                                        <option value="dépôt">Dépôt</option>
                                         <option value="solde">Solde</option>
                                         <option value="autre">Autre</option>
                                     </select>
@@ -582,7 +582,7 @@
                             <strong style="font-variant-numeric: tabular-nums;">{{ event.total_amount | format_da }}</strong>
                         </div>
                         <div class="summary-row">
-                            <span>Acompte Requis</span>
+                            <span>Dépôt Requis</span>
                             <strong style="font-variant-numeric: tabular-nums;">{{ event.deposit_required | format_da }}</strong>
                         </div>
                         <hr style="border-color: var(--border-light); margin: 10px 0;">
@@ -651,12 +651,12 @@
                         <!-- Deposit Check -->
                         {% if deposit >= event.deposit_required %}
                         <div class="alert alert-success mt-4 mb-0" style="font-size: 0.8125rem;">
-                            <i class="fas fa-check-circle me-1"></i> Acompte validé
+                            <i class="fas fa-check-circle me-1"></i> Dépôt validé
                         </div>
                         {% else %}
                         <div class="alert alert-warning mt-4 mb-0" style="font-size: 0.8125rem;">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Acompte insuffisant ({{ deposit | format_da }} / {{ event.deposit_required | format_da }})
+                            Dépôt insuffisant ({{ deposit | format_da }} / {{ event.deposit_required | format_da }})
                         </div>
                         {% endif %}
                     </div>
@@ -707,26 +707,26 @@
                             </button>
                             {% endif %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="20000" data-type="acompte"
+                                    data-amount="20000" data-type="dépôt"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 20,000 DA
                             </button>
                             {% if event.total_amount - total_paid >= 50000 %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="50000" data-type="acompte"
+                                    data-amount="50000" data-type="dépôt"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 50,000 DA
                             </button>
                             {% elif event.total_amount - total_paid > 0 %}
                             <button type="button" class="quick-amount btn btn-outline-primary" 
-                                    data-amount="{{ event.total_amount - total_paid }}" data-type="acompte"
+                                    data-amount="{{ event.total_amount - total_paid }}" data-type="dépôt"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 {{ "%.0f"|format(event.total_amount - total_paid) }} DA
                             </button>
                             {% endif %}
                             {% if event.total_amount - total_paid >= 100000 %}
                             <button type="button" class="quick-amount btn btn-outline-info" 
-                                    data-amount="100000" data-type="acompte"
+                                    data-amount="100000" data-type="dépôt"
                                     style="padding: 16px 12px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; min-height: 56px;">
                                 100,000 DA
                             </button>
@@ -776,7 +776,7 @@
                                    style="padding: 12px 14px; border-radius: 10px;">
                         </div>
                     </details>
-                    <input type="hidden" name="payment_type" id="quickPayType" value="acompte">
+                    <input type="hidden" name="payment_type" id="quickPayType" value="dépôt">
                 </div>
                 <div class="modal-footer" style="padding: 16px 20px;">
                     <button type="submit" class="btn btn-success btn-lg w-100"
