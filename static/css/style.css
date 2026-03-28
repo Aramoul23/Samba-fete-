@@ -1246,3 +1246,77 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
 #linesContainer::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
+
+/* ═══════════════════════════════════════════════════════
+   Event Detail - Fix overlapping elements
+   ═══════════════════════════════════════════════════════ */
+.event-header-bar {
+    position: relative;
+    z-index: 10;
+    background: var(--bg-elevated);
+    padding: 16px;
+    border-radius: var(--radius-lg);
+}
+
+.event-header-bar .d-flex.gap-2 {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+    .event-header-bar .d-flex.gap-2 {
+        position: relative;
+        z-index: 5;
+    }
+    .event-header-bar .d-flex.gap-2 .btn {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 100px;
+    }
+}
+
+/* Make action buttons always visible */
+.card-custom {
+    position: relative;
+    z-index: 1;
+}
+
+.card-custom:has(.btn-success):has(.btn-outline-gold) {
+    z-index: 2;
+}
+
+/* Ensure payment buttons aren't covered */
+.quick-pay-btn-container {
+    position: sticky;
+    bottom: 80px;
+    z-index: 50;
+}
+
+/* Fix for financial sidebar overlap */
+@media (min-width: 992px) {
+    .event-detail-sidebar {
+        position: sticky;
+        top: 80px;
+        z-index: 50;
+    }
+    
+    .event-detail-main {
+        z-index: 1;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .event-detail-sidebar {
+        margin-top: 16px;
+    }
+}
+
+/* Sticky top action bar */
+.sticky-action-bar {
+    position: sticky;
+    top: 60px;
+    z-index: 100;
+    background: var(--bg-elevated);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-md);
+}

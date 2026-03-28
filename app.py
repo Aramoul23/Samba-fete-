@@ -1190,7 +1190,7 @@ def update_event_status(event_id):
         
         # Validate status transitions
         allowed_transitions = {
-            "confirmé": ["annulé"],
+            "confirmé": ["annulé", "changé de date"],
             "en attente": ["confirmé", "annulé"],
             "annulé": [],
             "terminé": [],
@@ -1198,13 +1198,20 @@ def update_event_status(event_id):
         }
         
         # Allow transition if current status is in allowed transitions for new status
-        # OR if this is a new event (no current status)
         if current_status not in allowed_transitions:
-            # If current status is not recognized, allow transition
             pass
         elif new_status not in allowed_transitions.get(current_status, []):
             flash(f"⚠️ Transition non autorisée: Impossible de passer de '{current_status}' à '{new_status}'. Veuillez contacter l'administrateur.", "danger")
             return redirect(url_for("event_detail", event_id=event_id))
+        
+        # Special validation: en attente -> confirmé requires deposit >= 20000
+        if current_status == "en attente" and new_status == "confirmé":
+            event_for_deposit = db.execute("SELECT deposit_required, total_amount FROM events WHERE id = ?", (event_id,)).fetchone()
+            if event_for_deposit:
+                deposit = float(event_for_deposit["deposit_required"] or 0)
+                if deposit < 20000:
+                    flash(f"⚠️ Le dépôt doit être au minimum 20,000 DA pour confirmer l'événement. Dépôt actuel: {deposit} DA", "danger")
+                    return redirect(url_for("event_detail", event_id=event_id))
 
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
