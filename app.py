@@ -167,7 +167,20 @@ def date_only(value):
         return str(value)[:10]
 
 
+def datetime_display(value):
+    """Format datetime for display: YYYY-MM-DD à HH:MM."""
+    if value is None:
+        return "N/A"
+    if isinstance(value, str):
+        return value[:16].replace(" ", " à ")
+    try:
+        return value.strftime("%Y-%m-%d à %H:%M")
+    except (AttributeError, TypeError):
+        return str(value)[:16]
+
+
 app.jinja_env.filters["date_only"] = date_only
+app.jinja_env.filters["datetime_display"] = datetime_display
 
 
 @app.context_processor
