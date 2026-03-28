@@ -656,7 +656,14 @@ function availCalNext() {
 }
 
 document.querySelector('input[name="event_date"]').addEventListener('change', function() {
-    const parts = this.value.split('-');
+    updateAvailCalendarFromInput(this.value);
+});
+document.querySelector('input[name="event_date"]').addEventListener('input', function() {
+    updateAvailCalendarFromInput(this.value);
+});
+
+function updateAvailCalendarFromInput(val) {
+    const parts = val.split('-');
     if (parts.length === 3) {
         const y = parseInt(parts[0]);
         const m = parseInt(parts[1]);
@@ -668,7 +675,7 @@ document.querySelector('input[name="event_date"]').addEventListener('change', fu
             renderAvailCalendar();
         }
     }
-});
+}
 
 loadAvailCalendar();
 
