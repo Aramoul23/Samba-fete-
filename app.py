@@ -739,15 +739,16 @@ def event_form(event_id=None):
         if not venue_id:
             errors.append("Le lieu est requis")
 
-        # Check date conflict — no double booking
-        if event_date and venue_id:
+        # Check date conflict — no double booking on same date (any venue)
+        if event_date:
             conflict = db.execute(
-                "SELECT id, title FROM events WHERE event_date = ? AND venue_id = ? "
-                "AND status IN ('confirmé', 'en attente') AND id != ?",
-                (event_date, venue_id, event_id or 0)
+                "SELECT id, title, v.name as venue_name FROM events e "
+                "JOIN venues v ON e.venue_id = v.id "
+                "WHERE e.event_date = ? AND e.status IN ('confirmé', 'en attente') AND e.id != ?",
+                (event_date, event_id or 0)
             ).fetchone()
             if conflict:
-                errors.append(f"⛔ Date déjà réservée! '{conflict['title']}' est déjà prévu le {event_date} dans ce lieu.")
+                errors.append(f"⛔ Date déjà réservée! '{conflict['title']}' est déjà prévu le {event_date} ({conflict['venue_name']}).")
 
         if errors:
             for e in errors:
