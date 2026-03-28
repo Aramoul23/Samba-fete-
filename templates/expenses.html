@@ -208,10 +208,10 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Catégorie</th>
-                                    <th>Description</th>
+                                    <th class="d-none d-md-table-cell">Description</th>
                                     <th class="text-end">Montant</th>
-                                    <th>Événement</th>
-                                    <th>Méthode</th>
+                                    <th class="d-none d-lg-table-cell">Événement</th>
+                                    <th class="d-none d-md-table-cell">Méthode</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -224,11 +224,11 @@
                                             {{ expense.category }}
                                         </span>
                                     </td>
-                                    <td>{{ expense.description or '—' }}</td>
+                                    <td class="d-none d-md-table-cell">{{ expense.description or '—' }}</td>
                                     <td class="text-end" style="font-weight: 600; color: var(--danger); font-variant-numeric: tabular-nums;">
                                         {{ expense.amount | format_da }}
                                     </td>
-                                    <td>
+                                    <td class="d-none d-lg-table-cell">
                                         {% if expense.event_id %}
                                         <a href="{{ url_for('event_detail', event_id=expense.event_id) }}" class="text-decoration-none">
                                             {{ expense.event_title or 'Événement #' ~ expense.event_id }}
@@ -237,7 +237,7 @@
                                         —
                                         {% endif %}
                                     </td>
-                                    <td>{{ expense.method }}</td>
+                                    <td class="d-none d-md-table-cell">{{ expense.method }}</td>
                                     <td class="text-center">
                                         <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">

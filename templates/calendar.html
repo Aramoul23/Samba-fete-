@@ -22,8 +22,8 @@
             </div>
 
             <!-- Venue Filter -->
-            <div class="d-flex align-items-center gap-3">
-                <select class="form-input-elegant" style="width: auto; min-width: 180px;" onchange="filterVenue(this.value)">
+            <div class="d-flex align-items-center gap-3" style="flex: 1; min-width: 0;">
+                <select class="form-input-elegant" style="width: 100%; max-width: 200px;" onchange="filterVenue(this.value)">
                     <option value="" {% if not venue_filter %}selected{% endif %}>Tous les lieux</option>
                     {% for v in venues %}
                     <option value="{{ v.id }}" {% if venue_filter == v.id %}selected{% endif %}>{{ v.name }}</option>
