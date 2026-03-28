@@ -450,30 +450,31 @@
                     </div>
                 </div>
 
-                <!-- Section: Acompte -->
+                <!-- Section: Dépôt & Montant -->
                 <div class="card-custom mb-4 sticky-sidebar">
                     <div class="section-header">
                         <i class="fas fa-money-bill-wave"></i>
-                        <h5>Acompte</h5>
+                        <h5>Dépôt & Montant</h5>
                     </div>
                     <div class="card-body-custom">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label-elegant">Montant Total (DA)</label>
+                                <label class="form-label-elegant">Montant Total (DA) *</label>
                                 <div class="input-group">
                                     <input type="number" name="total_amount" id="totalAmountInput"
-                                           class="form-input-elegant"
-                                           value="{{ event.total_amount if event else 0 }}" step="100">
+                                           class="form-input-elegant" required
+                                           value="{{ event.total_amount if event else 0 }}" step="100" min="0">
                                     <span class="input-group-text">DA</span>
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label-elegant">Acompte requis (min. 20,000 DA)</label>
+                                <label class="form-label-elegant">Dépôt requis (confirme l'événement)</label>
                                 <div class="input-group">
                                     <input type="number" name="deposit_required" class="form-input-elegant"
-                                           value="{{ event.deposit_required if event else 20000 }}" step="100" min="20000">
+                                           value="{{ event.deposit_required if event else 20000 }}" step="100" min="0">
                                     <span class="input-group-text">DA</span>
                                 </div>
+                                <small style="color: var(--text-tertiary); font-size: 0.7rem;">Le dépôt confirme l'événement automatiquement</small>
                             </div>
                         </div>
                     </div>

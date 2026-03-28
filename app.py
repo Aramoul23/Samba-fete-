@@ -1069,8 +1069,17 @@ def add_payment(event_id):
             (event_id, amount, method, payment_type, reference, notes),
         )
 
-        # Check if now fully paid → auto-update status
+        # Check if deposit paid → auto-confirm event
         new_total_paid = float(total_paid) + amount
+        deposit_required = float(event.get("deposit_required", 0) or 0)
+        
+        if event["status"] == "en attente" and deposit_required > 0 and new_total_paid >= deposit_required:
+            db.execute(
+                "UPDATE events SET status='confirmé' WHERE id=?", (event_id,)
+            )
+            logger.info("Event %d auto-confirmed (deposit paid: %.2f >= %.2f)", event_id, new_total_paid, deposit_required)
+        
+        # Also confirm if fully paid
         if new_total_paid >= float(event["total_amount"]):
             if event["status"] == "en attente":
                 db.execute(
@@ -1083,6 +1092,9 @@ def add_payment(event_id):
 
         if new_total_paid >= float(event["total_amount"]):
             flash("Paiement enregistré — événement soldé! ✓", "success")
+        elif deposit_required > 0 and new_total_paid >= deposit_required and event["status"] == "en attente":
+            reste = float(event["total_amount"]) - new_total_paid
+            flash(f"Dépôt enregistré — événement confirmé! ✓ Reste: {reste:,.0f} DA", "success")
         else:
             reste = float(event["total_amount"]) - new_total_paid
             flash(f"Paiement enregistré! Reste: {reste:,.0f} DA", "success")
