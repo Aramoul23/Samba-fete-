@@ -403,10 +403,22 @@ if (amountInput) {
 const form = document.getElementById('quickPaymentForm');
 if (form) {
     form.addEventListener('submit', function(e) {
-        const val = parseFloat(document.getElementById('paymentAmount').value) || 0;
-        if (val <= 0) {
+        const amtInput = document.getElementById('paymentAmount');
+        if (!amtInput) {
             e.preventDefault();
-            alert('Le montant doit être supérieur à 0');
+            alert(' Champ de montant introuvable');
+            return;
+        }
+        
+        // Clean the value - remove any non-numeric chars except decimal point
+        let valStr = amtInput.value.toString().replace(/[^\d.]/g, '');
+        const val = parseFloat(valStr) || 0;
+        
+        console.log('Submitting payment - amount:', val, 'remaining:', remaining);
+        
+        if (isNaN(val) || val <= 0) {
+            e.preventDefault();
+            alert('Veuillez entrer un montant valide supérieur à 0');
             return;
         }
         if (val > remaining) {

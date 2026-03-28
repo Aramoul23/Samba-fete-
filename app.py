@@ -1922,42 +1922,47 @@ def accounting():
 @login_required
 def generate_contract(event_id):
     """Génère le PDF du contrat pour un événement."""
-    db = get_db_connection()
-    event = db.execute(
-        "SELECT e.*, c.name as client_name, c.phone, c.phone2, c.email, c.address, "
-        "v.name as venue_name, v.capacity_men, v.capacity_women, "
-        "v2.name as venue2_name FROM events e "
-        "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
-        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
-        "WHERE e.id=?",
-        (event_id,),
-    ).fetchone()
+    try:
+        db = get_db_connection()
+        event = db.execute(
+            "SELECT e.*, c.name as client_name, c.phone, c.phone2, c.email, c.address, "
+            "v.name as venue_name, v.capacity_men, v.capacity_women, "
+            "v2.name as venue2_name FROM events e "
+            "JOIN clients c ON e.client_id=c.id JOIN venues v ON e.venue_id=v.id "
+            "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
+            "WHERE e.id=?",
+            (event_id,),
+        ).fetchone()
 
-    if not event:
-        flash("Événement introuvable", "danger")
-        return redirect(url_for("index"))
+        if not event:
+            flash("Événement introuvable", "danger")
+            return redirect(url_for("index"))
 
-    payments = db.execute(
-        "SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY payment_date DESC",
-        (event_id,),
-    ).fetchall()
-    total_paid = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
-        (event_id,),
-    ).fetchone()["s"]
-    event_lines = db.execute(
-        "SELECT * FROM event_lines WHERE event_id=?", (event_id,)
-    ).fetchall()
+        payments = db.execute(
+            "SELECT * FROM payments WHERE event_id=? AND is_refunded=0 ORDER BY payment_date DESC",
+            (event_id,),
+        ).fetchall()
+        total_paid = db.execute(
+            "SELECT COALESCE(SUM(amount),0) as s FROM payments WHERE event_id=? AND is_refunded=0",
+            (event_id,),
+        ).fetchone()["s"]
+        event_lines = db.execute(
+            "SELECT * FROM event_lines WHERE event_id=?", (event_id,)
+        ).fetchall()
 
-    pdf_bytes = generate_contract_pdf(event, payments, total_paid, event_lines)
+        pdf_bytes = generate_contract_pdf(event, payments, total_paid, event_lines)
 
-    response = make_response(pdf_bytes)
-    response.headers["Content-Type"] = "application/pdf"
-    safe_title = event["title"].replace(" ", "_")[:30]
-    response.headers["Content-Disposition"] = (
-        f"inline; filename=contrat_{safe_title}_{event_id}.pdf"
-    )
-    return response
+        response = make_response(pdf_bytes)
+        response.headers["Content-Type"] = "application/pdf"
+        safe_title = event["title"].replace(" ", "_")[:30]
+        response.headers["Content-Disposition"] = (
+            f"inline; filename=contrat_{safe_title}_{event_id}.pdf"
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Contract generation error: {e}")
+        flash(f"Erreur lors de la génération du contrat: {str(e)}", "danger")
+        return redirect(url_for("event_detail", event_id=event_id))
 
 
 # ─── Receipt ─────────────────────────────────────────────────────────
@@ -1994,16 +1999,21 @@ def generate_receipt(event_id, payment_id):
     remaining = round(float(event["total_amount"]) - total_paid_after, 2)
     receipt_no = f"{date_str[:4]}-{payment_id:04d}"
 
-    pdf_bytes = generate_receipt_pdf(
-        event, payment, total_paid_before, total_paid_after, remaining, receipt_no
-    )
-    response = make_response(pdf_bytes)
-    response.headers["Content-Type"] = "application/pdf"
-    safe_title = event["client_name"].replace(" ", "_")[:20]
-    response.headers["Content-Disposition"] = (
-        f"inline; filename=recu_{safe_title}_{payment_id}.pdf"
-    )
-    return response
+    try:
+        pdf_bytes = generate_receipt_pdf(
+            event, payment, total_paid_before, total_paid_after, remaining, receipt_no
+        )
+        response = make_response(pdf_bytes)
+        response.headers["Content-Type"] = "application/pdf"
+        safe_title = event["client_name"].replace(" ", "_")[:20]
+        response.headers["Content-Disposition"] = (
+            f"inline; filename=recu_{safe_title}_{payment_id}.pdf"
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Receipt generation error: {e}")
+        flash(f"Erreur lors de la génération du reçu: {str(e)}", "danger")
+        return redirect(url_for("event_detail", event_id=event_id))
 
 
 # ─── Settings ────────────────────────────────────────────────────────

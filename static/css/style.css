@@ -787,6 +787,28 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     border: 1px solid var(--border-light) !important;
     border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow-xl) !important;
+    z-index: 9999 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.flatpickr-wrapper {
+    z-index: 9998 !important;
+    position: relative;
+}
+
+/* Modal Fixes - Ensure modals work properly */
+.modal-backdrop {
+    z-index: 9000 !important;
+}
+.modal {
+    z-index: 9990 !important;
+}
+.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
+.modal-backdrop.show {
+    opacity: 0.5 !important;
 }
 .flatpickr-months {
     background: var(--bg-subtle) !important;
@@ -1056,6 +1078,10 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
 /* Flatpickr Day States */
 .flatpickr-day {
     transition: all 0.2s ease;
+    z-index: 1 !important;
+    position: relative !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 .flatpickr-day:hover:not(.flatpickr-disabled) {
     background: var(--primary-soft) !important;
