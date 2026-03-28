@@ -1180,6 +1180,32 @@ def update_event_status(event_id):
             flash("Statut invalide", "danger")
             return redirect(url_for("event_detail", event_id=event_id))
 
+        # Get current event status
+        current_event = db.execute("SELECT status FROM events WHERE id = ?", (event_id,)).fetchone()
+        if not current_event:
+            flash("Événement introuvable", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
+        
+        current_status = current_event["status"]
+        
+        # Validate status transitions
+        allowed_transitions = {
+            "confirmé": ["annulé"],
+            "en attente": ["confirmé", "annulé"],
+            "annulé": [],
+            "terminé": [],
+            "changé de date": ["confirmé", "annulé"]
+        }
+        
+        # Allow transition if current status is in allowed transitions for new status
+        # OR if this is a new event (no current status)
+        if current_status not in allowed_transitions:
+            # If current status is not recognized, allow transition
+            pass
+        elif new_status not in allowed_transitions.get(current_status, []):
+            flash(f"⚠️ Transition non autorisée: Impossible de passer de '{current_status}' à '{new_status}'. Veuillez contacter l'administrateur.", "danger")
+            return redirect(url_for("event_detail", event_id=event_id))
+
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if new_status == "changé de date" and new_date:

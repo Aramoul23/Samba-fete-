@@ -1180,3 +1180,69 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
         height: 8px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Event Form - Sticky Financial Section
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 992px) {
+    .sticky-sidebar {
+        position: sticky;
+        top: 80px;
+        z-index: 100;
+    }
+}
+
+@media (max-width: 991.98px) and (min-width: 768px) {
+    .sticky-sidebar {
+        position: sticky;
+        top: 70px;
+        z-index: 100;
+    }
+}
+
+/* Financial section in main column */
+.card-custom:has(#totalAmountInput) {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-subtle) 100%);
+}
+
+.card-custom:has(#totalAmountInput) .input-group-lg input {
+    height: 50px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-md);
+}
+
+.card-custom:has(#totalAmountInput) .input-group-lg .input-group-text {
+    background: var(--bg-subtle);
+    border: 2px solid var(--primary);
+    border-left: none;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Fix line items scrolling */
+#linesContainer {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+#linesContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#linesContainer::-webkit-scrollbar-track {
+    background: var(--bg-subtle);
+    border-radius: 3px;
+}
+
+#linesContainer::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+#linesContainer::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}

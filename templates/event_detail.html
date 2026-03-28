@@ -70,53 +70,49 @@
     </div>
     {% endif %}
 
-    <!-- Status Change Buttons -->
-    <div class="card-custom mb-4">
+    <!-- Status Change Buttons (Only for confirmed events: can cancel) -->
+    {% if event.status == 'confirmé' %}
+    <div class="card-custom mb-4" style="border-left: 4px solid var(--success);">
         <div class="card-header-custom">
-            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Changer le Statut</h5>
+            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
         </div>
         <div class="card-body-custom">
             <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
                 <div class="col-md-8">
                     <div class="d-flex flex-wrap gap-2">
-                        {% if event.status != 'confirmé' %}
-                        <button type="submit" name="status" value="confirmé" class="btn btn-success">
-                            <i class="fas fa-check me-1"></i>Confirmer
-                        </button>
-                        {% endif %}
-                        
-                        {% if event.status != 'changé de date' %}
-                        <button type="button" class="btn btn-warning" onclick="showDateChangeModal()" style="background: var(--warning); color: #2d3436; border: none;">
-                            <i class="fas fa-calendar-alt me-1"></i>Changé de date
-                        </button>
-                        {% endif %}
-                        
-                        {% if event.status != 'terminé' %}
-                        <button type="submit" name="status" value="terminé" class="btn btn-secondary">
-                            <i class="fas fa-check-double me-1"></i>Terminé
-                        </button>
-                        {% endif %}
-                        
-                        {% if event.status != 'en attente' %}
-                        <button type="submit" name="status" value="en attente" class="btn btn-outline-gold">
-                            <i class="fas fa-clock me-1"></i>Remettre en attente
-                        </button>
-                        {% endif %}
-                        
-                        {% if event.status != 'annulé' %}
                         <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
-                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement?')">
-                            <i class="fas fa-times me-1"></i>Annuler
+                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement? Cette action est irréversible.')">
+                            <i class="fas fa-times me-1"></i>Annuler l'événement
                         </button>
-                        {% endif %}
                     </div>
                 </div>
-                
-                <!-- Hidden date input for date change -->
                 <input type="hidden" name="new_date" id="newDateInput">
             </form>
         </div>
     </div>
+    {% elif event.status == 'en attente' %}
+    <div class="card-custom mb-4" style="border-left: 4px solid var(--warning);">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
+        </div>
+        <div class="card-body-custom">
+            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusForm" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" name="status" value="confirmé" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Confirmer l'événement
+                        </button>
+                        <button type="submit" name="status" value="annulé" class="btn btn-outline-danger" 
+                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cet événement?')">
+                            <i class="fas fa-times me-1"></i>Annuler
+                        </button>
+                    </div>
+                </div>
+                <input type="hidden" name="new_date" id="newDateInput">
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="row g-4">
         <!-- Left Column -->
