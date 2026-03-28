@@ -2487,6 +2487,22 @@ def quick_payment():
     )
 
 
+# ─── Error Handlers ──────────────────────────────────────────────
+@app.errorhandler(500)
+def internal_error(e):
+    """Show detailed error for debugging."""
+    import traceback
+    error_trace = traceback.format_exc()
+    logger.error("500 Error: %s\n%s", str(e), error_trace)
+    return f"""
+    <html><body style="font-family: monospace; padding: 40px; background: #1a1a2e; color: #eee;">
+    <h1 style="color: #e74c3c;">500 Error</h1>
+    <pre style="background: #16213e; padding: 20px; border-radius: 8px; overflow-x: auto;">{error_trace}</pre>
+    <p><a href="/login" style="color: #3498db;">← Back to Login</a></p>
+    </body></html>
+    """, 500
+
+
 # ─── Init and Run ────────────────────────────────────────────────────
 # Initialize database on import (for Gunicorn/production)
 init_db()
