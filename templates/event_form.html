@@ -572,12 +572,15 @@ const datepicker = flatpickr("#eventDatePicker", {
         const status = calendarEvents[dateStr];
         
         if (status === 'confirmé' || status === 'terminé') {
-            dayElem.style.background = 'rgba(255,180,171,0.2)';
-            dayElem.style.color = 'var(--danger)';
+            dayElem.style.background = 'rgba(255,80,80,0.2)';
+            dayElem.style.color = '#ff5050';
             dayElem.style.fontWeight = '700';
             dayElem.style.borderRadius = '50%';
-            dayElem.title = dateStr + ' — Confirmé ✕';
-            // Don't disable — let them see but warn
+            dayElem.style.textDecoration = 'line-through';
+            dayElem.style.opacity = '0.5';
+            dayElem.style.cursor = 'not-allowed';
+            dayElem.classList.add('flatpickr-disabled');
+            dayElem.title = dateStr + ' — Réservé ✕';
         } else if (status === 'en attente') {
             dayElem.style.background = 'rgba(255,209,102,0.15)';
             dayElem.style.color = 'var(--warning)';
@@ -589,9 +592,8 @@ const datepicker = flatpickr("#eventDatePicker", {
     onChange: function(selectedDates, dateStr) {
         const status = calendarEvents[dateStr];
         if (status === 'confirmé' || status === 'terminé') {
-            if (!confirm(`⚠️ Le ${dateStr} a déjà un événement confirmé. Voulez-vous vraiment réserver cette date?`)) {
-                this.clear();
-            }
+            alert('⛔ Cette date est déjà réservée! Veuillez choisir une autre date.');
+            this.clear();
         }
     }
 });
