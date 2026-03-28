@@ -145,8 +145,8 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 .financial-box.due .fin-label, .financial-box.due .fin-value {{ color: #991b1b; }}
 .financial-box.total .fin-label {{ color: #c9a227; }}
 .financial-box.total .fin-value {{ color: white; font-size: 13pt; }}
-.financial-box.deposit {{ background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #f59e0b; }}
-.financial-box.deposit .fin-label, .financial-box.deposit .fin-value {{ color: #92400e; }}
+.financial-box.avance {{ background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #f59e0b; }}
+.financial-box.avance .fin-label, .financial-box.avance .fin-value {{ color: #92400e; }}
 .terms-section {{ padding: 10px 25px; background: white; }}
 .terms-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
 .term-box {{ padding: 8px 10px; border-radius: 4px; font-size: 7pt; line-height: 1.4; }}
@@ -221,7 +221,7 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
     <div class="section-title">Conditions Financières</div>
     <div class="financial-grid">
         <div class="financial-box total"><div class="fin-label">Montant Total</div><div class="fin-value">{format_da(event.get("total_amount", 0))}</div></div>
-        <div class="financial-box deposit"><div class="fin-label">Acompte (Dépôt)</div><div class="fin-value">{format_da(event.get("deposit_required", 0) or 0)}</div></div>
+        <div class="financial-box avance"><div class="fin-label">Avance</div><div class="fin-value">{format_da(event.get("deposit_required", 0) or 0)}</div></div>
         <div class="financial-box paid"><div class="fin-label">Payé</div><div class="fin-value">{format_da(total_paid)}</div></div>
         <div class="financial-box {"due" if remaining > 0 else "paid"}"><div class="fin-label">Reste à Payer</div><div class="fin-value">{format_da(remaining)}</div></div>
     </div>
@@ -240,7 +240,7 @@ tr.total-row td {{ background: linear-gradient(90deg, #fdfcf8 0%, #f5f2eb 100%);
 </div>
 <div class="cancel-box">
     <strong>Politique d'Annulation</strong>
-    L'dépôt versé est non remboursable en cas d'annulation. Toute modification de date doit être effectuée au moins 15 jours avant l'événement, sous réserve de disponibilité.
+    L'avance versée est non remboursable en cas d'annulation. Toute modification de date doit être effectuée au moins 15 jours avant l'événement, sous réserve de disponibilité.
 </div>
 <div class="signatures">
     <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Le Prestataire</div><div class="sig-name">{COMPANY_NAME}</div></div>

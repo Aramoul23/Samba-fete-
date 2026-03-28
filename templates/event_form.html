@@ -162,7 +162,7 @@
                 <div class="card-custom mb-4" style="border: 2px solid var(--primary);">
                     <div class="section-header" style="background: linear-gradient(135deg, var(--primary-soft) 0%, var(--bg-subtle) 100%);">
                         <i class="fas fa-calculator" style="color: var(--primary);"></i>
-                        <h5 style="color: var(--primary);">Total & Dépôt</h5>
+                        <h5 style="color: var(--primary);">Total & Avance</h5>
                     </div>
                     <div class="card-body-custom">
                         <div class="row g-3">
@@ -177,7 +177,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label-elegant fw-bold">Dépôt Requis (Acompte)</label>
+                                <label class="form-label-elegant fw-bold">Avance (Premier Paiement)</label>
                                 <div class="input-group input-group-lg" id="depositGroup">
                                     <input type="number" name="deposit_required" class="form-input-elegant"
                                            value="{{ event.deposit_required if event else 0 }}" step="100" min="0"
@@ -185,7 +185,7 @@
                                     <span class="input-group-text" style="font-weight: 600;">DA</span>
                                 </div>
                                 <small class="text-warning" id="depositHelp" style="display: none;">
-                                    <i class="fas fa-info-circle me-1"></i> Le dépôt confirme automatiquement l'événement
+                                    <i class="fas fa-info-circle me-1"></i> L'avance est déduite du total
                                 </small>
                             </div>
                         </div>
@@ -392,31 +392,32 @@
             <!-- Right Column: Sidebar -->
             <div class="col-lg-4">
 
-                <!-- Section: Dépôt & Montant -->
+                <!-- Section: Total & Avance -->
                 <div class="card-custom mb-4 sticky-sidebar">
                     <div class="section-header">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <h5>Dépôt & Montant</h5>
+                        <i class="fas fa-calculator"></i>
+                        <h5>Total & Avance</h5>
                     </div>
                     <div class="card-body-custom">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label-elegant">Montant Total (DA) *</label>
+                                <label class="form-label-elegant">Montant Total (DA)</label>
                                 <div class="input-group">
                                     <input type="number" name="total_amount" id="totalAmountInput"
-                                           class="form-input-elegant" required
+                                           class="form-input-elegant" readonly
                                            value="{{ event.total_amount if event else 0 }}" step="100" min="0">
                                     <span class="input-group-text">DA</span>
                                 </div>
+                                <small style="color: var(--text-tertiary); font-size: 0.7rem;">Calculé automatiquement depuis les services</small>
                             </div>
                             <div class="col-12">
-                                <label class="form-label-elegant">Dépôt requis (confirme l'événement)</label>
+                                <label class="form-label-elegant">Avance (Premier Paiement)</label>
                                 <div class="input-group">
                                     <input type="number" name="deposit_required" class="form-input-elegant"
-                                           value="{{ event.deposit_required if event else 20000 }}" step="100" min="0">
+                                           value="{{ event.deposit_required if event else 0 }}" step="100" min="0" placeholder="0">
                                     <span class="input-group-text">DA</span>
                                 </div>
-                                <small style="color: var(--text-tertiary); font-size: 0.7rem;">Le dépôt confirme l'événement automatiquement</small>
+                                <small style="color: var(--text-tertiary); font-size: 0.7rem;">Premier paiement - sera déduit du total</small>
                             </div>
                         </div>
                     </div>
@@ -713,6 +714,27 @@ function calculateServicesTotal() {
 
     document.getElementById('totalAmountInput').value = Math.max(0, total).toFixed(0);
 }
+
+// Auto-calculate total when services change
+function setupAutoCalculate() {
+    // Calculate on page load
+    calculateServicesTotal();
+    
+    // Add listeners to all service checkboxes
+    document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', calculateServicesTotal);
+    });
+    
+    // Add listeners to all service price inputs
+    document.querySelectorAll('.service-price').forEach(input => {
+        input.addEventListener('input', calculateServicesTotal);
+    });
+}
+
+// Setup auto-calculate when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    setupAutoCalculate();
+});
 
 // ─── Status Change Handler ──────────────────────────────
 function handleStatusChange() {

@@ -701,7 +701,7 @@ def event_form(event_id=None):
         )
         notes = data.get("notes", "").strip()
         total_amount = data.get("total_amount", 0, type=float)
-        deposit_required = data.get("deposit_required", 20000, type=float)
+        deposit_required = data.get("deposit_required", 0, type=float)
 
         line_descs = request.form.getlist("line_desc[]")
         line_amounts = request.form.getlist("line_amount[]")
@@ -1204,14 +1204,8 @@ def update_event_status(event_id):
             flash(f"⚠️ Transition non autorisée: Impossible de passer de '{current_status}' à '{new_status}'. Veuillez contacter l'administrateur.", "danger")
             return redirect(url_for("event_detail", event_id=event_id))
         
-        # Special validation: en attente -> confirmé requires deposit >= 20000
-        if current_status == "en attente" and new_status == "confirmé":
-            event_for_deposit = db.execute("SELECT deposit_required, total_amount FROM events WHERE id = ?", (event_id,)).fetchone()
-            if event_for_deposit:
-                deposit = float(event_for_deposit["deposit_required"] or 0)
-                if deposit < 20000:
-                    flash(f"⚠️ Le dépôt doit être au minimum 20,000 DA pour confirmer l'événement. Dépôt actuel: {deposit} DA", "danger")
-                    return redirect(url_for("event_detail", event_id=event_id))
+        # No minimum validation - any advance amount is allowed
+        # Removed: deposit >= 20000 requirement
 
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -2028,7 +2022,7 @@ def settings():
                 (cap_m, cap_w, venue_id),
             )
 
-        deposit_min = request.form.get("deposit_min", 20000, type=float)
+        deposit_min = request.form.get("deposit_min", 0, type=float)
         hall_name = request.form.get("hall_name", "Samba Fête")
         currency = request.form.get("currency", "DA")
         set_setting("deposit_min", str(deposit_min))

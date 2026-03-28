@@ -352,11 +352,14 @@
 
 {% block scripts %}
 <script>
-// Quick payment buttons
-const remaining = {{ event_financials.remaining if event_financials else 0 }};
+// Quick payment buttons - with safe default
+const remaining = {{ event_financials.remaining if event_financials and event_financials.remaining else 0 }};
 
 function updatePaymentType() {
-    const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const amtInput = document.getElementById('paymentAmount');
+    if (!amtInput) return;
+    
+    const amount = parseFloat(amtInput.value) || 0;
     const typeInput = document.getElementById('paymentType');
     const typeDisplay = document.getElementById('paymentTypeDisplay');
     
@@ -377,7 +380,7 @@ function updatePaymentType() {
 
 document.querySelectorAll('.quick-pay-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-        const amount = this.dataset.amount;
+        const amount = parseFloat(this.dataset.amount) || 0;
         document.getElementById('paymentAmount').value = amount;
         document.getElementById('paymentAmount').focus();
         document.getElementById('paymentAmount').select();
@@ -399,9 +402,8 @@ if (amountInput) {
 // Validate amount before submit
 const form = document.getElementById('quickPaymentForm');
 if (form) {
-    const remaining = {{ event_financials.remaining if event_financials else 0 }};
     form.addEventListener('submit', function(e) {
-        const val = parseFloat(amountInput.value) || 0;
+        const val = parseFloat(document.getElementById('paymentAmount').value) || 0;
         if (val <= 0) {
             e.preventDefault();
             alert('Le montant doit être supérieur à 0');

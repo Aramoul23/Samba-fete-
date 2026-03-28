@@ -400,8 +400,8 @@
                                     </td>
                                     <td>{{ p.method }}</td>
                                     <td>
-                                        {% if p.payment_type == 'dépôt' %}
-                                        <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Dépôt</span>
+                                        {% if p.payment_type == 'avance' %}
+                                        <span class="badge-slot" style="background: var(--warning-soft); color: #8a6d1b;">Avance</span>
                                         {% elif p.payment_type == 'solde' %}
                                         <span class="badge-slot" style="background: var(--info-soft); color: var(--primary-dark);">Solde</span>
                                         {% else %}
@@ -575,7 +575,7 @@
                             <strong style="font-variant-numeric: tabular-nums;">{{ event.total_amount | format_da }}</strong>
                         </div>
                         <div class="summary-row">
-                            <span>Dépôt Requis</span>
+                            <span>Avance</span>
                             <strong style="font-variant-numeric: tabular-nums;">{{ event.deposit_required | format_da }}</strong>
                         </div>
                         <hr style="border-color: var(--border-light); margin: 10px 0;">
@@ -644,12 +644,12 @@
                         <!-- Deposit Check -->
                         {% if deposit >= event.deposit_required %}
                         <div class="alert alert-success mt-4 mb-0" style="font-size: 0.8125rem;">
-                            <i class="fas fa-check-circle me-1"></i> Dépôt validé
+                            <i class="fas fa-check-circle me-1"></i> Avance validé
                         </div>
                         {% else %}
                         <div class="alert alert-warning mt-4 mb-0" style="font-size: 0.8125rem;">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Dépôt insuffisant ({{ deposit | format_da }} / {{ event.deposit_required | format_da }})
+                            Avance insuffisant ({{ deposit | format_da }} / {{ event.deposit_required | format_da }})
                         </div>
                         {% endif %}
                     </div>
