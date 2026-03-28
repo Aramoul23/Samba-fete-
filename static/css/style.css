@@ -780,3 +780,81 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
         width: 100%; flex: 0 0 100%; max-width: 100%;
     }
 }
+
+/* ─── Flatpickr Dark Gold Theme ───────────────────────── */
+.flatpickr-calendar {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+.flatpickr-months {
+    background: var(--bg-subtle) !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+}
+.flatpickr-months .flatpickr-month {
+    background: var(--bg-subtle) !important;
+    color: var(--primary) !important;
+    fill: var(--primary) !important;
+}
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: var(--primary) !important;
+    fill: var(--primary) !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--primary-light) !important;
+}
+.flatpickr-weekdays {
+    background: var(--bg-subtle) !important;
+}
+.flatpickr-weekday {
+    color: var(--text-tertiary) !important;
+    font-family: 'Manrope', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.7rem !important;
+}
+.flatpickr-day {
+    color: var(--text) !important;
+    font-family: 'Manrope', sans-serif !important;
+    border-radius: 50% !important;
+}
+.flatpickr-day:hover {
+    background: var(--primary-soft) !important;
+    border-color: var(--primary) !important;
+}
+.flatpickr-day.today {
+    border-color: var(--primary) !important;
+    background: var(--primary-soft) !important;
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #041329 !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: var(--text-tertiary) !important;
+    opacity: 0.4;
+}
+.flatpickr-current-month {
+    color: var(--primary) !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: var(--bg-elevated) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+.flatpickr-current-month input.cur-year {
+    color: var(--text) !important;
+}
+.flatpickr-time {
+    border-top: 1px solid var(--border-light) !important;
+    background: var(--bg-subtle) !important;
+}

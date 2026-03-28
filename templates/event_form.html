@@ -72,8 +72,9 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Date *</label>
-                                <input type="date" name="event_date" class="form-input-elegant" required
-                                       value="{{ event.event_date if event else request.args.get('date', '') }}">
+                                <input type="text" name="event_date" id="eventDatePicker" class="form-input-elegant" required
+                                       value="{{ event.event_date if event else request.args.get('date', '') }}"
+                                       placeholder="Choisir une date" readonly>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Créneau horaire</label>
@@ -525,6 +526,19 @@ function removeLine(btn) {
         btn.closest('.line-item').remove();
     }
 }
+
+// ─── Date Picker (Flatpickr) ──────────────────────────────
+const datepicker = flatpickr("#eventDatePicker", {
+    locale: "fr",
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    defaultDate: document.getElementById('eventDatePicker').value || null,
+    inline: false,
+    disableMobile: false,
+    theme: "dark",
+    monthSelectorType: "static",
+    animate: true,
+});
 
 function calculateServicesTotal() {
     let total = 0;
