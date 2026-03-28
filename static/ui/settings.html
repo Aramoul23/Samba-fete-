@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Samba Fête | Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #041329;
+            color: #d6e3ff;
+        }
+        .serif {
+            font-family: 'Noto Serif', serif;
+        }
+        .glass-panel {
+            background: rgba(28, 42, 65, 0.6);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#d4e4f6",
+                        "surface-tint": "#e9c349",
+                        "on-secondary": "#402d00",
+                        "surface": "#041329",
+                        "tertiary-container": "#b8c9da",
+                        "surface-dim": "#041329",
+                        "inverse-primary": "#735c00",
+                        "primary": "#ffe088",
+                        "surface-bright": "#2c3951",
+                        "primary-fixed": "#ffe087",
+                        "on-error": "#690005",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#0d1d2a",
+                        "error": "#ffb4ab",
+                        "surface-container": "#112036",
+                        "background": "#041329",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-tertiary-container": "#455463",
+                        "on-primary": "#3c2f00",
+                        "surface-container-highest": "#27354d",
+                        "on-tertiary": "#223240",
+                        "on-tertiary-fixed-variant": "#394857",
+                        "on-primary-container": "#655000",
+                        "outline": "#99907c",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#ffbf00",
+                        "surface-container-high": "#1c2a41",
+                        "primary-container": "#e9c349",
+                        "surface-container-lowest": "#010e24",
+                        "on-background": "#d6e3ff",
+                        "secondary-fixed": "#ffdfa0",
+                        "inverse-on-surface": "#233148",
+                        "on-primary-fixed-variant": "#574500",
+                        "secondary-fixed-dim": "#fbbc00",
+                        "on-secondary-fixed": "#261a00",
+                        "tertiary-fixed-dim": "#b8c8da",
+                        "on-primary-fixed": "#231a00",
+                        "outline-variant": "#4d4635",
+                        "on-surface-variant": "#d0c6af",
+                        "tertiary": "#d4e5f7",
+                        "on-secondary-container": "#6d5000",
+                        "on-surface": "#d6e3ff",
+                        "secondary": "#ffe2ab",
+                        "inverse-surface": "#d6e3ff",
+                        "surface-container-low": "#0d1c32",
+                        "surface-variant": "#27354d"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 bg-[#041329]/60 backdrop-blur-xl shadow-[0_24px_40px_rgba(1,8,20,0.08)] flex justify-between items-center px-8 py-4">
+<div class="flex items-center gap-4">
+<span class="font-['Noto_Serif'] font-bold text-[#ffe088] italic text-xl tracking-wide">Samba Fête</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8 text-sm font-medium tracking-tight">
+<a class="text-[#d0c6af] hover:text-[#ffe088] transition-colors duration-300" href="#">Dashboard</a>
+<a class="text-[#d0c6af] hover:text-[#ffe088] transition-colors duration-300" href="#">Events</a>
+<a class="text-[#ffe088] font-semibold" href="#">Settings</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#ffe088] active:scale-95 transition-transform" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-[#ffe088] active:scale-95 transition-transform" data-icon="settings">settings</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline-variant/15 flex items-center justify-center overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional man in a tailored dark suit with soft evening lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFmWfZT0gf8eLWR-ptj1ejhEj5ec9eREfq_ZPMx9fIuv6eFY-vK3TwPlVpjYhvQJXaSj8Jha2-g4TLcWUDxH48nGbNB3I2zAKJ_GSaYw9yQxMXkOCdgfjCMn0d1S9ir4K69FZup2fe0a3PuFkO-zSfhniuwQfehzvM1TgFyJ_NoURs3LsGzXQ-DeInLkAVXUgoGPiVZiF8ZmtODbmxH8oGifhMfn9QJ6Nj4YsAFplYV3G0BKV5yADbsFgH_NHJU8GBcJF6Rz4vtleB"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Side Navigation Shell -->
+<nav class="h-screen w-64 fixed left-0 top-0 z-40 bg-[#0d1c32] border-r border-[#4d4635]/15 flex flex-col py-8 hidden md:flex">
+<div class="px-8 mb-10">
+<h1 class="font-['Noto_Serif'] text-xl text-[#ffe088]">Samba Fête</h1>
+<p class="font-['Manrope'] text-[10px] uppercase tracking-[0.2em] text-[#d0c6af] mt-1 opacity-70">Luxury Management</p>
+</div>
+<div class="flex-grow">
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 text-[#d0c6af] hover:bg-[#112036] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Manrope'] text-sm font-medium">Dashboard</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 text-[#d0c6af] hover:bg-[#112036] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-['Manrope'] text-sm font-medium">Calendar</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 text-[#d0c6af] hover:bg-[#112036] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="event_seat">event_seat</span>
+<span class="font-['Manrope'] text-sm font-medium">Events</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 text-[#d0c6af] hover:bg-[#112036] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Manrope'] text-sm font-medium">Clients</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 text-[#d0c6af] hover:bg-[#112036] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-['Manrope'] text-sm font-medium">Finances</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-6 py-4 bg-[#2c3951] text-[#ffe088] border-l-4 border-[#e9c349]">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Manrope'] text-sm font-medium">Settings</span>
+</div>
+</div>
+<div class="mt-auto px-6 space-y-2">
+<button class="w-full bg-gradient-to-r from-[#ffe088] to-[#e9c349] text-[#3c2f00] font-semibold py-3 rounded-md text-sm mb-6 flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Event
+            </button>
+<div class="cursor-pointer flex items-center gap-3 px-4 py-3 text-[#d0c6af] hover:text-[#ffe088] transition-all">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-sm">Support</span>
+</div>
+<div class="cursor-pointer flex items-center gap-3 px-4 py-3 text-[#d0c6af] hover:text-[#ffe088] transition-all">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="text-sm">Logout</span>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="md:ml-64 pt-24 pb-12 px-8 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12">
+<h2 class="serif text-4xl text-on-surface font-light tracking-tight mb-2">System Configuration</h2>
+<p class="text-on-surface-variant font-body font-light">Tailor your venue management experience and security protocols.</p>
+</div>
+<!-- Bento Layout Sections -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Hall Information Section -->
+<section class="lg:col-span-5 space-y-6">
+<div class="p-8 rounded-xl bg-surface-container-low glass-panel border border-outline-variant/15">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+<h3 class="serif text-2xl text-primary font-medium tracking-wide">Hall Information</h3>
+</div>
+<form class="space-y-6">
+<div class="space-y-1">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-bold ml-1">Hall Name</label>
+<input class="w-full bg-surface-container-highest/30 border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-4 py-3 placeholder-on-surface-variant/40 serif italic" type="text" value="Royal Emerald Ballroom"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-bold ml-1">Address</label>
+<textarea class="w-row bg-surface-container-highest/30 border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-4 py-3 w-full resize-none font-body" rows="2">Suite 45, Avenue des Arts, Quartier Diplomatique</textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-bold ml-1">Phone</label>
+<input class="w-full bg-surface-container-highest/30 border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-4 py-3 font-body" type="tel" value="+33 1 42 68 53 00"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-bold ml-1">NIF</label>
+<input class="w-full bg-surface-container-highest/30 border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-4 py-3 font-body" type="text" value="0023489112"/>
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-bold ml-1">RC Number</label>
+<input class="w-full bg-surface-container-highest/30 border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-4 py-3 font-body" type="text" value="FR-2023-PAR-889"/>
+</div>
+<button class="w-full mt-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-semibold py-4 rounded-md tracking-wider uppercase text-xs hover:brightness-110 active:scale-[0.98] transition-all shadow-xl shadow-primary/10" type="submit">
+                                Save Hall Details
+                            </button>
+</form>
+</div>
+<!-- System Settings Section (Nested in Column) -->
+<div class="p-8 rounded-xl bg-surface-container-low border border-outline-variant/5">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary" data-icon="tune">tune</span>
+<h3 class="serif text-2xl text-primary font-medium tracking-wide">System Settings</h3>
+</div>
+<div class="space-y-8">
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<label class="font-body font-medium text-on-surface">Base Currency</label>
+<span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Financial Unit</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-3 px-4 border border-primary bg-primary/10 text-primary text-sm font-semibold rounded-lg transition-all">USD</button>
+<button class="flex-1 py-3 px-4 border border-outline-variant/30 text-on-surface-variant text-sm font-medium rounded-lg hover:border-primary/50 transition-all">EUR</button>
+<button class="flex-1 py-3 px-4 border border-outline-variant/30 text-on-surface-variant text-sm font-medium rounded-lg hover:border-primary/50 transition-all">DA</button>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<label class="font-body font-medium text-on-surface">Deposit Minimum</label>
+<span class="serif italic text-primary text-lg">35%</span>
+</div>
+<div class="relative w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary-container w-[35%]"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant/60 font-bold uppercase tracking-widest">
+<span>10%</span>
+<span>Fixed minimum booking fee</span>
+<span>75%</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- User Management Section -->
+<section class="lg:col-span-7 space-y-8">
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/15 flex flex-col">
+<div class="p-8 flex justify-between items-center border-b border-outline-variant/10">
+<div>
+<h3 class="serif text-2xl text-primary font-medium tracking-wide">User Management</h3>
+<p class="text-xs text-on-surface-variant mt-1 font-body">Manage staff access and permission tiers</p>
+</div>
+<span class="bg-surface-bright text-on-surface text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-bold">4 Total Users</span>
+</div>
+<!-- User Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-high/40">
+<tr>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Identity</th>
+<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Email</th>
+<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Role</th>
+<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Status</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-bright/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">AS</div>
+<span class="font-body font-semibold text-on-surface text-sm">Alessandro Sarto</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">a.sarto@samba.com</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-tighter">Owner</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
+<span class="text-xs text-on-surface font-medium">Active</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary-fixed-dim font-bold text-xs">MC</div>
+<span class="font-body font-semibold text-on-surface text-sm">Marie Claire</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">m.claire@samba.com</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-tighter">Planner</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
+<span class="text-xs text-on-surface font-medium">Active</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-bold text-xs">JH</div>
+<span class="font-body font-semibold text-on-surface text-sm">Julian H.</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">julian@samba.com</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-tighter">Finance</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-2 opacity-40">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>
+<span class="text-xs text-on-surface font-medium">Offline</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Add User Form Area -->
+<div class="p-8 bg-surface-container-highest/20 mt-auto border-t border-outline-variant/10">
+<h4 class="text-xs uppercase tracking-widest text-primary font-bold mb-6">Add New Staff Member</h4>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="space-y-1">
+<label class="text-[9px] uppercase tracking-widest text-on-surface-variant ml-1">Full Name</label>
+<input class="w-full bg-transparent border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-2 py-2 text-sm" placeholder="e.g. Elena Rossi" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-[9px] uppercase tracking-widest text-on-surface-variant ml-1">Email</label>
+<input class="w-full bg-transparent border-none border-b border-outline-variant/30 text-on-surface focus:ring-0 focus:border-primary transition-all px-2 py-2 text-sm" placeholder="staff@company.com" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="text-[9px] uppercase tracking-widest text-on-surface-variant ml-1">Access Role</label>
+<select class="w-full bg-transparent border-none border-b border-outline-variant/30 text-on-surface-variant focus:ring-0 focus:border-primary transition-all px-2 py-2 text-sm cursor-pointer">
+<option class="bg-surface-container">Select Role</option>
+<option class="bg-surface-container">Event Planner</option>
+<option class="bg-surface-container">Concierge</option>
+<option class="bg-surface-container">Billing Specialist</option>
+</select>
+</div>
+</div>
+<button class="mt-8 flex items-center gap-2 text-primary hover:text-primary-container transition-all text-sm font-semibold group">
+<span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>
+                                Add User to System
+                                <span class="w-12 h-px bg-primary/30 group-hover:w-16 transition-all duration-300"></span>
+</button>
+</div>
+</div>
+<!-- Signature Visual Component -->
+<div class="relative rounded-xl h-48 overflow-hidden group">
+<img alt="Luxury event hall" class="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-[2s]" data-alt="Modern high-end event venue interior with golden chandeliers, deep navy velvet seating, and sophisticated ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABRDF38wMK7QJh0mYkTr9f4Umzb6oR69SgZelYcSXlxOo2kHmjk3ERuf1EmqrWPRa0o8aYxocY6S0SQgSx_JEkU6mqVB1DDEP5sdi1DXpv2PdPZggT-fZILOOtEqsUOIMVRn0h7Uo8U0HhBy_iBOWTFCZ115Q_G5MBepkZcvYzazPVOiAkuUGygu3Gai4Xqc0PvOBaVvfst_d95fbnawHLmgo3HaNT1VQPsPBIpKjqX86SJnBp2TYK_5ygrmZtfngl3pAHbZMv6TY1"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-6 left-8">
+<p class="serif italic text-primary-fixed-dim text-2xl">Excellence in every detail.</p>
+<p class="text-[10px] uppercase tracking-[0.3em] text-on-surface-variant mt-2">The Samba Fête Standard</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Bottom Nav for Mobile -->
+<footer class="md:hidden fixed bottom-0 w-full bg-[#0d1c32]/95 backdrop-blur-md z-50 flex justify-around items-center py-4 px-2">
+<div class="flex flex-col items-center gap-1 text-[#d0c6af]">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-medium">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#d0c6af]">
+<span class="material-symbols-outlined" data-icon="event_seat">event_seat</span>
+<span class="text-[10px] font-medium">Events</span>
+</div>
+<div class="flex flex-col items-center gap-1 bg-[#2c3951] text-[#ffe088] p-2 rounded-xl">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-semibold">Settings</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#d0c6af]">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</div>
+</footer>
+</body></html>

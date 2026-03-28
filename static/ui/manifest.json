@@ -1,0 +1,62 @@
+[
+  {
+    "name": "login",
+    "status": "success",
+    "title": "Samba Fête Premium Login"
+  },
+  {
+    "name": "dashboard",
+    "status": "success",
+    "title": "Samba Fête Main Dashboard"
+  },
+  {
+    "name": "calendar",
+    "status": "success",
+    "title": "Samba Fête Booking Calendar"
+  },
+  {
+    "name": "events",
+    "status": "success",
+    "title": "Events List - Samba Fête"
+  },
+  {
+    "name": "event-detail",
+    "status": "success",
+    "title": "Event Detail: Sterling-Vance Union"
+  },
+  {
+    "name": "clients",
+    "status": "success",
+    "title": "Samba Fête Client Directory"
+  },
+  {
+    "name": "client-detail",
+    "status": "success",
+    "title": "Client Detail: Marcia Silva"
+  },
+  {
+    "name": "payments",
+    "status": "success",
+    "title": "Paiement Rapide - Samba Fête"
+  },
+  {
+    "name": "finances",
+    "status": "success",
+    "title": "Financial Stewardship Dashboard"
+  },
+  {
+    "name": "accounting",
+    "status": "success",
+    "title": "Samba Fête Accounting Dashboard"
+  },
+  {
+    "name": "expenses",
+    "status": "success",
+    "title": "Expense Stewardship - Samba Fête"
+  },
+  {
+    "name": "settings",
+    "status": "success",
+    "title": "Samba Fête Settings"
+  }
+]

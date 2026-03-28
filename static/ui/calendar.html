@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Samba Fête | Monthly Booking Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #041329;
+            color: #d6e3ff;
+            font-family: 'Manrope', sans-serif;
+        }
+        .serif { font-family: 'Noto Serif', serif; }
+        .glass-panel {
+            background: rgba(28, 42, 65, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "secondary": "#b9c7e4",
+                "surface-container-lowest": "#010e24",
+                "inverse-on-surface": "#233148",
+                "on-background": "#d6e3ff",
+                "on-tertiary-container": "#005783",
+                "tertiary-container": "#90cdff",
+                "surface-container-low": "#0d1c32",
+                "primary": "#ffe088",
+                "on-tertiary-fixed": "#001e30",
+                "on-primary": "#3c2f00",
+                "on-surface-variant": "#d0c6af",
+                "surface-container-highest": "#27354d",
+                "on-secondary": "#233148",
+                "inverse-primary": "#735c00",
+                "on-primary-container": "#655000",
+                "on-error-container": "#ffdad6",
+                "surface": "#041329",
+                "error": "#ffb4ab",
+                "outline": "#99907c",
+                "secondary-fixed-dim": "#b9c7e4",
+                "on-secondary-fixed-variant": "#394760",
+                "surface-bright": "#2c3951",
+                "on-primary-fixed-variant": "#574500",
+                "inverse-surface": "#d6e3ff",
+                "on-secondary-container": "#a7b5d2",
+                "on-error": "#690005",
+                "tertiary-fixed": "#cbe6ff",
+                "on-secondary-fixed": "#0d1c32",
+                "tertiary-fixed-dim": "#90cdff",
+                "surface-tint": "#e9c349",
+                "outline-variant": "#4d4635",
+                "error-container": "#93000a",
+                "background": "#041329",
+                "on-primary-fixed": "#231a00",
+                "surface-variant": "#27354d",
+                "on-tertiary-fixed-variant": "#004b71",
+                "primary-fixed": "#ffe087",
+                "primary-fixed-dim": "#e9c349",
+                "secondary-fixed": "#d6e3ff",
+                "surface-dim": "#041329",
+                "secondary-container": "#394760",
+                "primary-container": "#e9c349",
+                "on-surface": "#d6e3ff",
+                "surface-container-high": "#1c2a41",
+                "on-tertiary": "#003450",
+                "surface-container": "#112036",
+                "tertiary": "#cce6ff"
+              },
+              fontFamily: {
+                "headline": ["Noto Serif"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="overflow-hidden">
+<!-- SideNavBar (Authority Source: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-[#ffe088]/15 bg-[#041329] flex flex-col py-8 z-40 hidden md:flex">
+<div class="px-8 mb-12">
+<h1 class="text-xl font-['Noto_Serif'] text-[#ffe088]">Samba Fête</h1>
+<p class="text-xs text-[#d6e3ff]/40 uppercase tracking-[0.2em] mt-1">Digital Concierge</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center text-[#d6e3ff]/60 pl-8 py-3 hover:bg-[#0d1c32] hover:text-[#ffe088] transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined mr-4">dashboard</span>
+<span class="font-['Manrope'] text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center text-[#ffe088] bg-[#112036] rounded-r-full border-l-4 border-[#ffe088] pl-6 py-3 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-['Manrope'] text-sm tracking-wide font-bold">Calendar</span>
+</a>
+<a class="flex items-center text-[#d6e3ff]/60 pl-8 py-3 hover:bg-[#0d1c32] hover:text-[#ffe088] transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4">event_seat</span>
+<span class="font-['Manrope'] text-sm tracking-wide">Events</span>
+</a>
+<a class="flex items-center text-[#d6e3ff]/60 pl-8 py-3 hover:bg-[#0d1c32] hover:text-[#ffe088] transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4">group</span>
+<span class="font-['Manrope'] text-sm tracking-wide">Clients</span>
+</a>
+<a class="flex items-center text-[#d6e3ff]/60 pl-8 py-3 hover:bg-[#0d1c32] hover:text-[#ffe088] transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4">payments</span>
+<span class="font-['Manrope'] text-sm tracking-wide">Finances</span>
+</a>
+<a class="flex items-center text-[#d6e3ff]/60 pl-8 py-3 hover:bg-[#0d1c32] hover:text-[#ffe088] transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-4">settings</span>
+<span class="font-['Manrope'] text-sm tracking-wide">Settings</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<button class="w-full bg-gradient-to-br from-[#ffe088] to-[#e9c349] text-[#3c2f00] font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+                New Booking
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 min-h-screen flex flex-col relative">
+<!-- TopNavBar (Authority Source: JSON) -->
+<header class="fixed top-0 right-0 left-0 md:left-64 z-50 h-20 bg-[#041329]/60 backdrop-blur-xl flex justify-between items-center px-8 shadow-[0_48px_48px_-12px_rgba(1,14,36,0.06)]">
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#ffe088]/60 group-focus-within:text-[#ffe088]">search</span>
+<input class="bg-[#0d1c32] border-none rounded-full pl-10 pr-4 py-2 text-sm text-[#d6e3ff] focus:ring-1 focus:ring-[#ffe088] w-64 transition-all" placeholder="Search events..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-[#d6e3ff]/70 hover:text-[#ffe088] transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-[#d6e3ff]/70 hover:text-[#ffe088] transition-colors">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant/30">
+<div class="text-right">
+<p class="text-xs font-bold text-[#ffe088]">Julian V.</p>
+<p class="text-[10px] text-[#d6e3ff]/50">Chief Concierge</p>
+</div>
+<div class="w-10 h-10 rounded-full border border-primary/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a professional male concierge in a dark navy suit with gold lapel pin looking refined" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBJhApzOZaRteGF1zwgm9dd4vjvoUX82bLjUfozV3aktYCPmqLlu4pmGuaylGGl_cE-2RFdGnoRrOeGK3Gb0-PPlAoln7k_Gc3w7GUIfkupSpay4DeN7zYQtFOkbun2kFCdXJTfXdtcun0AZl-l7J0UiCJ-uNC6_NHySZZDQpuKVIKxLNZ8uZx_szHjhePzvv3gRKHnIB1WnMalHJPtLp3R4NBoRb23DbB3EZ4_J9R39MB_xETlUlbcmreJioT_tCfnVt3rdnUhOk8"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Calendar Container -->
+<div class="mt-20 flex-1 p-8 overflow-y-auto bg-gradient-to-b from-surface to-surface-container-low">
+<!-- Calendar Header Area -->
+<div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div>
+<h2 class="text-sm font-label text-primary font-bold tracking-[0.2em] uppercase mb-2">Venue Availability</h2>
+<h3 class="text-5xl font-headline text-on-surface leading-tight">October 2024</h3>
+</div>
+<div class="flex items-center gap-6 bg-surface-container p-2 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<span class="text-sm font-bold tracking-widest px-4 border-x border-outline-variant/20 uppercase">Today</span>
+<button class="p-2 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface-container-high border-none rounded-lg py-2 pl-4 pr-10 text-sm font-bold text-primary focus:ring-1 focus:ring-primary cursor-pointer">
+<option>Grande Salle</option>
+<option>Jardin Royal</option>
+<option>Crystal Ballroom</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-primary">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Calendar Grid -->
+<div class="grid grid-cols-7 gap-px bg-outline-variant/20 rounded-xl overflow-hidden shadow-2xl">
+<!-- Days of Week -->
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Mon</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Tue</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Wed</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Thu</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Fri</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant">Sat</span>
+</div>
+<div class="bg-surface-container-low py-4 text-center border-b border-outline-variant/10">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant text-primary/70">Sun</span>
+</div>
+<!-- Calendar Cells (Representative Month Start) -->
+<!-- Prev Month -->
+<div class="bg-surface/40 min-h-[140px] p-4 group relative">
+<span class="text-on-surface/20 font-headline italic">30</span>
+</div>
+<!-- Current Month -->
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">1</span>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2 p-1.5 bg-tertiary-container/10 rounded border-l-2 border-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="text-[10px] font-bold text-tertiary truncate">Maintenance</span>
+</div>
+</div>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">2</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">3</span>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2 p-1.5 bg-primary/10 rounded border-l-2 border-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-[10px] font-bold text-primary truncate">Pending: Smith</span>
+</div>
+</div>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline text-primary font-bold">4</span>
+<div class="absolute top-4 right-4 flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</div>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2 p-1.5 bg-green-500/10 rounded border-l-2 border-green-500">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span class="text-[10px] font-bold text-green-400 truncate">Confirmed: Gala</span>
+</div>
+</div>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">5</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">6</span>
+</div>
+<!-- Week 2 -->
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">7</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">8</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">9</span>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2 p-1.5 bg-error/10 rounded border-l-2 border-error">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="text-[10px] font-bold text-error truncate">Cancelled</span>
+</div>
+</div>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">10</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">11</span>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-r border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">12</span>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2 p-1.5 bg-green-500/10 rounded border-l-2 border-green-500">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span class="text-[10px] font-bold text-green-400 truncate">Wedding Ceremony</span>
+</div>
+</div>
+</div>
+<div class="bg-surface min-h-[140px] p-4 group relative hover:bg-surface-container-low transition-colors cursor-pointer border-b border-outline-variant/5">
+<span class="text-on-surface/60 font-headline">13</span>
+</div>
+<!-- Fill Remaining Cells -->
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">14</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">15</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">16</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">17</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">18</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">19</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-b border-outline-variant/5"><span class="text-on-surface/60 font-headline">20</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">21</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">22</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">23</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">24</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">25</span></div>
+<div class="bg-surface min-h-[140px] p-4 border-r border-outline-variant/5"><span class="text-on-surface/60 font-headline">26</span></div>
+<div class="bg-surface min-h-[140px] p-4"><span class="text-on-surface/60 font-headline">27</span></div>
+</div>
+<!-- Legend Bar -->
+<footer class="mt-8 flex justify-center">
+<div class="glass-panel px-10 py-4 rounded-full border border-outline-variant/10 flex items-center gap-12">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></span>
+<span class="text-xs font-bold tracking-widest uppercase text-on-surface/80">Confirmed</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-[#ffe088] shadow-[0_0_10px_rgba(255,224,136,0.4)]"></span>
+<span class="text-xs font-bold tracking-widest uppercase text-on-surface/80">Pending Inquiry</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-error shadow-[0_0_10px_rgba(255,180,171,0.4)]"></span>
+<span class="text-xs font-bold tracking-widest uppercase text-on-surface/80">Cancelled</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-tertiary shadow-[0_0_10px_rgba(144,205,255,0.4)]"></span>
+<span class="text-xs font-bold tracking-widest uppercase text-on-surface/80">Maintenance</span>
+</div>
+</div>
+</footer>
+</div>
+<!-- Signature Editorial Card: Sidebar Floating Info -->
+<div class="fixed right-8 top-32 w-80 hidden lg:block">
+<div class="glass-panel p-8 rounded-2xl border border-outline-variant/10 shadow-2xl relative overflow-hidden group">
+<div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700"></div>
+<h4 class="text-xs font-bold tracking-widest text-primary uppercase mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+                    Concierge Note
+                </h4>
+<div class="space-y-6">
+<div>
+<p class="text-xs text-on-surface-variant font-medium mb-1">Upcoming Highlight</p>
+<p class="text-xl font-headline italic">Royal Gala Night</p>
+<p class="text-sm text-on-surface/60 mt-2">Oct 12, Grande Salle. Premium catering confirmed for 450 guests.</p>
+</div>
+<div class="pt-6 border-t border-outline-variant/10">
+<div class="flex justify-between items-center mb-4">
+<span class="text-xs font-bold text-on-surface/40 uppercase">Efficiency</span>
+<span class="text-xs font-bold text-primary tracking-tighter">94% Capacity</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[94%]"></div>
+</div>
+</div>
+<div class="pt-4">
+<img class="w-full h-32 object-cover rounded-lg grayscale hover:grayscale-0 transition-all duration-500" data-alt="high-end luxury wedding hall interior with crystal chandeliers and gold accents at twilight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaUnlUHh6p4WJKI50QzFCd4DYDIqBIbtjkaNRKBpmo3PiIT-7dk-Zw_r5LwneQEL_CYUHhiKpK--M2TOnkPzvJjdr4YSUeCK8lhnEdko5fv7VmUclWrt8jQZZiPkK-J8kxAdpPCYm3HiGJoNidZ8GdQXunBJF1FlPPghfUWoGGI_4a3pRLhYZpUaIj6k2K7d5cLmvt8Q2KySw1gI3pj0uGF4EhO_7djXzSakx4iJ2mfucCr6scUKrwYZthRuggxh1SEoBfCFeMmdZx"/>
+<p class="text-[10px] italic text-on-surface-variant mt-2 text-center">Grande Salle - Signature Lighting Setup</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile BottomNavBar (Safety measure) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#041329]/95 backdrop-blur-md border-t border-outline-variant/10 flex items-center justify-around px-4 z-50">
+<button class="flex flex-col items-center gap-1 text-[#d6e3ff]/50">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Dash</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#ffe088]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Plan</span>
+</button>
+<div class="-mt-12 bg-primary text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">add</span>
+</div>
+<button class="flex flex-col items-center gap-1 text-[#d6e3ff]/50">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Clients</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#d6e3ff]/50">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Set</span>
+</button>
+</nav>
+</body></html>

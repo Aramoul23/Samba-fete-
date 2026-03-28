@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Samba Fête | Events Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed-variant": "#574500",
+              "on-secondary-fixed-variant": "#534519",
+              "secondary-fixed-dim": "#dac58d",
+              "on-tertiary": "#003450",
+              "surface-container-highest": "#27354d",
+              "on-surface-variant": "#d0c6af",
+              "surface-container-lowest": "#010e24",
+              "surface": "#041329",
+              "surface-container": "#112036",
+              "inverse-on-surface": "#233148",
+              "on-secondary-fixed": "#231a00",
+              "on-primary-fixed": "#231a00",
+              "outline": "#99907c",
+              "outline-variant": "#4d4635",
+              "on-tertiary-fixed": "#001e30",
+              "surface-container-high": "#1c2a41",
+              "surface-bright": "#2c3951",
+              "secondary-container": "#56481b",
+              "primary": "#ffe088",
+              "primary-container": "#e9c349",
+              "inverse-surface": "#d6e3ff",
+              "primary-fixed": "#ffe087",
+              "secondary": "#dac58d",
+              "on-primary": "#3c2f00",
+              "surface-dim": "#041329",
+              "tertiary-fixed": "#cbe6ff",
+              "surface-container-low": "#0d1c32",
+              "tertiary-fixed-dim": "#90cdff",
+              "secondary-fixed": "#f7e1a6",
+              "primary-fixed-dim": "#e9c349",
+              "on-background": "#d6e3ff",
+              "on-error": "#690005",
+              "tertiary": "#cce6ff",
+              "on-error-container": "#ffdad6",
+              "on-tertiary-container": "#005783",
+              "on-surface": "#d6e3ff",
+              "on-secondary-container": "#cbb780",
+              "tertiary-container": "#90cdff",
+              "on-primary-container": "#655000",
+              "on-tertiary-fixed-variant": "#004b71",
+              "background": "#041329",
+              "surface-variant": "#27354d",
+              "inverse-primary": "#735c00",
+              "surface-tint": "#e9c349",
+              "error": "#ffb4ab",
+              "on-secondary": "#3b2f05",
+              "error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(44, 57, 81, 0.6);
+        backdrop-filter: blur(20px);
+      }
+      .gold-gradient {
+        background: linear-gradient(135deg, #e9c349 0%, #ffe088 100%);
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-8 bg-[#041329] dark:bg-slate-950 border-r border-white/10 w-72 hidden md:flex z-50">
+<div class="px-8">
+<h1 class="text-xl font-['Noto_Serif'] italic text-[#e9c349] mb-8">Samba Fête</h1>
+<p class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem] text-slate-500 mb-8">Digital Concierge</p>
+</div>
+<nav class="flex flex-col flex-grow">
+<a class="text-slate-400 py-3 px-6 hover:bg-[#112036] hover:text-[#e9c349] transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Dashboard</span>
+</a>
+<a class="text-[#e9c349] bg-white/5 border-r-4 border-[#e9c349] py-3 px-6 flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Events</span>
+</a>
+<a class="text-slate-400 py-3 px-6 hover:bg-[#112036] hover:text-[#e9c349] transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Clients</span>
+</a>
+<a class="text-slate-400 py-3 px-6 hover:bg-[#112036] hover:text-[#e9c349] transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Finances</span>
+</a>
+<a class="text-slate-400 py-3 px-6 hover:bg-[#112036] hover:text-[#e9c349] transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Venues</span>
+</a>
+<a class="text-slate-400 py-3 px-6 mt-auto hover:bg-[#112036] hover:text-[#e9c349] transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Manrope'] font-semibold tracking-[0.1rem] uppercase text-[0.75rem]">Settings</span>
+</a>
+</nav>
+</aside>
+<main class="md:ml-72 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-8 py-4 h-20 bg-[#041329] sticky top-0 z-40">
+<div class="flex items-center gap-8">
+<h2 class="text-2xl font-bold tracking-tight font-['Noto_Serif'] text-[#e9c349] md:hidden">Samba Fête</h2>
+<div class="relative group hidden lg:block">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none focus:ring-1 focus:ring-primary rounded-lg pl-12 pr-4 py-2 w-80 text-sm text-on-surface" placeholder="Search events..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-[#e9c349] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-[#e9c349] hover:text-[#ffe088] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="px-8 py-12 lg:px-16 max-w-7xl">
+<!-- Header Section -->
+<div class="mb-12">
+<h1 class="font-headline text-5xl font-bold text-primary mb-4 tracking-tight -ml-1">Event Registry</h1>
+<p class="text-on-surface-variant font-body text-lg max-w-2xl leading-relaxed">
+                    Curating unforgettable moments at the Grand Ballroom. Manage your upcoming wedding nuptials and gala celebrations with precision.
+                </p>
+</div>
+<!-- Filter Bar -->
+<section class="bg-surface-container-low p-6 rounded-xl mb-12 flex flex-wrap items-center gap-6">
+<div class="flex-grow min-w-[240px]">
+<label class="block font-label text-[0.65rem] uppercase tracking-widest text-slate-500 mb-2">Search Registry</label>
+<div class="relative">
+<span class="absolute left-0 bottom-2 text-primary/60 material-symbols-outlined scale-75" data-icon="search">search</span>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder-slate-600 transition-colors pb-1 pl-6" placeholder="Event or Client Name" type="text"/>
+</div>
+</div>
+<div class="w-48">
+<label class="block font-label text-[0.65rem] uppercase tracking-widest text-slate-500 mb-2">Status</label>
+<select class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface transition-colors pb-1">
+<option class="bg-surface-container">All Statuses</option>
+<option class="bg-surface-container">Confirmed</option>
+<option class="bg-surface-container">Pending</option>
+<option class="bg-surface-container">Cancelled</option>
+</select>
+</div>
+<div class="w-64">
+<label class="block font-label text-[0.65rem] uppercase tracking-widest text-slate-500 mb-2">Date Range</label>
+<div class="relative">
+<span class="absolute right-0 bottom-2 text-primary/60 material-symbols-outlined scale-75" data-icon="calendar_today">calendar_today</span>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 text-on-surface placeholder-slate-600 transition-colors pb-1" placeholder="Oct 2024 - Dec 2024" type="text"/>
+</div>
+</div>
+<button class="bg-surface-container-high hover:bg-surface-bright px-6 py-2 rounded-lg text-primary text-sm font-semibold transition-colors mt-6 lg:mt-0 ml-auto border border-outline-variant/20">
+                    Apply Filters
+                </button>
+</section>
+<!-- Grid Content -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-8">
+<!-- Card 1 -->
+<article class="bg-surface-container rounded-xl overflow-hidden group hover:translate-y-[-4px] transition-all duration-300 border border-outline-variant/5">
+<div class="h-48 relative overflow-hidden">
+<img alt="Wedding venue" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" data-alt="luxury wedding reception hall with white floral arrangements and soft ambient golden lighting on tables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvKpbNYTyB8JxwRVKc4MCCPLeBtZLivGCCpVmG_c1dsQyTJxyUGQRnUXBc2nr4MRDhqWDJvfr5DN03dBOyS6iR7bNW5zKLBM_o9nc01M0h5FYt3_Gl8SYCX0LzAZdImJaNhG03AuUjhbN8iHIMtMF_MHJC5n5TZ-olli86A4UdxtjVSDRIZmF-qhlEHUbKJFR9jQb2ytRRREnThOfUnEnCjYTypIFNX7xM-lMLKuzbkILXEmLObLREWRdp_bLNePW-_ucUm9euHyYE"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label text-[0.65rem] uppercase tracking-[0.1rem] font-bold">Confirmed</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl text-on-surface mb-1">Sterling-Vance Nuptials</h3>
+<p class="text-on-surface-variant font-body">Eleanor Sterling &amp; Arthur Vance</p>
+</div>
+<div class="text-right">
+<p class="font-headline text-xl text-primary">$45,000</p>
+<p class="font-label text-[0.6rem] text-slate-500 uppercase tracking-widest">Total Value</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-y-4 mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="event">event</span>
+<span class="text-sm text-on-surface-variant">December 14, 2024</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="location_on">location_on</span>
+<span class="text-sm text-on-surface-variant">Emerald Ballroom</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="group">group</span>
+<span class="text-sm text-on-surface-variant">250 Guests</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="restaurant">restaurant</span>
+<span class="text-sm text-on-surface-variant">Full Catering</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow gold-gradient text-on-primary-container font-semibold py-2.5 rounded-lg text-sm hover:opacity-90 transition-opacity">
+                                View Details
+                            </button>
+<button class="px-4 border border-outline-variant/30 text-on-surface-variant rounded-lg hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined scale-90" data-icon="edit">edit</span>
+</button>
+<button class="px-4 border border-outline-variant/30 text-on-surface-variant rounded-lg hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined scale-90" data-icon="payments">payments</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container rounded-xl overflow-hidden group hover:translate-y-[-4px] transition-all duration-300 border border-outline-variant/5">
+<div class="h-48 relative overflow-hidden">
+<img alt="Gala setting" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" data-alt="high-end corporate gala event with blue and gold lighting and sophisticated table settings in a grand hall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1QGnwlgK_AHM52YpRxIgMya1zF9IZQMEuYfss_bldS_o7FYlEWauJGiMwTbTSl4Bjo5oUh2sRs1_V7JKrBYw0LDRYMo4ds7agiVw3RnAk6kIqTSSubY-RiTw_puzoRV7nqyQlcnzHNHTdPpzvYNDE3fC5wb97mgsqOEeW8Tbw38vV4cCAgyv1V4ZB8-HcJm3sQWGrXmBSJAvE6TRUoowfYPugT4LygteTG08bkC-QipSRGZkhrRRQDzwl4lbMDeQ_y3WV5IXxzCtZ"/>
+<div class="absolute top-4 right-4">
+<span class="bg-surface-container-high text-primary px-3 py-1 rounded-full font-label text-[0.65rem] uppercase tracking-[0.1rem] font-bold">Pending</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl text-on-surface mb-1">Aurelius Winter Gala</h3>
+<p class="text-on-surface-variant font-body">Aurelius Enterprises</p>
+</div>
+<div class="text-right">
+<p class="font-headline text-xl text-primary">$62,500</p>
+<p class="font-label text-[0.6rem] text-slate-500 uppercase tracking-widest">Total Value</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-y-4 mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="event">event</span>
+<span class="text-sm text-on-surface-variant">January 08, 2025</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="location_on">location_on</span>
+<span class="text-sm text-on-surface-variant">Skyline Pavilion</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="group">group</span>
+<span class="text-sm text-on-surface-variant">400 Guests</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="music_note">music_note</span>
+<span class="text-sm text-on-surface-variant">Live Orchestra</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow gold-gradient text-on-primary-container font-semibold py-2.5 rounded-lg text-sm hover:opacity-90 transition-opacity">
+                                View Details
+                            </button>
+<button class="px-4 border border-outline-variant/30 text-on-surface-variant rounded-lg hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined scale-90" data-icon="edit">edit</span>
+</button>
+<button class="px-4 border border-outline-variant/30 text-on-surface-variant rounded-lg hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined scale-90" data-icon="payments">payments</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-container rounded-xl overflow-hidden group hover:translate-y-[-4px] transition-all duration-300 border border-outline-variant/5">
+<div class="h-48 relative overflow-hidden">
+<img alt="Luxury event" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" data-alt="candlelit banquet table with expensive crystal glasses and deep red roses in a dark moody atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ5N0Wn-b6aLTRKfArk_C0na_mtme8hNdGhfeG2DnmCj6NSVPPpXH4yKf6WQdIWNFwGYVPDbUqJtSJxROX_VF-BXGlS2DFeDPufUN6I2axA6o0zqQHRSdU9HrUp0bCJaPXr9GW61xCEekgIo3HsnlEcdSOXLv8JqFkTvOd6cNbv3OKOqQMTeUBbL9XR1dYaP6bRJ7JlMPLIKeRSEaQQVk-ChXHd10gxZoAaqC7_087FvNIMTFKYzqFGPbKxkF__kjNvcg1wgUlufV8"/>
+<div class="absolute top-4 right-4">
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-label text-[0.65rem] uppercase tracking-[0.1rem] font-bold">Cancelled</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-2xl text-on-surface mb-1">Moretti - Blanc Wedding</h3>
+<p class="text-on-surface-variant font-body">Julian Moretti</p>
+</div>
+<div class="text-right">
+<p class="font-headline text-xl text-primary">$38,200</p>
+<p class="font-label text-[0.6rem] text-slate-500 uppercase tracking-widest">Total Value</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-y-4 mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="event">event</span>
+<span class="text-sm text-on-surface-variant">Feb 22, 2025</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="location_on">location_on</span>
+<span class="text-sm text-on-surface-variant">Petit Salon</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="group">group</span>
+<span class="text-sm text-on-surface-variant">120 Guests</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary scale-75" data-icon="cake">cake</span>
+<span class="text-sm text-on-surface-variant">Tiered Design</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow border border-primary/40 text-primary font-semibold py-2.5 rounded-lg text-sm hover:bg-primary/5 transition-colors">
+                                Review Status
+                            </button>
+</div>
+</div>
+</article>
+<!-- Card 4 (Bento Style Offset) -->
+<div class="bg-surface-container-high rounded-xl p-8 flex flex-col justify-center items-center text-center border border-dashed border-outline-variant/40 group cursor-pointer hover:bg-surface-bright transition-colors">
+<div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="add_circle">add_circle</span>
+</div>
+<h3 class="font-headline text-2xl text-on-surface mb-2">New Event Inquiry</h3>
+<p class="text-on-surface-variant font-body mb-8 max-w-xs">
+                        Start a new consultation and draft a curated experience for your next client.
+                    </p>
+<button class="px-8 py-3 rounded-full border border-primary text-primary font-bold tracking-widest uppercase text-xs hover:bg-primary hover:text-on-primary transition-all">
+                        Create Draft
+                    </button>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="flex flex-col md:flex-row justify-between items-center px-12 w-full mt-auto py-12 border-t border-white/5 bg-[#041329]">
+<p class="font-['Manrope'] text-sm tracking-wide text-slate-400">© 2024 Samba Fête Events Management</p>
+<div class="flex gap-8 mt-6 md:mt-0">
+<a class="text-slate-500 hover:text-white transition-colors text-sm font-['Manrope']" href="#">Terms of Service</a>
+<a class="text-slate-500 hover:text-white transition-colors text-sm font-['Manrope']" href="#">Privacy Policy</a>
+<a class="text-slate-500 hover:text-white transition-colors text-sm font-['Manrope']" href="#">Contact Concierge</a>
+</div>
+</footer>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-8 right-8 z-50 gold-gradient text-on-primary-container px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 group active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'FILL' 0, 'wght' 700;">add</span>
+<span class="font-bold tracking-widest uppercase text-xs">New Event</span>
+</button>
+</body></html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Paiement Rapide | Samba Fête</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#ffdf92",
+              "inverse-on-surface": "#233148",
+              "on-primary-fixed-variant": "#574500",
+              "on-secondary-fixed": "#241a00",
+              "secondary-fixed-dim": "#eac256",
+              "secondary-container": "#907000",
+              "surface-container-high": "#1c2a41",
+              "primary-container": "#e9c349",
+              "surface-container-lowest": "#010e24",
+              "on-background": "#d6e3ff",
+              "on-primary-container": "#655000",
+              "on-tertiary-fixed-variant": "#544600",
+              "on-secondary-fixed-variant": "#594400",
+              "outline": "#99907c",
+              "on-error-container": "#ffdad6",
+              "surface-container-highest": "#27354d",
+              "on-tertiary": "#3a3000",
+              "secondary": "#eac256",
+              "inverse-surface": "#d6e3ff",
+              "surface-container-low": "#0d1c32",
+              "surface-variant": "#27354d",
+              "on-surface-variant": "#d0c6af",
+              "outline-variant": "#4d4635",
+              "tertiary": "#ffe16e",
+              "on-secondary-container": "#fffbff",
+              "on-surface": "#d6e3ff",
+              "tertiary-fixed-dim": "#e9c400",
+              "on-primary-fixed": "#231a00",
+              "primary-fixed": "#ffe087",
+              "on-error": "#690005",
+              "primary": "#ffe088",
+              "surface-bright": "#2c3951",
+              "surface": "#041329",
+              "inverse-primary": "#735c00",
+              "surface-dim": "#041329",
+              "tertiary-container": "#e9c400",
+              "surface-tint": "#e9c349",
+              "tertiary-fixed": "#ffe16d",
+              "on-secondary": "#3e2e00",
+              "primary-fixed-dim": "#e9c349",
+              "background": "#041329",
+              "on-primary": "#3c2f00",
+              "on-tertiary-container": "#625100",
+              "surface-container": "#112036",
+              "error": "#ffb4ab",
+              "on-tertiary-fixed": "#221b00",
+              "error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(39, 53, 77, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .gilded-gradient {
+            background: linear-gradient(135deg, #ffe088 0%, #e9c349 100%);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary min-h-screen flex overflow-hidden">
+<!-- Shared SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-72 border-r border-outline-variant/15 bg-slate-950 dark:bg-[#041329] py-8 px-6 flex-shrink-0">
+<div class="mb-12 flex items-center gap-3">
+<span class="text-2xl font-serif font-bold text-[#ffe088] tracking-tight">Samba Fête</span>
+</div>
+<nav class="flex-grow space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-[#d6e3ff]/60 hover:text-[#d6e3ff] hover:bg-[#112036] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label uppercase tracking-widest text-xs">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-[#d6e3ff]/60 hover:text-[#d6e3ff] hover:bg-[#112036] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-label uppercase tracking-widest text-xs">Calendar</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-[#d6e3ff]/60 hover:text-[#d6e3ff] hover:bg-[#112036] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-label uppercase tracking-widest text-xs">Events</span>
+</a>
+<!-- Active State for Finances -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-[#ffe088] font-bold border-r-2 border-[#ffe088] bg-gradient-to-r from-[#ffe088]/10 to-transparent transition-all duration-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-label uppercase tracking-widest text-xs">Finances</span>
+</a>
+</nav>
+<button class="gilded-gradient text-on-primary font-headline font-bold py-4 px-6 rounded-lg text-sm mb-12 shadow-lg shadow-primary/5 active:scale-[0.98] transition-transform">
+            Create Event
+        </button>
+<div class="mt-auto pt-8 border-t border-outline-variant/10 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 text-[#d6e3ff]/60 hover:text-[#d6e3ff] transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label uppercase tracking-widest text-xs">Settings</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-[#d6e3ff]/60 hover:text-[#d6e3ff] transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label uppercase tracking-widest text-xs">Support</span>
+</a>
+</div>
+</aside>
+<main class="flex-grow flex flex-col h-screen overflow-hidden">
+<!-- Shared TopAppBar -->
+<header class="flex justify-between items-center px-8 py-4 sticky top-0 z-50 bg-[#041329]/60 backdrop-blur-xl">
+<div class="flex items-center gap-6 flex-grow">
+<div class="relative max-w-md w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline/60 text-lg">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-2.5 pl-12 pr-6 w-full text-on-surface placeholder:text-outline/40 focus:ring-1 focus:ring-primary/30 transition-all font-body" placeholder="Rechercher un dossier..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-8">
+<button class="p-2 text-on-surface hover:bg-[#ffe088]/10 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant/20">
+<img class="w-10 h-10 rounded-full object-cover border border-primary/20" data-alt="professional executive headshot of a middle-aged man in a sharp navy suit with soft studio lighting and dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZbP-oHVFT0sGp6RXxsz11IFoHqq_7IYU1Z7PxHFiZqQ34kxwiHJhte5mjC0H5Ey2YTY5-goo59trkIP_hPGaJIUBaTTFLGnQvfSuA3DROal40sEyqxNUNw0bVQkMa2HUpxEpsGSjqhFpX6BuP1JWW-6-PYqHllmVBSu9aDjvQSlg2wG8HOh7vuMqKE4DgpQ8NMugKP-SOk4uSnohgItjNzlhFf9edX95R5oedsRUAI84xkT7DzAlniV2jtsxaH69KaP5ZE2q247vi"/>
+<div class="hidden sm:block">
+<p class="text-sm font-bold text-on-surface leading-tight">M. Belkacem</p>
+<p class="text-[10px] font-label uppercase tracking-wider text-primary/70">Administrateur</p>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-col lg:flex-row flex-grow overflow-hidden">
+<!-- Content Canvas -->
+<section class="flex-grow overflow-y-auto no-scrollbar p-8 space-y-12">
+<div class="max-w-4xl mx-auto space-y-12 pb-24">
+<!-- Header -->
+<div class="space-y-2">
+<h1 class="text-4xl font-headline font-bold text-on-surface tracking-tight">Paiement Rapide</h1>
+<p class="text-on-surface-variant max-w-lg">Enregistrez une nouvelle transaction en trois étapes simples pour sécuriser vos réservations.</p>
+</div>
+<!-- Step 1: Search Client -->
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<span class="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">01</span>
+<h2 class="text-xl font-headline italic">Rechercher le client</h2>
+</div>
+<div class="bg-surface-container-low p-1 rounded-xl focus-within:ring-1 focus-within:ring-primary/40 transition-all">
+<div class="flex items-center bg-surface-container rounded-lg px-6 py-4">
+<span class="material-symbols-outlined text-primary mr-4">person_search</span>
+<input class="bg-transparent border-none focus:ring-0 text-xl font-medium w-full text-on-surface" placeholder="Nom du client ou numéro de téléphone..." type="text" value="Famille Belkhir"/>
+</div>
+</div>
+</div>
+<!-- Step 2: Select Event -->
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<span class="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">02</span>
+<h2 class="text-xl font-headline italic">Sélectionner l'événement</h2>
+</div>
+<div class="grid md:grid-cols-2 gap-6">
+<!-- Card 1 (Active/Selected) -->
+<div class="relative group cursor-pointer">
+<div class="absolute -inset-0.5 gilded-gradient rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+<div class="relative bg-surface-container-high border border-primary/40 p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="bg-primary/10 text-primary text-[10px] font-label uppercase tracking-widest px-2 py-1 rounded">À venir</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h3 class="text-lg font-headline font-bold mb-1">Mariage Belkhir</h3>
+<div class="flex items-center gap-2 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-xs">calendar_today</span>
+<span>12 Sept 2024</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+<span>Grande Salle Royale</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="relative group cursor-pointer">
+<div class="relative bg-surface-container-low hover:bg-surface-container border border-outline-variant/10 p-6 rounded-xl flex flex-col gap-4 transition-colors">
+<div class="flex justify-between items-start">
+<div class="bg-on-surface/5 text-on-surface/50 text-[10px] font-label uppercase tracking-widest px-2 py-1 rounded">Passé</div>
+</div>
+<div>
+<h3 class="text-lg font-headline font-bold mb-1 text-on-surface/80">Fiançailles Amara</h3>
+<div class="flex items-center gap-2 text-on-surface-variant/60 text-sm">
+<span class="material-symbols-outlined text-xs">calendar_today</span>
+<span>24 Dec 2023</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant/60 text-sm mt-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+<span>Salon Orchidée</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 3: Record Payment -->
+<div class="space-y-8">
+<div class="flex items-center gap-4">
+<span class="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">03</span>
+<h2 class="text-xl font-headline italic">Détails du paiement</h2>
+</div>
+<div class="bg-surface-container p-8 rounded-xl space-y-8 border border-outline-variant/5">
+<!-- Quick Amount Buttons -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<button class="py-3 px-4 rounded border border-outline-variant/30 hover:border-primary/50 text-xs font-label uppercase tracking-tighter transition-all">Solde Complet</button>
+<button class="py-3 px-4 rounded border border-primary/40 bg-primary/5 text-primary text-xs font-label uppercase tracking-tighter transition-all">20,000 DA</button>
+<button class="py-3 px-4 rounded border border-outline-variant/30 hover:border-primary/50 text-xs font-label uppercase tracking-tighter transition-all">30,000 DA</button>
+<button class="py-3 px-4 rounded border border-outline-variant/30 hover:border-primary/50 text-xs font-label uppercase tracking-tighter transition-all">50,000 DA</button>
+</div>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="text-[10px] font-label uppercase tracking-widest text-primary/70">Montant du versement</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b-2 border-primary focus:border-primary-container focus:ring-0 text-3xl font-headline font-bold py-3 px-0 bg-transparent" type="text" value="20,000"/>
+<span class="absolute right-0 bottom-4 text-xl font-headline text-on-surface-variant">DA</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-label uppercase tracking-widest text-primary/70">Mode de règlement</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg p-4 font-body focus:ring-1 focus:ring-primary/30">
+<option>Espèces (Cash)</option>
+<option>Virement Bancaire</option>
+<option>Carte CIB / Dahabia</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-label uppercase tracking-widest text-primary/70">Type de paiement</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg p-4 font-body focus:ring-1 focus:ring-primary/30">
+<option>Acompte (Deposit)</option>
+<option>Tranche (Installment)</option>
+<option>Paiement Final</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-label uppercase tracking-widest text-primary/70">Référence / Note</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg p-4 font-body focus:ring-1 focus:ring-primary/30" placeholder="Ex: Chèque n°1234..." type="text"/>
+</div>
+</div>
+</div>
+<button class="w-full gilded-gradient py-6 rounded-lg text-on-primary font-headline font-bold text-lg tracking-widest uppercase shadow-2xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">
+                            Enregistrer le paiement
+                        </button>
+</div>
+</div>
+</section>
+<!-- Side Panel: Financial Summary -->
+<aside class="w-full lg:w-96 glass-panel border-l border-outline-variant/10 p-8 flex flex-col gap-10 overflow-y-auto no-scrollbar">
+<div>
+<h3 class="text-sm font-label uppercase tracking-widest text-primary mb-6">Résumé Financier</h3>
+<!-- Main Balance Card -->
+<div class="bg-surface-container-highest/30 rounded-2xl p-6 border border-white/5 space-y-6">
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs font-label uppercase">Contrat Total</p>
+<p class="text-3xl font-headline font-bold text-on-surface">850,000 <span class="text-sm font-body font-normal opacity-60">DA</span></p>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-label uppercase">
+<span class="text-primary">Réglé (320k)</span>
+<span class="text-on-surface-variant/60">38%</span>
+</div>
+<div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="h-full gilded-gradient w-[38%] rounded-full"></div>
+</div>
+</div>
+<div class="pt-4 border-t border-white/5 flex justify-between items-end">
+<div class="space-y-1">
+<p class="text-on-surface-variant text-[10px] font-label uppercase">Reste à payer</p>
+<p class="text-xl font-headline text-error">530,000 DA</p>
+</div>
+<span class="material-symbols-outlined text-error/40">account_balance_wallet</span>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-sm font-label uppercase tracking-widest text-primary">Historique Récent</h3>
+<span class="material-symbols-outlined text-on-surface-variant text-sm cursor-pointer hover:text-primary transition-colors">history</span>
+</div>
+<div class="space-y-4">
+<!-- History Item 1 -->
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-primary text-xl">payments</span>
+</div>
+<div class="flex-grow">
+<p class="text-sm font-bold">Acompte Initial</p>
+<p class="text-[10px] text-on-surface-variant">14 Janvier 2024</p>
+</div>
+<p class="text-sm font-bold text-primary">+150,000</p>
+</div>
+<!-- History Item 2 -->
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-primary text-xl">receipt_long</span>
+</div>
+<div class="flex-grow">
+<p class="text-sm font-bold">Deuxième Tranche</p>
+<p class="text-[10px] text-on-surface-variant">05 Mai 2024</p>
+</div>
+<p class="text-sm font-bold text-primary">+100,000</p>
+</div>
+<!-- History Item 3 -->
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-primary text-xl">account_balance</span>
+</div>
+<div class="flex-grow">
+<p class="text-sm font-bold">Versement Virement</p>
+<p class="text-[10px] text-on-surface-variant">22 Juillet 2024</p>
+</div>
+<p class="text-sm font-bold text-primary">+70,000</p>
+</div>
+</div>
+<!-- Visual Signature: Vertical Timeline Hint -->
+<div class="mt-8 pt-8 flex flex-col items-center">
+<div class="w-px h-24 bg-gradient-to-b from-primary to-transparent"></div>
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(255,224,136,0.8)] -mt-1"></div>
+<p class="text-[10px] font-label uppercase tracking-[0.2em] text-primary/40 mt-4 rotate-180 [writing-mode:vertical-lr]">Excellence</p>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Mobile Navigation (visible only on small screens) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-high border-t border-outline-variant/10 px-6 py-4 flex justify-around items-center z-50">
+<button class="text-primary flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-[10px] font-label uppercase">Paiement</span>
+</button>
+<button class="text-on-surface/50 flex flex-col items-center gap-1">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] font-label uppercase">Événements</span>
+</button>
+<button class="text-on-surface/50 flex flex-col items-center gap-1">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-label uppercase">Stats</span>
+</button>
+<button class="text-on-surface/50 flex flex-col items-center gap-1">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-label uppercase">Profil</span>
+</button>
+</nav>
+</body></html>

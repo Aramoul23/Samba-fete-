@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary": "#3c2f00",
+                        "surface-container-high": "#1c2a41",
+                        "surface-dim": "#041329",
+                        "on-tertiary-fixed-variant": "#004b71",
+                        "primary-fixed": "#ffe087",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#3b2f05",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#231a00",
+                        "on-background": "#d6e3ff",
+                        "primary-container": "#e9c349",
+                        "on-surface": "#d6e3ff",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#90cdff",
+                        "on-tertiary-container": "#005783",
+                        "inverse-primary": "#735c00",
+                        "tertiary-container": "#90cdff",
+                        "on-tertiary": "#003450",
+                        "primary": "#ffe088",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-tertiary-fixed": "#001e30",
+                        "secondary-fixed-dim": "#dac58d",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-primary-fixed": "#231a00",
+                        "surface-container-lowest": "#010e24",
+                        "outline-variant": "#4d4635",
+                        "on-surface-variant": "#d0c6af",
+                        "surface-bright": "#2c3951",
+                        "surface-container": "#112036",
+                        "surface-variant": "#27354d",
+                        "surface-tint": "#e9c349",
+                        "surface-container-highest": "#27354d",
+                        "outline": "#99907c",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#cbe6ff",
+                        "background": "#041329",
+                        "on-primary-container": "#655000",
+                        "on-secondary-fixed-variant": "#534519",
+                        "inverse-on-surface": "#233148",
+                        "surface-container-low": "#0d1c32",
+                        "secondary": "#dac58d",
+                        "surface": "#041329",
+                        "on-secondary-container": "#cbb780",
+                        "secondary-container": "#56481b",
+                        "inverse-surface": "#d6e3ff",
+                        "tertiary": "#cce6ff",
+                        "secondary-fixed": "#f7e1a6"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(13, 28, 50, 0.7);
+        }
+        .concierge-shadow {
+            box-shadow: 0px 24px 48px rgba(0, 0, 0, 0.4);
+        }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(233, 195, 73, 0.15);
+            border-color: rgba(233, 195, 73, 0.3);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary/30 min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full w-64 z-40 flex-col h-full py-6 px-4 bg-[#0d1c32] dark:bg-[#0d1c32] shadow-[24px_0_48px_rgba(0,0,0,0.4)]">
+<div class="mb-10 px-4">
+<h1 class="font-serif text-xl text-[#e9c349]">Samba Fête</h1>
+<p class="font-sans tracking-tight text-xs text-on-surface-variant opacity-70">Premium Management</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-3 hover:bg-[#2c3951] hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-sans tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-3 hover:bg-[#2c3951] hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined">event</span>
+<span class="font-sans tracking-tight">Events</span>
+</a>
+<!-- Active State: Clients -->
+<a class="flex items-center gap-3 bg-[#112036] text-[#e9c349] rounded-lg px-4 py-3 border-l-4 border-[#e9c349] translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-sans tracking-tight">Clients</span>
+</a>
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-3 hover:bg-[#2c3951] hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-sans tracking-tight">Contracts</span>
+</a>
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-3 hover:bg-[#2c3951] hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-sans tracking-tight">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+<button class="w-full py-3 mb-4 rounded-lg bg-primary-container text-on-primary font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                New Event
+            </button>
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-2 hover:opacity-100" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-sm">Support</span>
+</a>
+<a class="flex items-center gap-3 text-[#d6e3ff] opacity-60 px-4 py-2 hover:opacity-100" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="md:ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-8 h-16 bg-[#041329] dark:bg-[#041329]">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-[#e9c349]">menu</span>
+<h2 class="font-serif italic text-2xl text-[#e9c349]">Samba Fête</h2>
+</div>
+<div class="flex-1 max-w-xl mx-8 hidden lg:block">
+<div class="relative flex items-center bg-[#0d1c32] rounded-full px-4 h-10 group focus-within:ring-1 ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full text-on-surface placeholder:text-on-surface-variant/50" placeholder="Search directory..." type="text"/>
+<span class="text-[10px] font-mono text-on-surface-variant/40 border border-white/10 px-1.5 rounded">⌘K</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-[#d6e3ff] opacity-80 hover:bg-[#112036] hover:text-[#ffe088] p-2 rounded-full transition-colors duration-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-[#d6e3ff] opacity-80 hover:bg-[#112036] hover:text-[#ffe088] p-2 rounded-full transition-colors duration-300">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-primary/20">
+<img alt="User profile avatar" class="h-full w-full object-cover" data-alt="Close-up portrait of a professional man in a tailored dark suit with soft cinematic studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv76rpl3rCfdqQLSSdDDWB_-cpn4hgBmHS9_75HXMNc6aTHxqiahqI-1H3ikTMxH2BlX_Sn--rbVEPHs8NOwIW5V73-f6y4UaGAJPEGrcFNJi69fp85eyTRHoy_Xsx2cvvPV5uvPR9SJ-UZy7bZq1qLTsBb-pMsb1oCalr5bCP6fpLgSQ_X02KjO8jcjXCwhIT8UYEVbWxOESnToZQKQ2t-oRHYPrMNCNeaQLiBtki_QdBN_3LSrzUzEs5ZnsohA9JzNMf9rvV9ZSK"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 px-8 py-10 max-w-7xl mx-auto w-full">
+<!-- Hero Header Section -->
+<section class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="font-sans uppercase tracking-widest text-xs text-primary mb-2 block">Client Directory</span>
+<h1 class="font-serif text-4xl md:text-5xl text-on-surface leading-tight">Manage Your <br/><span class="italic text-primary-fixed">Distinguished</span> Guests</h1>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 bg-surface-container-high hover:bg-surface-bright px-6 py-3 rounded-lg border border-white/5 transition-all">
+<span class="material-symbols-outlined text-primary text-xl">filter_list</span>
+<span class="text-sm font-medium">Filter</span>
+</button>
+<button class="flex items-center gap-2 bg-primary-container text-on-primary px-8 py-3 rounded-lg font-bold concierge-shadow hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined font-bold">person_add</span>
+                        Nouveau Client
+                    </button>
+</div>
+</section>
+<!-- Stats/Bento Teaser Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+<div class="bg-surface-container-low p-6 rounded-xl border-t border-white/5">
+<p class="text-xs uppercase tracking-widest text-on-surface-variant mb-4">Total Portfolio Value</p>
+<div class="flex items-baseline gap-2">
+<span class="font-serif text-3xl">$1,240,000</span>
+<span class="text-tertiary text-xs font-bold">+12%</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border-t border-white/5">
+<p class="text-xs uppercase tracking-widest text-on-surface-variant mb-4">Active Clients</p>
+<div class="flex items-baseline gap-2">
+<span class="font-serif text-3xl">48</span>
+<span class="text-on-surface-variant text-xs">Profiles</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border-t border-white/5">
+<p class="text-xs uppercase tracking-widest text-on-surface-variant mb-4">Pending Contracts</p>
+<div class="flex items-baseline gap-2">
+<span class="font-serif text-3xl">7</span>
+<span class="text-primary text-xs font-bold">Action Required</span>
+</div>
+</div>
+</div>
+<!-- Client Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Client Card 1 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl transition-opacity group-hover:opacity-100 opacity-0"></div>
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="Elegant woman with dark hair in a professional portrait setting, wearing a white silk blouse, warm soft focus lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgtY3q2I5VAkNwTO-rDjCsDwzqq2fGokJR2HqKzJIegD7OuxsJcHR-1xnmO_0W9_knu_zYqNy5L1XdQce7Y3_dH0hiJRMQ7Fvwc7YYrc-JikgsTil3uedd_tEw80hvFFPSrfGtAEwsxMUQpaYW5tI1pb_EPxAsscqcdKjXk2m1ReQ7XT-H9CHigZAYEDWjPLla0rWUHjKUtMS1o-LjOkZe5K7oi0d7QFiHdg10cFUW-Kb-1Fo_us2vED0odAv5fPXu9HDePekTvfNn"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Eleanor Sterling</h3>
+<p class="text-sm text-primary-fixed-dim font-medium mb-6">Platinum Tier Member</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">e.sterling@luxury.com</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+1 (555) 902-3401</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">12 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$42,500</p>
+</div>
+</div>
+</div>
+<!-- Client Card 2 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="A distinguished man in his 50s with grey temples wearing a bespoke navy blazer, professional corporate headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJbcyV6a86-khkcSW7-f_2kASJN-sbLTHqpkyV_aZoYIjWe7aQteVM4PpTZY8uxyBwc9ZSYzpaP-S2CBsK4qhuIkjqD0vATbL5wEvqZCzUE1QROkQukXd1ChHlz4sYEJV5aEzHc-SJqD7LEdj2JPcE19Xu8taByUAs6-x-SxwNEr0oMrdWJcSwfPVYMyTNw16THSVK7JbyDH8klQNfsX64QY3gldxl9T-VCkYjd6aOkOi1cvkrAPnw8bViDj1HDkL4eHLLl_h0UlB0"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Julian Beaumont</h3>
+<p class="text-sm text-on-surface-variant font-medium mb-6">Corporate Executive</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">j.beaumont@prestige.co</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+1 (555) 120-4490</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">8 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$18,200</p>
+</div>
+</div>
+</div>
+<!-- Client Card 3 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="A creative professional woman with auburn hair and glasses, relaxed editorial lighting in a modern architectural space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtOF1-mk2XQhFOohvMy-PdMC0ATZ_o751316_Utc7QZ2LMMja4vqTFRIfV_4kTIakL8DkfqxbkCzmFg9rxPnqwMdlS6uFYZUW84krI8uCcWPktIQHyWAYiTEpbybyiTj87lDSNELrFJtLuHdglAA9-gsRfqCtAxLy4hJ41j876APDdkPaQnuQgb48Tq7it7iYybvi5TTh6kLxVygSX-daKljRvFPLV6r_Eyy-DIp4Td7yQolufpnPUyfn1w9usKdChsoArBp6aGzV3"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Sienna Vance</h3>
+<p class="text-sm text-tertiary font-medium mb-6">Vanguard Member</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">svance@creative.agency</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+1 (555) 883-2011</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">24 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$112,000</p>
+</div>
+</div>
+</div>
+<!-- Client Card 4 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="Charismatic man with short beard and stylish glasses in a sophisticated urban attire, soft directional evening light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD41CfaNtATQ6bVNDUcUqUO3UPNp36lA5ekwhDYdHCtf00o9jzcmhZj8DzMYmH7YmRDQML-Ryc0M2I6pqs6wcfeMV-JNbDl4GGgfHI4yOfJVt2OzDhbrfw6Rugzb_vjn4ei9O9xTKPJdRgJIqbqBo-KTY6QvTt3XV61uIZL2W05rZs0Dgp_X64PGAr2mZf97bPWwx64ghU3eMVJlqEqd0t5NtiuU-A2AWcGqpcL_A7G007E-M7H8JgKfKC0H2rIt3Q6ejEOsVqbwXEN"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Marcus Thorne</h3>
+<p class="text-sm text-on-surface-variant font-medium mb-6">Real Estate Developer</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">m.thorne@vanguard-dev.com</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+1 (555) 441-9982</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">5 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$22,400</p>
+</div>
+</div>
+</div>
+<!-- Client Card 5 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="Poised businesswoman in a minimalist charcoal dress, clean background, confident and professional aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCN34sKurXxuEdL93vgxrTqjIMKwtFDn5ljZvB4OfCYIBb0Ij06i9Ztg484hM4Hgi-bkaExO1bVUO5NJfIcLS3ID0gDHoLjyasCK_2zqCFs9o_8Q_rA3kSFWk_Y8JhzbQ8ev3u6WsiP735Bf-3hyrZ-imGxZhY_s7xrWvNS0hKW7Q-tlBzvBJ1aj5j_CUpiGo5kibQcyfvj8zQFWXthewj50lFfzANntegv_Qhb8TwcmNgWQbTh5OXlFXebO67jenix-VrXZUKPd27m"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Adelaide Rossi</h3>
+<p class="text-sm text-primary-fixed-dim font-medium mb-6">Heritage Client</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">arossi@fashion-house.it</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+39 02 8941 2230</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">19 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$68,900</p>
+</div>
+</div>
+</div>
+<!-- Client Card 6 -->
+<div class="group bg-surface-container rounded-xl p-8 transition-all duration-500 border border-transparent gold-glow relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="h-14 w-14 rounded-full border-2 border-primary/20 p-1">
+<img alt="Client Headshot" class="w-full h-full object-cover rounded-full" data-alt="Younger entrepreneur in high-end casual wear, urban lifestyle aesthetic, warm golden hour natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvmGVK9VWeM4iGVb4FiB_IlVef89OnWIoyAKf0RrT1KaLjNE1JF4TjuUdxwsH8gIPTIi2Ibw2AfD21_PsDXP3h0p9nCt9HjMU42hZOwY1fWFvSVeWL9gIoMR3_MQPLZ2UyjFd_H06gn3RcOVYEgjUlHpBoAnoNTy_IKGd8eB59bqWRHbWyjMKxQUCTHzm0w4G2G2GICKyTUPMrz-BYawFSdU_5b2qmimmhshbNtlUCvS5aY4EHUWgl2sG01mPDVC3RBvOZAEiT0YqN"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-serif text-2xl text-on-surface mb-1">Leo Fitzgerald</h3>
+<p class="text-sm text-on-surface-variant font-medium mb-6">Innovation Partner</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">mail</span>
+<span class="text-sm">leo.f@fitzgerald-tech.io</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg opacity-60">call</span>
+<span class="text-sm">+1 (555) 303-1212</span>
+</div>
+</div>
+<div class="flex justify-between pt-6 border-t border-white/5">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Events</p>
+<p class="font-serif text-lg">3 Events</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">Total Owed</p>
+<p class="font-serif text-lg text-primary-fixed">$9,500</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Pagination -->
+<footer class="mt-20 py-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+<p class="text-sm text-on-surface-variant">Showing 6 of 48 esteemed clients</p>
+<div class="flex items-center gap-2">
+<button class="h-10 w-10 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary font-bold">1</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:text-primary transition-all">2</button>
+<button class="h-10 w-10 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:text-primary transition-all">3</button>
+<span class="px-2 text-on-surface-variant opacity-40">...</span>
+<button class="h-10 w-10 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</footer>
+</div>
+</main>
+<!-- BottomNavBar for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-white/5 flex justify-around items-center px-4 h-16 z-50">
+<a class="flex flex-col items-center gap-1 text-[#d6e3ff] opacity-60" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] uppercase tracking-tighter">Dash</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#d6e3ff] opacity-60" href="#">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] uppercase tracking-tighter">Events</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#e9c349]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="text-[10px] uppercase tracking-tighter">Clients</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#d6e3ff] opacity-60" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px] uppercase tracking-tighter">Contracts</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#d6e3ff] opacity-60" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] uppercase tracking-tighter">Data</span>
+</a>
+</nav>
+</body></html>

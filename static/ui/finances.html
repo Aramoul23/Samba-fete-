@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Samba Fête | Financial Suite</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,300;0,400;0,600;1,400&amp;family=Manrope:wght@200;300;400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#d6e3ff",
+              "tertiary-container": "#97b0ff",
+              "on-tertiary": "#082b72",
+              "surface-container-lowest": "#010e24",
+              "inverse-surface": "#d6e3ff",
+              "on-tertiary-container": "#254188",
+              "secondary-container": "#b08c10",
+              "on-secondary-fixed-variant": "#584400",
+              "surface-dim": "#041329",
+              "primary-fixed-dim": "#e9c349",
+              "surface": "#041329",
+              "on-primary-fixed-variant": "#574500",
+              "surface-container-high": "#1c2a41",
+              "on-surface-variant": "#d0c5af",
+              "surface-container": "#112036",
+              "on-primary-fixed": "#241a00",
+              "on-background": "#d6e3ff",
+              "secondary": "#eac249",
+              "background": "#041329",
+              "on-tertiary-fixed-variant": "#27438a",
+              "outline": "#99907c",
+              "inverse-on-surface": "#233148",
+              "primary": "#f2ca50",
+              "on-primary": "#3c2f00",
+              "secondary-fixed": "#ffe08b",
+              "error": "#ffb4ab",
+              "outline-variant": "#4d4635",
+              "inverse-primary": "#735c00",
+              "on-error-container": "#ffdad6",
+              "surface-container-highest": "#27354d",
+              "tertiary-fixed-dim": "#b4c5ff",
+              "secondary-fixed-dim": "#eac249",
+              "primary-fixed": "#ffe088",
+              "on-error": "#690005",
+              "surface-tint": "#e9c349",
+              "on-secondary": "#3d2f00",
+              "error-container": "#93000a",
+              "surface-variant": "#27354d",
+              "on-tertiary-fixed": "#00174b",
+              "tertiary-fixed": "#dbe1ff",
+              "tertiary": "#bfcdff",
+              "surface-bright": "#2c3951",
+              "primary-container": "#d4af37",
+              "on-secondary-fixed": "#241a00",
+              "surface-container-low": "#0d1c32",
+              "on-primary-container": "#554300",
+              "on-secondary-container": "#352800"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(17, 32, 54, 0.6);
+        backdrop-filter: blur(12px);
+      }
+      .gold-gradient {
+        background: linear-gradient(135deg, #f2ca50 0%, #d4af37 100%);
+      }
+      .shimmer-track {
+        background: linear-gradient(90deg, #d4af37 0%, #f2ca50 50%, #d4af37 100%);
+        background-size: 200% 100%;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#041329]/60 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.1)] flex justify-between items-center px-8 h-20 w-full">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-semibold text-[#f2ca50] tracking-tighter font-headline">Samba Fête</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-[#f2ca50] border-b border-[#f2ca50] font-['Noto_Serif'] font-light tracking-wide cursor-pointer active:scale-95 transition-colors duration-300" href="#">Ledger</a>
+<a class="text-[#d0c5af] opacity-80 font-['Noto_Serif'] font-light tracking-wide cursor-pointer active:scale-95 hover:text-[#f2ca50] transition-colors duration-300" href="#">Venues</a>
+<a class="text-[#d0c5af] opacity-80 font-['Noto_Serif'] font-light tracking-wide cursor-pointer active:scale-95 hover:text-[#f2ca50] transition-colors duration-300" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#f2ca50] cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-[#f2ca50] cursor-pointer">settings</span>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full border border-primary/20" data-alt="close-up portrait of a sophisticated man in a dark suit with soft cinematic lighting against a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAryDfEhMekvhvF6ITVrbk6JIDNYUPTbOlHuECwFpe_NdhqcV1Tuzvp_ctPs9DeZs6bFIw9dS_EtNxQB30J36p9PU83lwER1bEAWcjLgsWlLRojMOtAEwHqSrFteehiyS1-1LPUFpzkL2nFpUwdKImgQEc63Lz3291kdAbaWXCFg6_9WLqYxLP3k96Dn6oP10BaEJam-XQO7mNglFwuMCc075MpYQ11lEXAFqT-ZSkX-3zq6UFiVGtadIMYV_zUokPXM2rdnE1fLut8"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-[#041329] shadow-2xl shadow-black/50 flex flex-col py-10 px-6 hidden lg:flex z-40 pt-24">
+<div class="mb-12">
+<h2 class="font-['Noto_Serif'] italic text-[#f2ca50] text-xl">The Estate</h2>
+<p class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px] text-[#d0c5af] opacity-60">Financial Suite</p>
+</div>
+<div class="flex flex-col space-y-8 flex-grow">
+<nav class="space-y-4">
+<div class="flex items-center gap-3 text-[#f2ca50] font-bold border-l-2 border-[#f2ca50] pl-4 cursor-pointer duration-500 ease-in-out">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Ledger</span>
+</div>
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:bg-[#112036] hover:text-[#f2ca50] transition-all cursor-pointer duration-500 ease-in-out">
+<span class="material-symbols-outlined">location_city</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Venues</span>
+</div>
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:bg-[#112036] hover:text-[#f2ca50] transition-all cursor-pointer duration-500 ease-in-out">
+<span class="material-symbols-outlined">insert_chart</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Analytics</span>
+</div>
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:bg-[#112036] hover:text-[#f2ca50] transition-all cursor-pointer duration-500 ease-in-out">
+<span class="material-symbols-outlined">description</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Contracts</span>
+</div>
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:bg-[#112036] hover:text-[#f2ca50] transition-all cursor-pointer duration-500 ease-in-out">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Archives</span>
+</div>
+</nav>
+<button class="gold-gradient text-on-primary-fixed py-3 rounded-lg font-headline font-semibold text-sm mt-8 active:scale-95 transition-transform">
+                New Entry
+            </button>
+</div>
+<div class="mt-auto space-y-4">
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:text-[#f2ca50] transition-all cursor-pointer">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Support</span>
+</div>
+<div class="flex items-center gap-3 text-[#d0c5af] pl-4 opacity-60 hover:text-[#f2ca50] transition-all cursor-pointer">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-['Manrope'] uppercase tracking-[0.1rem] text-[10px]">Settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-64 pt-28 px-8 pb-12 min-h-screen">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div>
+<h1 class="font-headline text-5xl font-light text-on-surface mb-2">Financial Overview</h1>
+<p class="font-body text-on-surface-variant tracking-widest uppercase text-xs">Estate Performance Portfolio • Fiscal Year 2024</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 border-b border-primary text-primary font-headline text-sm hover:bg-primary/5 transition-colors">Request Audit</button>
+<button class="gold-gradient px-8 py-3 rounded-xl font-headline font-semibold text-on-primary-fixed shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Export Ledger
+                </button>
+</div>
+</header>
+<!-- Stat Cards: Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<div class="bg-surface-container p-6 rounded-xl border-l border-primary/30 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl">payments</span>
+</div>
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-4">Total Revenue</p>
+<h3 class="font-headline text-3xl text-primary">$1,248,390</h3>
+<div class="mt-4 flex items-center gap-2 text-[10px] font-label text-tertiary">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+<span>+12.4% vs Last Year</span>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-xl relative overflow-hidden group">
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-4">Total Expenses</p>
+<h3 class="font-headline text-3xl text-on-surface">$412,000</h3>
+<div class="mt-4 flex items-center gap-2 text-[10px] font-label text-error">
+<span class="material-symbols-outlined text-xs">trending_down</span>
+<span>-4.2% Optimization</span>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-xl relative overflow-hidden group">
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-4">Annual Profit</p>
+<h3 class="font-headline text-3xl text-primary">$836,390</h3>
+<div class="mt-4 flex items-center gap-2 text-[10px] font-label text-tertiary">
+<span class="material-symbols-outlined text-xs">verified</span>
+<span>Projected Target Met</span>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-xl relative overflow-hidden group">
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-4">Margin %</p>
+<h3 class="font-headline text-3xl text-on-surface">67%</h3>
+<div class="mt-6 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="shimmer-track h-full w-[67%]"></div>
+</div>
+</div>
+</div>
+<!-- Main Visualizations -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+<!-- Revenue Performance Bar Chart -->
+<div class="lg:col-span-2 bg-surface-container-low p-8 rounded-xl">
+<div class="flex justify-between items-center mb-10">
+<h4 class="font-headline text-xl text-on-surface">Revenue Performance</h4>
+<span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Monthly Distribution</span>
+</div>
+<div class="flex items-end justify-between h-64 gap-2">
+<!-- Bars -->
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">JAN</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/30 rounded-t-sm h-[55%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">FEB</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/40 rounded-t-sm h-[45%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">MAR</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/20 rounded-t-sm h-[35%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">APR</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/60 rounded-t-sm h-[75%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">MAY</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full gold-gradient rounded-t-sm h-[95%] hover:brightness-110 transition-colors cursor-pointer shadow-lg shadow-primary/10"></div>
+<span class="text-[9px] font-label text-primary font-bold">JUN</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/50 rounded-t-sm h-[65%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">JUL</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/40 rounded-t-sm h-[60%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">AUG</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/30 rounded-t-sm h-[50%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">SEP</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/50 rounded-t-sm h-[70%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">OCT</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/40 rounded-t-sm h-[62%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">NOV</span>
+</div>
+<div class="flex flex-col items-center gap-3 w-full">
+<div class="w-full bg-primary/30 rounded-t-sm h-[58%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[9px] font-label text-on-surface-variant">DEC</span>
+</div>
+</div>
+</div>
+<!-- Expense Allocation Donut -->
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col items-center">
+<div class="w-full flex justify-between items-center mb-8">
+<h4 class="font-headline text-xl text-on-surface">Allocation</h4>
+<span class="material-symbols-outlined text-on-surface-variant">pie_chart</span>
+</div>
+<div class="relative w-48 h-48 mb-8">
+<!-- CSS-only Donut Illustration -->
+<div class="absolute inset-0 rounded-full border-[12px] border-surface-container-highest"></div>
+<div class="absolute inset-0 rounded-full border-[12px] border-primary border-r-transparent border-b-transparent rotate-45"></div>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline text-2xl text-on-surface">$412k</span>
+<span class="font-label text-[10px] text-on-surface-variant uppercase">Total</span>
+</div>
+</div>
+<div class="w-full space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label text-xs text-on-surface-variant">Concierge</span>
+</div>
+<span class="font-label text-xs font-bold text-on-surface">40%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#b08c10]"></div>
+<span class="font-label text-xs text-on-surface-variant">Maintenance</span>
+</div>
+<span class="font-label text-xs font-bold text-on-surface">30%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#584400]"></div>
+<span class="font-label text-xs text-on-surface-variant">Catering</span>
+</div>
+<span class="font-label text-xs font-bold text-on-surface">20%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+<span class="font-label text-xs text-on-surface-variant">Decor</span>
+</div>
+<span class="font-label text-xs font-bold text-on-surface">10%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Ledger Activity Table -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<div class="px-8 py-6 border-b border-white/5 flex justify-between items-center">
+<h4 class="font-headline text-xl text-on-surface">Recent Ledger Activity</h4>
+<div class="flex items-center gap-4 text-on-surface-variant cursor-pointer hover:text-primary transition-colors">
+<span class="font-label text-[10px] uppercase tracking-widest">View All Transactions</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container/50">
+<th class="px-8 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Date</th>
+<th class="px-8 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Description</th>
+<th class="px-8 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Type</th>
+<th class="px-8 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant text-right">Amount</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-8 py-6 font-label text-sm text-on-surface-variant">JUN 12, 2024</td>
+<td class="px-8 py-6">
+<p class="font-headline text-on-surface group-hover:text-primary transition-colors">Miller-Sterling Wedding</p>
+<p class="font-label text-[10px] text-on-surface-variant">ID: #SMB-9210-FL</p>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-tertiary-container/10 text-tertiary text-[10px] font-label uppercase tracking-widest rounded-full">Income</span>
+</td>
+<td class="px-8 py-6 font-headline text-primary text-right">+$42,500.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-8 py-6 font-label text-sm text-on-surface-variant">JUN 10, 2024</td>
+<td class="px-8 py-6">
+<p class="font-headline text-on-surface group-hover:text-primary transition-colors">Gourmet Catering Services</p>
+<p class="font-label text-[10px] text-on-surface-variant">Quarterly retainer</p>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-error-container/10 text-error text-[10px] font-label uppercase tracking-widest rounded-full">Expense</span>
+</td>
+<td class="px-8 py-6 font-headline text-on-surface text-right">-$12,400.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-8 py-6 font-label text-sm text-on-surface-variant">JUN 08, 2024</td>
+<td class="px-8 py-6">
+<p class="font-headline text-on-surface group-hover:text-primary transition-colors">Estate Maintenance &amp; Floral</p>
+<p class="font-label text-[10px] text-on-surface-variant">Main Ballroom Refresh</p>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-error-container/10 text-error text-[10px] font-label uppercase tracking-widest rounded-full">Expense</span>
+</td>
+<td class="px-8 py-6 font-headline text-on-surface text-right">-$3,200.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-8 py-6 font-label text-sm text-on-surface-variant">JUN 05, 2024</td>
+<td class="px-8 py-6">
+<p class="font-headline text-on-surface group-hover:text-primary transition-colors">Concierge Excellence Bonus</p>
+<p class="font-label text-[10px] text-on-surface-variant">Performance allocation</p>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-error-container/10 text-error text-[10px] font-label uppercase tracking-widest rounded-full">Expense</span>
+</td>
+<td class="px-8 py-6 font-headline text-on-surface text-right">-$5,000.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-8 py-6 font-label text-sm text-on-surface-variant">JUN 01, 2024</td>
+<td class="px-8 py-6">
+<p class="font-headline text-on-surface group-hover:text-primary transition-colors">Global Luxury Gala Deposit</p>
+<p class="font-label text-[10px] text-on-surface-variant">Venue reservation</p>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-tertiary-container/10 text-tertiary text-[10px] font-label uppercase tracking-widest rounded-full">Income</span>
+</td>
+<td class="px-8 py-6 font-headline text-primary text-right">+$115,000.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="lg:ml-64 bg-[#010e24] border-t border-[#d4af37]/10 w-full py-12 mt-auto flex flex-col md:flex-row justify-between items-center px-12 space-y-4 md:space-y-0">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="font-['Manrope'] text-xs font-light tracking-widest text-[#d4af37]">© 2024 Samba Fête. An Exclusive Estate.</span>
+</div>
+<div class="flex gap-8">
+<a class="font-['Manrope'] text-xs font-light tracking-widest text-[#d0c5af] opacity-50 hover:opacity-100 transition-opacity" href="#">Legal Privacy</a>
+<a class="font-['Manrope'] text-xs font-light tracking-widest text-[#d0c5af] opacity-50 hover:opacity-100 transition-opacity" href="#">Terms of Service</a>
+<a class="font-['Manrope'] text-xs font-light tracking-widest text-[#d0c5af] opacity-50 hover:opacity-100 transition-opacity" href="#">Concierge Support</a>
+</div>
+</footer>
+</body></html>

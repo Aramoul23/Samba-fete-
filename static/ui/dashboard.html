@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#d0c6af",
+              "surface-container-highest": "#27354d",
+              "on-tertiary": "#233148",
+              "on-secondary-fixed-variant": "#564500",
+              "secondary-fixed-dim": "#e0c46e",
+              "on-primary-fixed-variant": "#574500",
+              "surface-container-lowest": "#010e24",
+              "surface": "#041329",
+              "surface-container": "#112036",
+              "inverse-on-surface": "#233148",
+              "on-secondary-fixed": "#231b00",
+              "outline": "#99907c",
+              "on-primary-fixed": "#231a00",
+              "surface-container-high": "#1c2a41",
+              "on-tertiary-fixed": "#0d1c32",
+              "outline-variant": "#4d4635",
+              "inverse-surface": "#d6e3ff",
+              "primary": "#ffe088",
+              "primary-container": "#e9c349",
+              "surface-bright": "#2c3951",
+              "secondary-container": "#645000",
+              "secondary": "#e0c46e",
+              "primary-fixed": "#ffe087",
+              "surface-dim": "#041329",
+              "tertiary-fixed": "#d6e3ff",
+              "on-primary": "#3c2f00",
+              "secondary-fixed": "#fee087",
+              "surface-container-low": "#0d1c32",
+              "tertiary-fixed-dim": "#b9c7e4",
+              "on-error": "#690005",
+              "on-background": "#d6e3ff",
+              "primary-fixed-dim": "#e9c349",
+              "tertiary": "#d6e3ff",
+              "on-error-container": "#ffdad6",
+              "on-surface": "#d6e3ff",
+              "on-tertiary-container": "#45536c",
+              "inverse-primary": "#735c00",
+              "surface-tint": "#e9c349",
+              "error": "#ffb4ab",
+              "background": "#041329",
+              "surface-variant": "#27354d",
+              "on-primary-container": "#655000",
+              "on-tertiary-fixed-variant": "#394760",
+              "on-secondary-container": "#e0c46e",
+              "tertiary-container": "#b9c7e5",
+              "error-container": "#93000a",
+              "on-secondary": "#3c2f00"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(39, 53, 77, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(233, 195, 73, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-[#041329] shadow-[4px_0_24px_rgba(1,14,36,0.5)] flex flex-col py-8 space-y-2">
+<div class="px-8 mb-10">
+<h1 class="text-xl font-bold text-[#e9c349] font-['Noto_Serif'] tracking-tight">Samba Fête</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-[#d6e3ff]/50 mt-1 font-medium">Celestial Gala Management</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center px-4 py-3 bg-gradient-to-r from-[#e9c349] to-[#ffe088] text-[#3c2f00] rounded-r-full font-bold shadow-lg shadow-[#e9c349]/20 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
+<span class="text-sm">Tableau de Bord</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="calendar_month">calendar_month</span>
+<span class="text-sm">Calendrier</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="event">event</span>
+<span class="text-sm">Événements</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="speed">speed</span>
+<span class="text-sm">Paiement Rapide</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="group">group</span>
+<span class="text-sm">Clients</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="payments">payments</span>
+<span class="text-sm">Finances</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="account_balance">account_balance</span>
+<span class="text-sm">Comptabilité</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="receipt_long">receipt_long</span>
+<span class="text-sm">Dépenses</span>
+</a>
+<a class="flex items-center px-4 py-3 text-[#d6e3ff]/80 hover:text-[#ffe088] hover:bg-[#112036] rounded-r-full hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings">settings</span>
+<span class="text-sm">Paramètres</span>
+</a>
+</nav>
+<div class="px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="Samba Fête Admin" class="w-full h-full object-cover" data-alt="close up profile portrait of a professional luxury event manager with elegant attire in a dark high-end office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1XJk03Ff30v3BIvdDBk-r-glX1YlRc7S87UNExOtloS1zg7Ff57DvWMqess_eq0jJcfsKN3trYhA_NCAZfmPbqHqFa8rUD5z4SQacNo7UNYRPP6qEIb5waYoXr1gQpOAPZKxBd5akam1DFTr4xwpblN6RqmJhoy-Gn9JuupxklRHh_2L-A0WD4hMTFEodZ7P4ao_-RTwcEOgFv2JdK5xMTqYV19oUypTT5J549Ov3lOT5SDkRWMN2CMyqbL6spIiOYye8cPhjHEBn"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Admin</p>
+<p class="text-[10px] text-on-surface-variant">Celestial Host</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-64 right-0 z-30 bg-[#041329]/60 backdrop-blur-xl flex justify-between items-center px-8 py-4 shadow-2xl shadow-[#010e24]/50">
+<div class="flex items-center bg-[#112036] rounded-full px-4 py-2 w-96 group focus-within:ring-1 ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-on-surface placeholder:text-on-surface-variant/50 w-full" placeholder="Rechercher un événement, un client..." type="text"/>
+</div>
+<div class="flex items-center space-x-6">
+<button class="relative text-[#d6e3ff]/70 hover:text-[#ffe088] transition-colors scale-105 active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-surface"></span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<div class="flex items-center space-x-3">
+<span class="font-headline font-bold text-lg text-[#e9c349]">Samba Fête</span>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-primary/20" data-alt="luxury profile avatar icon minimalist gold and dark blue branding" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz2p3NVXHYS1F1orEF6BimCxhzrOZxWM5FE1aQvCqKKUw_NUoUd2vWnD6MYCirAC6-PRfMOCR-GgD8n0BGaKz7h965y00lD6aeVhEc6dotI8w3ItOPBGyyCgGKsVEmZGgwTxSdW9FokQGMwOR6ttOaq5Ubr4iVHuSf3KN6N4BO932_1VFacVMKiW5kefhgNQft0MUr-xrrcnTu8aQnISHc92FNzaAk2ZCQ0YAEqdWtntVapg-7unWFOy3cUJ6Pq4_9A_dg7GnMZ5RS"/>
+</div>
+</div>
+</header>
+<main class="mt-24 px-12 pb-12 flex-1">
+<!-- Hero Header -->
+<div class="mb-12">
+<h2 class="font-headline text-4xl font-black text-on-surface tracking-tight mb-2">Bienvenue, <span class="text-primary text-glow">Samba Fête Admin</span></h2>
+<p class="text-on-surface-variant font-medium">Voici l'aperçu de votre gala céleste aujourd'hui.</p>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<div class="glass-card p-6 rounded-xl border-t border-l border-white/5 shadow-xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="event">event</span>
+</div>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">+12%</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Événements</p>
+<h3 class="text-3xl font-bold text-on-surface mt-1">24</h3>
+</div>
+<div class="glass-card p-6 rounded-xl border-t border-l border-white/5 shadow-xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+</div>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">+5.4%</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Revenus</p>
+<h3 class="text-3xl font-bold text-on-surface mt-1">1,248,390 DA</h3>
+</div>
+<div class="glass-card p-6 rounded-xl border-t border-l border-white/5 shadow-xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="group">group</span>
+</div>
+<span class="text-xs font-bold text-error bg-error/10 px-2 py-1 rounded-full">-2.1%</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Clients</p>
+<h3 class="text-3xl font-bold text-on-surface mt-1">842</h3>
+</div>
+<div class="glass-card p-6 rounded-xl border-t border-l border-white/5 shadow-xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="pending_actions">pending_actions</span>
+</div>
+<span class="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">Actif</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider">En attente</p>
+<h3 class="text-3xl font-bold text-on-surface mt-1">12</h3>
+</div>
+</div>
+<!-- Bento Layout Main Content -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Revenue Performance (Bar Chart Visual) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container rounded-2xl p-8 shadow-inner overflow-hidden relative">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h4 class="font-headline text-2xl font-bold text-on-surface">Performance des Revenus</h4>
+<p class="text-sm text-on-surface-variant">Tendances mensuelles de la saison en cours</p>
+</div>
+<button class="text-xs font-bold text-primary uppercase tracking-widest hover:underline transition-all">Détails Complets</button>
+</div>
+<div class="flex items-end justify-between h-64 space-x-2">
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[40%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant mt-4 font-bold uppercase">Jan</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[60%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant mt-4 font-bold uppercase">Fév</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[85%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant mt-4 font-bold uppercase">Mar</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[55%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant mt-4 font-bold uppercase">Avr</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[95%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant mt-4 font-bold uppercase">Mai</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-primary-container/20 rounded-t-lg relative group h-[70%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary-container rounded-t-lg group-hover:bg-primary transition-all duration-300 shadow-[0_-4px_20px_rgba(233,195,73,0.3)]"></div>
+</div>
+<span class="text-[10px] text-primary mt-4 font-bold uppercase">Juin</span>
+</div>
+</div>
+</div>
+<!-- Upcoming Events Spotlight -->
+<div class="col-span-12 lg:col-span-4 flex flex-col space-y-6">
+<h4 class="font-headline text-xl font-bold text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-primary" data-icon="star">star</span>
+                        Prochains Événements
+                    </h4>
+<!-- Event Card 1 -->
+<div class="surface-container-high rounded-xl p-5 border-l-4 border-primary shadow-lg hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">14 JUIN, 2024</p>
+<h5 class="font-bold text-lg text-on-surface">Mariage Belkhir</h5>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded font-bold uppercase">Confirmé</span>
+</div>
+<div class="mt-4 flex items-center text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="location_on">location_on</span>
+                            Grande Salle d'Or
+                        </div>
+</div>
+<!-- Event Card 2 -->
+<div class="surface-container-high rounded-xl p-5 border-l-4 border-on-surface-variant/30 shadow-lg hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">18 JUIN, 2024</p>
+<h5 class="font-bold text-lg text-on-surface">Gala des Roses</h5>
+</div>
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-1 rounded font-bold uppercase">En attente</span>
+</div>
+<div class="mt-4 flex items-center text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="location_on">location_on</span>
+                            Pavillon Céleste
+                        </div>
+</div>
+<!-- Event Card 3 -->
+<div class="surface-container-high rounded-xl p-5 border-l-4 border-primary shadow-lg hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">22 JUIN, 2024</p>
+<h5 class="font-bold text-lg text-on-surface">Soirée de Charité</h5>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded font-bold uppercase">Confirmé</span>
+</div>
+<div class="mt-4 flex items-center text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-sm mr-1" data-icon="location_on">location_on</span>
+                            Jardins de Samba
+                        </div>
+</div>
+</div>
+<!-- Recent Payments Table -->
+<div class="col-span-12 bg-surface-container rounded-2xl overflow-hidden shadow-2xl border-t border-white/5">
+<div class="px-8 py-6 flex justify-between items-center border-b border-outline-variant/10">
+<h4 class="font-headline text-2xl font-bold text-on-surface">Paiements Récents</h4>
+<div class="flex space-x-2">
+<button class="px-4 py-2 rounded-full text-xs font-bold border border-outline-variant/30 text-on-surface-variant hover:border-primary/50 transition-colors">Exporter</button>
+<button class="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary shadow-lg shadow-primary/20 hover:scale-105 transition-transform">Nouveau Reçu</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low text-[10px] text-on-surface-variant uppercase tracking-[0.2em]">
+<tr>
+<th class="px-8 py-4 font-bold">Date</th>
+<th class="px-8 py-4 font-bold">Client</th>
+<th class="px-8 py-4 font-bold">Service</th>
+<th class="px-8 py-4 font-bold">Montant</th>
+<th class="px-8 py-4 font-bold">Statut</th>
+<th class="px-8 py-4 font-bold text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 text-sm text-on-surface">12 Juin, 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center text-[10px] font-bold text-primary">MB</div>
+<span class="text-sm font-semibold text-on-surface">Famille Belkhir</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Acompte Mariage</td>
+<td class="px-8 py-5 text-sm font-bold text-primary">450,000 DA</td>
+<td class="px-8 py-5">
+<span class="flex items-center text-emerald-400 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2"></span>
+                                            Payé
+                                        </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 text-sm text-on-surface">10 Juin, 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center text-[10px] font-bold text-primary">AR</div>
+<span class="text-sm font-semibold text-on-surface">Assoc. des Roses</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Location Salle</td>
+<td class="px-8 py-5 text-sm font-bold text-primary">120,000 DA</td>
+<td class="px-8 py-5">
+<span class="flex items-center text-primary text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mr-2"></span>
+                                            En attente
+                                        </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-8 py-5 text-sm text-on-surface">09 Juin, 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center text-[10px] font-bold text-primary">SC</div>
+<span class="text-sm font-semibold text-on-surface">Secours Culturel</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Traiteur Premium</td>
+<td class="px-8 py-5 text-sm font-bold text-primary">85,000 DA</td>
+<td class="px-8 py-5">
+<span class="flex items-center text-emerald-400 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2"></span>
+                                            Payé
+                                        </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 bg-surface-container-low/50 flex justify-center">
+<button class="text-[10px] font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest transition-colors flex items-center">
+                            Voir toutes les transactions
+                            <span class="material-symbols-outlined text-xs ml-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-6 mt-auto flex justify-between items-center px-12 bg-[#010e24]">
+<p class="font-['Manrope'] text-xs uppercase tracking-widest text-[#d6e3ff]/40">© 2024 Samba Fête. The Celestial Gala.</p>
+<div class="flex space-x-8">
+<a class="font-['Manrope'] text-xs uppercase tracking-widest text-[#d6e3ff]/40 hover:text-[#e9c349] transition-colors" href="#">Privacy Policy</a>
+<a class="font-['Manrope'] text-xs uppercase tracking-widest text-[#d6e3ff]/40 hover:text-[#e9c349] transition-colors" href="#">Terms of Service</a>
+<a class="font-['Manrope'] text-xs uppercase tracking-widest text-[#d6e3ff]/40 hover:text-[#e9c349] transition-colors" href="#">Support</a>
+</div>
+</footer>
+<!-- FAB (Highly Contextual - suppressed on dashboard unless primary action is needed) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full shadow-[0_10px_30px_rgba(233,195,73,0.4)] flex items-center justify-center hover:scale-110 active:scale-90 transition-transform z-50">
+<span class="material-symbols-outlined text-2xl" data-icon="add" style="font-variation-settings: 'FILL' 0, 'wght' 700;">add</span>
+</button>
+</div>
+</body></html>
