@@ -2,7 +2,6 @@
 
 Tests: login, logout, rate limiting, access control, user management.
 """
-import pytest
 
 
 # ══════════════════════════════════════════════════════════════════════

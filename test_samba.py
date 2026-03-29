@@ -1,6 +1,5 @@
 """Tests for Samba Fête app – utils + models (no Flask server needed)."""
 
-import os
 import sqlite3
 
 import pytest

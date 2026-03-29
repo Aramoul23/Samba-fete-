@@ -6,8 +6,6 @@ Generates ODS (OpenDocument Spreadsheet) files for data export.
 from odf.opendocument import OpenDocumentSpreadsheet
 from odf.table import Table, TableRow, TableCell
 from odf.text import P
-from datetime import datetime
-from utils import format_da
 
 
 def create_ods_document(sheet_name, headers, rows, totals=None):

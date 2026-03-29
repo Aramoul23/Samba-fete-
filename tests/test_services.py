@@ -2,8 +2,6 @@
 
 Tests business logic — uses _db fixture for app context.
 """
-import datetime
-import pytest
 from werkzeug.datastructures import ImmutableMultiDict
 
 from app.services.booking_service import BookingService

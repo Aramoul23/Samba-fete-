@@ -4,7 +4,7 @@ Tests: create/edit/delete bookings, service lines, calendar, payments.
 """
 import datetime
 import pytest
-from app.models import db, Event, Client, Payment, EventLine, Venue
+from app.models import db, Event, Payment, EventLine
 
 
 def _future_date(days=30):

@@ -4,7 +4,7 @@ Tests: payments, dashboard stats, expenses, PDF generation.
 """
 import datetime
 import pytest
-from app.models import db, Event, Client, Payment, Expense
+from app.models import db, Payment, Expense
 
 
 def _has_weasyprint():
