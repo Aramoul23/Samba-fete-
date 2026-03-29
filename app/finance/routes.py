@@ -119,36 +119,61 @@ def _financials_impl():
     ed = request.args.get("end_date", date.today().isoformat())
     export_csv = request.args.get("export", type=int)
 
-    total_revenue = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
-        Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 0).scalar()
-    total_refunded = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
-        Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 1).scalar()
+    try:
+        total_revenue = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
+            Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 0).scalar()
+    except Exception:
+        logger.error("FAILED: total_revenue query (sd=%s, ed=%s)", sd, ed, exc_info=True)
+        raise
 
-    revenue_by_type = db.session.query(
-        Event.event_type, func.coalesce(func.sum(Payment.amount), 0).label("revenue"),
-        func.count(Event.id.distinct()).label("count")
-    ).outerjoin(Payment, (Payment.event_id == Event.id) & (Payment.is_refunded == 0)).filter(
-        Event.event_date.between(sd, ed), Event.status != "annulé"
-    ).group_by(Event.event_type).order_by(func.sum(Payment.amount).desc()).all()
+    try:
+        total_refunded = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+            Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 1).scalar()
+    except Exception:
+        logger.error("FAILED: total_refunded query", exc_info=True)
+        raise
 
-    top_clients = db.session.query(
-        Client.id, Client.name,
-        func.coalesce(func.sum(Event.total_amount), 0).label("total_billed"),
-        func.coalesce(func.sum(case((Payment.is_refunded == 0, Payment.amount), else_=0)), 0).label("total_paid"),
-    ).join(Event, Client.id == Event.client_id).outerjoin(Payment, Payment.event_id == Event.id).filter(Event.event_date.between(sd, ed)).group_by(Client.id, Client.name).having(
-        func.sum(Event.total_amount) > 0).order_by(func.sum(Event.total_amount).desc()).limit(10).all()
+    try:
+        revenue_by_type = db.session.query(
+            Event.event_type, func.coalesce(func.sum(Payment.amount), 0).label("revenue"),
+            func.count(Event.id.distinct()).label("count")
+        ).outerjoin(Payment, (Payment.event_id == Event.id) & (Payment.is_refunded == 0)).filter(
+            Event.event_date.between(sd, ed), Event.status != "annulé"
+        ).group_by(Event.event_type).order_by(func.sum(Payment.amount).desc()).all()
+    except Exception:
+        logger.error("FAILED: revenue_by_type query", exc_info=True)
+        raise
 
-    payments = Payment.query.join(Event).join(Client).filter(
-        Payment.payment_date.between(*_pdt(sd, ed))).order_by(Payment.payment_date.desc()).all()
+    try:
+        top_clients = db.session.query(
+            Client.id, Client.name,
+            func.coalesce(func.sum(Event.total_amount), 0).label("total_billed"),
+            func.coalesce(func.sum(case((Payment.is_refunded == 0, Payment.amount), else_=0)), 0).label("total_paid"),
+        ).join(Event, Client.id == Event.client_id).outerjoin(Payment, Payment.event_id == Event.id).filter(Event.event_date.between(sd, ed)).group_by(Client.id, Client.name).having(
+            func.sum(Event.total_amount) > 0).order_by(func.sum(Event.total_amount).desc()).limit(10).all()
+    except Exception:
+        logger.error("FAILED: top_clients query", exc_info=True)
+        raise
 
-    ef_raw = db.session.query(
-        Event.id, Event.title, Event.event_date, Event.event_type, Event.status, Event.total_amount,
-        Client.name.label("client_name"),
-        func.coalesce(func.sum(case((EventLine.is_cost == 0, EventLine.amount), else_=0)), 0).label("total_revenue"),
-        func.coalesce(func.sum(case((EventLine.is_cost == 1, EventLine.amount), else_=0)), 0).label("total_costs"),
-    ).join(Client).outerjoin(EventLine).filter(
-        Event.event_date.between(sd, ed), Event.status != "annulé"
-    ).group_by(Event.id).order_by(Event.event_date.desc()).all()
+    try:
+        payments = Payment.query.join(Event).join(Client).filter(
+            Payment.payment_date.between(*_pdt(sd, ed))).order_by(Payment.payment_date.desc()).all()
+    except Exception:
+        logger.error("FAILED: payments query", exc_info=True)
+        raise
+
+    try:
+        ef_raw = db.session.query(
+            Event.id, Event.title, Event.event_date, Event.event_type, Event.status, Event.total_amount,
+            Client.name.label("client_name"),
+            func.coalesce(func.sum(case((EventLine.is_cost == 0, EventLine.amount), else_=0)), 0).label("total_revenue"),
+            func.coalesce(func.sum(case((EventLine.is_cost == 1, EventLine.amount), else_=0)), 0).label("total_costs"),
+        ).join(Client).outerjoin(EventLine).filter(
+            Event.event_date.between(sd, ed), Event.status != "annulé"
+        ).group_by(Event.id).order_by(Event.event_date.desc()).all()
+    except Exception:
+        logger.error("FAILED: ef_raw query", exc_info=True)
+        raise
 
     ef_list = []
     for r in ef_raw:
