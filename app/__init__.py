@@ -56,9 +56,8 @@ def create_app(config_name=None):
     _secret = os.environ.get("SECRET_KEY")
     if not _secret:
         if app.config.get("FLASK_ENV") == "production":
-            raise RuntimeError(
-                "FATAL: SECRET_KEY must be set in production. "
-                "Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+            logger.error(
+                "SECRET_KEY not set in production — generating random key (sessions will break on restart)"
             )
         _secret = secrets.token_hex(32)
         logger.warning(
