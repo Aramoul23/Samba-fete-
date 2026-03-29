@@ -19,7 +19,7 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
-from sqlalchemy import or_, func, case
+from sqlalchemy import or_, func
 
 from app.models import db, Event, Client, EventLine, Payment, Expense, Venue
 from app.bookings.helpers import (
@@ -168,11 +168,9 @@ def event_form(event_id=None):
         if not event:
             flash("Événement introuvable", "danger")
             return redirect(url_for("finance.dashboard"))
-        for line in event.service_lines.all():
-            (custom_lines if line.description not in (list(zip(*DEFAULT_SERVICES))[1] if False else []) else event_lines).append(line)
         from app.bookings.helpers import PREDEFINED_NAMES
-        event_lines = [l for l in event.service_lines.all() if l.description in PREDEFINED_NAMES]
-        custom_lines = [l for l in event.service_lines.all() if l.description not in PREDEFINED_NAMES]
+        event_lines = [ln for ln in event.service_lines.all() if ln.description in PREDEFINED_NAMES]
+        custom_lines = [ln for ln in event.service_lines.all() if ln.description not in PREDEFINED_NAMES]
 
     venues = Venue.query.filter_by(is_active=1).all()
 
@@ -476,7 +474,7 @@ def generate_contract(event_id):
         # PDF generators expect dict-like objects — convert ORM to dict
         pdf_bytes = generate_contract_pdf(
             _event_to_dict(event), [_payment_to_dict(p) for p in payments],
-            total_paid, [_line_to_dict(l) for l in lines]
+            total_paid, [_line_to_dict(ln) for ln in lines]
         )
         resp = make_response(pdf_bytes)
         resp.headers["Content-Type"] = "application/pdf"
@@ -598,5 +596,5 @@ def _event_to_dict(e):
 def _payment_to_dict(p):
     return {c.name: getattr(p, c.name) for c in p.__table__.columns}
 
-def _line_to_dict(l):
-    return {c.name: getattr(l, c.name) for c in l.__table__.columns}
+def _line_to_dict(ln):
+    return {c.name: getattr(ln, c.name) for c in ln.__table__.columns}

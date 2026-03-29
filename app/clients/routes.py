@@ -1,6 +1,6 @@
 """Samba Fête — Clients blueprint (SQLAlchemy ORM)."""
 import logging
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, render_template, request
 from flask_login import login_required
 from sqlalchemy import func, or_
 

@@ -6,8 +6,10 @@ import logging
 import traceback
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request
 from sqlalchemy import text
+
+from app.models import db
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 Matches the existing PostgreSQL/SQLite schema exactly.
 Column names, types, and defaults preserved for seamless migration.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -272,7 +272,7 @@ class Setting(db.Model):
     value = db.Column(db.Text)
 
     def __repr__(self):
-        return f"<Setting {key}={self.value}>"
+        return f"<Setting {self.key}={self.value}>"
 
     @classmethod
     def get(cls, key, default=""):

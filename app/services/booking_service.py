@@ -6,9 +6,9 @@ Routes call these functions instead of doing raw DB work.
 import logging
 from datetime import datetime, date, timedelta
 
-from sqlalchemy import func, or_
+from sqlalchemy import func
 
-from app.models import db, Event, Client, EventLine, Payment, Expense, Venue, AuditLog
+from app.models import db, Event, Client, EventLine, Payment, Expense, AuditLog
 
 logger = logging.getLogger(__name__)
 

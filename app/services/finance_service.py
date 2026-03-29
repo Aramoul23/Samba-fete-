@@ -3,11 +3,11 @@
 Business logic for expenses, financial reports, dashboard KPIs.
 """
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
-from sqlalchemy import func, case
+from sqlalchemy import func
 
-from app.models import db, Event, Client, EventLine, Payment, Expense, Setting, AuditLog
+from app.models import db, Event, Client, Payment, Expense, Setting, AuditLog
 
 logger = logging.getLogger(__name__)
 

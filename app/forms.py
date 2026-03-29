@@ -6,14 +6,13 @@ Validators enforce data integrity before hitting the database.
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, PasswordField, FloatField, IntegerField,
-    SelectField, TextAreaField, DateField, BooleanField,
-    HiddenField, SubmitField,
+    SelectField, TextAreaField, BooleanField,
+    SubmitField,
 )
 from wtforms.validators import (
     DataRequired, Email, Length, NumberRange, Optional,
-    Regexp, ValidationError,
+    Regexp,
 )
-from app.models import User
 
 
 # ══════════════════════════════════════════════════════════════════════
