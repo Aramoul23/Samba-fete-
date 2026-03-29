@@ -37,7 +37,7 @@ bp = Blueprint("auth", __name__, template_folder="../templates")
 def login():
     """Gère la connexion et l'authentification des utilisateurs."""
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        return redirect(url_for("finance.dashboard"))
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -47,7 +47,7 @@ def login():
         if user and user.check_password(password):
             if not user.is_active:
                 flash("Ce compte est désactivé", "danger")
-                return render_template("login.html")
+                return render_template("auth/login.html")
             login_user(user, remember=True)
             logger.info("Successful login: %s", user.username)
             next_page = request.args.get("next")
@@ -56,11 +56,11 @@ def login():
                 if parsed.netloc and parsed.netloc != request.host:
                     next_page = None  # reject external redirect
             flash(f"Bienvenue, {user.username}!", "success")
-            return redirect(next_page or url_for("index"))
+            return redirect(next_page or url_for("finance.dashboard"))
         else:
             flash("Nom d'utilisateur ou mot de passe incorrect", "danger")
 
-    return render_template("login.html")
+    return render_template("auth/login.html")
 
 
 @bp.route("/logout")
@@ -99,7 +99,7 @@ def reset_password():
 def users():
     """Affiche la gestion des utilisateurs."""
     users_list = get_all_users()
-    return render_template("users.html", users=users_list, current_user=current_user)
+    return render_template("auth/users.html", users=users_list, current_user=current_user)
 
 
 @bp.route("/parametres/utilisateurs/ajouter", methods=["POST"])

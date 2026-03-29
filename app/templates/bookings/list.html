@@ -38,7 +38,7 @@
                             <i class="fas fa-download"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('export_events', status=status_filter, q=search) }}">
+                            <li><a class="dropdown-item" href="{{ url_for('finance.export_events', status=status_filter, q=search) }}">
                                 <i class="fas fa-file-excel me-2"></i>Exporter en ODS
                             </a></li>
                         </ul>
@@ -76,7 +76,7 @@
                     <tbody>
                         {% for e in events %}
                         {% set reste = e.total_amount - (e.total_paid or 0) %}
-                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=e.id) }}'">
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('bookings.event_detail', event_id=e.id) }}'">
                             <td>
                                 <strong>{{ e.event_date|date_only }}</strong>
                             </td>
@@ -95,7 +95,7 @@
                             </td>
                             <td class="text-center d-none d-md-table-cell" onclick="event.stopPropagation()">
                                 {% if reste > 0 %}
-                                <a href="{{ url_for('event_detail', event_id=e.id) }}#paymentSection" class="btn btn-success btn-sm">
+                                <a href="{{ url_for('bookings.event_detail', event_id=e.id) }}#paymentSection" class="btn btn-success btn-sm">
                                     <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
                                 </a>
                                 {% else %}

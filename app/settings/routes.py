@@ -40,7 +40,7 @@ def settings():
 
     venues = db.execute("SELECT * FROM venues ORDER BY id").fetchall()
     return render_template(
-        "settings.html", venues=venues,
+        "settings/settings.html", venues=venues,
         deposit_min=get_setting("deposit_min", "20000"),
         hall_name=get_setting("hall_name", "Samba Fête"),
         currency=get_setting("currency", "DA"),

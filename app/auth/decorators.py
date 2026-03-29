@@ -22,6 +22,6 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != "admin":
             flash("Accès réservé aux administrateurs", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("finance.dashboard"))
         return f(*args, **kwargs)
     return decorated

@@ -469,7 +469,7 @@
 
     {% if event %}
     <!-- Delete form must be OUTSIDE the main event form (no nested forms in HTML) -->
-    <form method="POST" id="deleteForm" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:none;"></form>
+    <form method="POST" id="deleteForm" action="{{ url_for('bookings.delete_event', event_id=event.id) }}" style="display:none;"></form>
     {% endif %}
 </div>
 {% endblock %}

@@ -28,10 +28,10 @@
                             <i class="fas fa-download me-1"></i> Exporter
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('export_finances', start_date=start_date, end_date=end_date) }}">
+                            <li><a class="dropdown-item" href="{{ url_for('finance.export_finances', start_date=start_date, end_date=end_date) }}">
                                 <i class="fas fa-file-excel me-2"></i>Finances (ODS)
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('export_payments', start_date=start_date, end_date=end_date) }}">
+                            <li><a class="dropdown-item" href="{{ url_for('finance.export_payments', start_date=start_date, end_date=end_date) }}">
                                 <i class="fas fa-file-excel me-2"></i>Paiements (ODS)
                             </a></li>
                         </ul>
@@ -148,7 +148,7 @@
                         </thead>
                         <tbody>
                             {% for c in top_clients %}
-                            <tr class="clickable-row" onclick="window.location='{{ url_for('client_detail', client_id=c.id) }}'">
+                            <tr class="clickable-row" onclick="window.location='{{ url_for('clients.client_detail', client_id=c.id) }}'">
                                 <td><strong>{{ loop.index }}</strong></td>
                                 <td style="font-weight: 500;">{{ c.name }}</td>
                                 <td class="text-end">{{ c.total_billed | format_da }}</td>
@@ -198,7 +198,7 @@
                         <tr {% if p.is_refunded %}style="opacity: 0.6;"{% endif %}>
                             <td><strong>{{ p.payment_date|date_only }}</strong></td>
                             <td>
-                                <a href="{{ url_for('event_detail', event_id=p.event_id) }}" class="text-decoration-none">
+                                <a href="{{ url_for('bookings.event_detail', event_id=p.event_id) }}" class="text-decoration-none">
                                     {{ p.title }}
                                 </a>
                             </td>
@@ -261,7 +261,7 @@
                     </thead>
                     <tbody>
                         {% for ef in event_financials %}
-                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ef.id) }}'">
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('bookings.event_detail', event_id=ef.id) }}'">
                             <td><strong>{{ ef.event_date|date_only }}</strong></td>
                             <td style="font-weight: 500;">{{ ef.title }}</td>
                             <td class="d-none d-md-table-cell">{{ ef.client_name }}</td>

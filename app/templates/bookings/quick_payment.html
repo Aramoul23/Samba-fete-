@@ -36,7 +36,7 @@
                 <div class="row g-3">
                     {% for c in clients %}
                     <div class="col-md-4">
-                        <a href="{{ url_for('quick_payment', client_id=c.id) }}" class="text-decoration-none">
+                        <a href="{{ url_for('bookings.quick_payment', client_id=c.id) }}" class="text-decoration-none">
                             <div class="client-pick-card">
                                 <div class="client-pick-name">{{ c.name }}</div>
                                 <div class="client-pick-phone"><i class="fas fa-phone me-1"></i>{{ c.phone }}</div>
@@ -75,7 +75,7 @@
                 <span class="badge bg-primary me-2" style="font-size: 0.75rem;">2</span>
                 Sélectionner l'Événement — {{ selected_client.name }}
             </h5>
-            <a href="{{ url_for('quick_payment', q=search) }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ url_for('bookings.quick_payment', q=search) }}" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>Changer de client
             </a>
         </div>
@@ -125,7 +125,7 @@
                             </td>
                             <td class="text-center">
                                 {% if reste > 0 %}
-                                <a href="{{ url_for('quick_payment', client_id=selected_client.id, event_id=ev.id, q=search) }}"
+                                <a href="{{ url_for('bookings.quick_payment', client_id=selected_client.id, event_id=ev.id, q=search) }}"
                                    class="btn btn-success btn-sm">
                                     <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
                                 </a>
@@ -158,7 +158,7 @@
                         <span class="badge bg-success me-2" style="font-size: 0.75rem;">3</span>
                         Encaisser le Paiement
                     </h5>
-                    <a href="{{ url_for('quick_payment', client_id=selected_client.id, q=search) }}" class="btn btn-sm btn-outline-secondary">
+                    <a href="{{ url_for('bookings.quick_payment', client_id=selected_client.id, q=search) }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>Autre événement
                     </a>
                 </div>
@@ -209,8 +209,8 @@
                     </div>
 
                     <!-- Payment Form -->
-                    <form method="POST" action="{{ url_for('add_payment', event_id=selected_event.id) }}" id="quickPaymentForm">
-                        <input type="hidden" name="next" value="{{ url_for('quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}">
+                    <form method="POST" action="{{ url_for('bookings.add_payment', event_id=selected_event.id) }}" id="quickPaymentForm">
+                        <input type="hidden" name="next" value="{{ url_for('bookings.quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Montant (DA) *</label>
@@ -304,7 +304,7 @@
             <div class="card-custom">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique</h5>
-                    <a href="{{ url_for('event_detail', event_id=selected_event.id) }}" class="btn btn-sm btn-outline-gold">
+                    <a href="{{ url_for('bookings.event_detail', event_id=selected_event.id) }}" class="btn btn-sm btn-outline-gold">
                         <i class="fas fa-external-link-alt me-1"></i>Détails
                     </a>
                 </div>
@@ -327,7 +327,7 @@
                             </div>
                             <div class="d-flex gap-1">
                                 {% if not p.is_refunded %}
-                                <a href="{{ url_for('generate_receipt', event_id=selected_event.id, payment_id=p.id) }}"
+                                <a href="{{ url_for('bookings.generate_receipt', event_id=selected_event.id, payment_id=p.id) }}"
                                    class="btn btn-sm btn-outline-gold" target="_blank" title="Imprimer Reçu">
                                     <i class="fas fa-print"></i>
                                 </a>

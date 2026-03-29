@@ -32,7 +32,7 @@ def client_list():
         params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
     query += " ORDER BY c.created_at DESC"
     clients = db.execute(query, params).fetchall()
-    return render_template("client_list.html", clients=clients, search=search)
+    return render_template("clients/client_list.html", clients=clients, search=search)
 
 
 @bp.route("/client/<int:client_id>")
@@ -97,7 +97,7 @@ def client_detail(client_id):
             }
 
     return render_template(
-        "client_detail.html",
+        "clients/client_detail.html",
         client=client, events=events,
         total_owed=total_owed, total_paid=total_paid,
         all_payments=all_payments, event_financials=event_financials,

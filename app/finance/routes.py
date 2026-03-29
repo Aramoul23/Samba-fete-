@@ -190,7 +190,7 @@ def dashboard():
     currency = _get_setting_db(db, "currency", "DA")
 
     return render_template(
-        "index.html",
+        "finance/index.html",
         events_this_month=events_this_month,
         revenue_month=revenue_month,
         upcoming=upcoming,
@@ -329,7 +329,7 @@ def financials():
         return resp
 
     return render_template(
-        "financials.html",
+        "finance/financials.html",
         start_date=start_date, end_date=end_date,
         total_revenue=total_revenue, total_outstanding=total_outstanding,
         total_refunded=total_refunded, total_profit=total_profit,
@@ -414,7 +414,7 @@ def accounting():
     monthly_pl.reverse()
 
     return render_template(
-        "accounting.html",
+        "finance/accounting.html",
         start_date=start_date, end_date=end_date,
         total_income=total_income, total_expenses=total_expenses,
         net_profit=net_profit, profit_margin=profit_margin,
@@ -472,7 +472,7 @@ def expenses():
     ).fetchall()
 
     return render_template(
-        "expenses.html",
+        "finance/expenses.html",
         expenses=all_expenses,
         start_date=start_date, end_date=end_date,
         category_filter=category_filter,

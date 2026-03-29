@@ -12,11 +12,11 @@
                 {% set prev_year = year if month > 1 else year - 1 %}
                 {% set next_month = month + 1 if month < 12 else 1 %}
                 {% set next_year = year if month < 12 else year + 1 %}
-                <a href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline-gold btn-sm">
+                <a href="{{ url_for('bookings.calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline-gold btn-sm">
                     <i class="fas fa-chevron-left"></i>
                 </a>
                 <span class="calendar-month-label">{{ month_name }} {{ year }}</span>
-                <a href="{{ url_for('calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline-gold btn-sm">
+                <a href="{{ url_for('bookings.calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline-gold btn-sm">
                     <i class="fas fa-chevron-right"></i>
                 </a>
             </div>

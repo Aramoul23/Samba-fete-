@@ -155,7 +155,7 @@ def event_form(event_id=None):
         event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
         if not event:
             flash("Événement introuvable", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("finance.dashboard"))
         client = db.execute(
             "SELECT * FROM clients WHERE id=?", (event["client_id"],)
         ).fetchone()
@@ -306,7 +306,7 @@ def event_detail(event_id):
 
     if not event:
         flash("Événement introuvable", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("finance.dashboard"))
 
     event_lines = db.execute(
         "SELECT * FROM event_lines WHERE event_id=?", (event_id,)
@@ -407,7 +407,7 @@ def add_payment(event_id):
         ).fetchone()
         if not event:
             flash("Événement introuvable", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("finance.dashboard"))
         if event["status"] == "annulé":
             flash("Impossible d'encaisser sur un événement annulé", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
@@ -586,7 +586,7 @@ def delete_event(event_id):
         db.rollback()
         logger.exception("Failed to delete event %s", event_id)
         flash("Une erreur est survenue lors de la suppression.", "danger")
-    return redirect(url_for("index"))
+    return redirect(url_for("finance.dashboard"))
 
 
 # ─── Event Expense ───────────────────────────────────────────────────
@@ -658,7 +658,7 @@ def generate_contract(event_id):
 
         if not event:
             flash("Événement introuvable", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("finance.dashboard"))
 
         payments = db.execute(
             "SELECT * FROM payments WHERE event_id=? AND is_refunded=0 "
@@ -703,7 +703,7 @@ def generate_receipt(event_id, payment_id):
 
     if not event:
         flash("Événement introuvable", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("finance.dashboard"))
 
     payment = db.execute(
         "SELECT * FROM payments WHERE id=? AND event_id=?", (payment_id, event_id)

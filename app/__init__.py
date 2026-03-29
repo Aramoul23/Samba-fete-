@@ -145,7 +145,7 @@ def create_app(config_name=None):
     def rate_limit_exceeded(e):
         from flask import flash, render_template as rt
         flash("Trop de tentatives. Veuillez patienter une minute.", "danger")
-        return rt("login.html"), 429
+        return rt("auth/login.html"), 429
 
     @app.errorhandler(500)
     def internal_error(e):

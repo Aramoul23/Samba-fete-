@@ -27,10 +27,10 @@
                 <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
             </button>
             {% endif %}
-            <a href="{{ url_for('generate_contract', event_id=event.id) }}" class="btn btn-primary" target="_blank">
+            <a href="{{ url_for('bookings.generate_contract', event_id=event.id) }}" class="btn btn-primary" target="_blank">
                 <i class="fas fa-file-pdf me-1"></i>Contrat
             </a>
-            <a href="{{ url_for('event_form', event_id=event.id) }}" class="btn btn-outline-gold">
+            <a href="{{ url_for('bookings.event_form', event_id=event.id) }}" class="btn btn-outline-gold">
                 <i class="fas fa-edit me-1"></i>Modifier
             </a>
         </div>
@@ -77,7 +77,7 @@
             <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
         </div>
         <div class="card-body-custom">
-            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusFormConfirm" class="row g-3 align-items-end">
+            <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" id="statusFormConfirm" class="row g-3 align-items-end">
                 <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="btn btn-warning" onclick="showDateChangeModal()" style="background: var(--warning); color: #2d3436; border: none;">
@@ -106,7 +106,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
             <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gestion du Statut</h5>
         </div>
         <div class="card-body-custom">
-            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" id="statusFormEnAttente" class="row g-3 align-items-end">
+            <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" id="statusFormEnAttente" class="row g-3 align-items-end">
                 <div class="col-md-12">
                     <div class="d-flex flex-wrap gap-2">
                         <button type="submit" name="status" value="confirmé" class="btn btn-success">
@@ -172,7 +172,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
             <div class="card-custom mb-4">
                 <div class="card-header-custom">
                     <h5 class="mb-0"><i class="fas fa-user me-2"></i>Client</h5>
-                    <a href="{{ url_for('client_detail', client_id=event.client_id) }}" class="btn btn-sm btn-outline-gold">
+                    <a href="{{ url_for('clients.client_detail', client_id=event.client_id) }}" class="btn btn-sm btn-outline-gold">
                         <i class="fas fa-external-link-alt me-1"></i>Voir profil
                     </a>
                 </div>
@@ -279,7 +279,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
                                     <td>{{ exp.description or '—' }}</td>
                                     <td class="text-end" style="font-weight: 600; color: var(--danger);">{{ exp.amount | format_da }}</td>
                                     <td>
-                                        <form method="POST" action="{{ url_for('delete_expense', expense_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
+                                        <form method="POST" action="{{ url_for('finance.delete_expense', expense_id=exp.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
@@ -302,7 +302,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
                     <!-- Add Expense Form -->
                     <div class="add-payment-form" style="margin-top: 16px;">
                         <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter des Dépenses</h6>
-                        <form method="POST" action="{{ url_for('add_event_expense', event_id=event.id) }}">
+                        <form method="POST" action="{{ url_for('bookings.add_event_expense', event_id=event.id) }}">
                             <div class="row g-2 align-items-start">
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Date</label>
@@ -430,7 +430,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
                                     </td>
                                     <td class="text-center">
                                         {% if not p.is_refunded %}
-                                        <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=p.id) }}"
+                                        <a href="{{ url_for('bookings.generate_receipt', event_id=event.id, payment_id=p.id) }}"
                                            class="btn btn-sm btn-outline-gold me-1" target="_blank" title="Imprimer Reçu">
                                             <i class="fas fa-print"></i> Reçu
                                         </a>
@@ -500,7 +500,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
                             </div>
                         </div>
                         
-                        <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}" id="paymentForm">
+                        <form method="POST" action="{{ url_for('bookings.add_payment', event_id=event.id) }}" id="paymentForm">
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-2">
                                     <label class="form-label-elegant">Montant</label>
@@ -656,12 +656,12 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
 
                     <!-- Contract & Receipt Buttons -->
                     <div class="mt-4 d-grid gap-2">
-                        <a href="{{ url_for('generate_contract', event_id=event.id) }}"
+                        <a href="{{ url_for('bookings.generate_contract', event_id=event.id) }}"
                            class="btn btn-primary btn-lg" target="_blank">
                             <i class="fas fa-file-pdf me-2"></i>Imprimer Contrat
                         </a>
                         {% if payments %}
-                        <a href="{{ url_for('generate_receipt', event_id=event.id, payment_id=payments[0].id) }}"
+                        <a href="{{ url_for('bookings.generate_receipt', event_id=event.id, payment_id=payments[0].id) }}"
                            class="btn btn-outline-gold btn-lg" target="_blank">
                             <i class="fas fa-print me-2"></i>Dernier Reçu
                         </a>
@@ -681,7 +681,7 @@ Also let's make sure for "en attente" there are proper confirm and annuler butto
                 <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i>Encaisser un Paiement</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}" id="quickPayForm">
+            <form method="POST" action="{{ url_for('bookings.add_payment', event_id=event.id) }}" id="quickPayForm">
                 <div class="modal-body" style="padding: 20px;">
                     <!-- Quick Amount Buttons - Big touch targets -->
                     <div class="mb-4">

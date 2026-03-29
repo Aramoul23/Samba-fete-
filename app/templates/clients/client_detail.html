@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
+                <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Nouvel Événement
                 </a>
             </div>
@@ -118,7 +118,7 @@
                             {% if p.reference %}
                             <span class="ms-2">· Réf: {{ p.reference }}</span>
                             {% endif %}
-                            <span class="ms-2">· <a href="{{ url_for('event_detail', event_id=p.event_id) }}">{{ p.event_title }}</a></span>
+                            <span class="ms-2">· <a href="{{ url_for('bookings.event_detail', event_id=p.event_id) }}">{{ p.event_title }}</a></span>
                         </div>
                         {% if p.is_refunded and p.notes and '[REMBOURSÉ' in p.notes %}
                         <div class="mt-1" style="font-size: 0.75rem; color: var(--danger);">
@@ -137,7 +137,7 @@
     <div class="card-custom">
         <div class="card-header-custom">
             <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Historique des Événements</h5>
-            <a href="{{ url_for('event_form') }}" class="btn btn-sm btn-primary">
+            <a href="{{ url_for('bookings.event_form') }}" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus me-1"></i>Nouveau
             </a>
         </div>
@@ -163,7 +163,7 @@
                     <tbody>
                         {% for ev in events %}
                         {% set ev_data = event_financials[ev.id] %}
-                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=ev.id) }}'">
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('bookings.event_detail', event_id=ev.id) }}'">
                             <td><strong>{{ ev.event_date|date_only }}</strong></td>
                             <td style="font-weight: 500;">{{ ev.title }}</td>
                             <td>{{ ev.event_type }}</td>
@@ -184,14 +184,14 @@
                             </td>
                             <td onclick="event.stopPropagation()">
                                 {% if ev_data.remaining > 0 %}
-                                <a href="{{ url_for('event_detail', event_id=ev.id) }}#paymentSection"
+                                <a href="{{ url_for('bookings.event_detail', event_id=ev.id) }}#paymentSection"
                                    class="btn btn-sm btn-success" title="Encaisser un paiement">
                                     <i class="fas fa-hand-holding-usd"></i>
                                 </a>
                                 {% else %}
                                 <span class="badge-status status-confirmé" style="font-size: 0.6rem;">Soldé</span>
                                 {% endif %}
-                                <a href="{{ url_for('generate_contract', event_id=ev.id) }}"
+                                <a href="{{ url_for('bookings.generate_contract', event_id=ev.id) }}"
                                    class="btn btn-sm btn-outline-gold ms-1" target="_blank" title="Contrat PDF"
                                    onclick="event.stopPropagation()">
                                     <i class="fas fa-file-pdf"></i>
@@ -206,7 +206,7 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <p>Aucun événement pour ce client</p>
-                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
+                <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Créer un événement
                 </a>
             </div>

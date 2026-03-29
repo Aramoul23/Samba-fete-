@@ -108,7 +108,7 @@
                                 <a href="{{ url_for('finance.expenses') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-times"></i>
                                 </a>
-                                <a href="{{ url_for('export_expenses', start_date=start_date, end_date=end_date, category=category_filter) }}" 
+                                <a href="{{ url_for('finance.export_expenses', start_date=start_date, end_date=end_date, category=category_filter) }}" 
                                    class="btn btn-success">
                                     <i class="fas fa-download"></i> ODS
                                 </a>
@@ -230,7 +230,7 @@
                                     </td>
                                     <td class="d-none d-lg-table-cell">
                                         {% if expense.event_id %}
-                                        <a href="{{ url_for('event_detail', event_id=expense.event_id) }}" class="text-decoration-none">
+                                        <a href="{{ url_for('bookings.event_detail', event_id=expense.event_id) }}" class="text-decoration-none">
                                             {{ expense.event_title or 'Événement #' ~ expense.event_id }}
                                         </a>
                                         {% else %}
@@ -239,7 +239,7 @@
                                     </td>
                                     <td class="d-none d-md-table-cell">{{ expense.method }}</td>
                                     <td class="text-center">
-                                        <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
+                                        <form method="POST" action="{{ url_for('finance.delete_expense', expense_id=expense.id) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette dépense?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
