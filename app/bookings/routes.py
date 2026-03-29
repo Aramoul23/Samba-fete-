@@ -159,8 +159,8 @@ def event_list():
 @bp.route("/evenement/<int:event_id>/modifier", methods=["GET", "POST"])
 @login_required
 def event_form(event_id=None):
-    event = Event.query.get(event_id) if event_id else None
-    client = Client.query.get(event.client_id) if event else None
+    event = db.session.get(Event, event_id) if event_id else None
+    client = db.session.get(Client, event.client_id) if event else None
     event_lines = []
     custom_lines = []
 
@@ -532,7 +532,7 @@ def quick_payment():
             or_(Client.name.ilike(f"%{search}%"), Client.phone.ilike(f"%{search}%"))
         ).order_by(Client.name).limit(20).all()
 
-    selected_client = Client.query.get(selected_client_id) if selected_client_id else None
+    selected_client = db.session.get(Client, selected_client_id) if selected_client_id else None
     client_events = []
     if selected_client:
         client_events = Event.query.filter(
@@ -540,7 +540,7 @@ def quick_payment():
             Event.status.notin_(["annulé", "terminé"])
         ).order_by(Event.event_date).all()
 
-    selected_event = Event.query.get(selected_event_id) if selected_event_id else None
+    selected_event = db.session.get(Event, selected_event_id) if selected_event_id else None
     event_payments = []
     event_financials = None
     if selected_event:

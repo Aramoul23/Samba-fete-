@@ -283,7 +283,7 @@ def export_finances():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
     tr = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.payment_date.between(sd, ed), Payment.is_refunded == 0).scalar()
-    to_ = db.session.query(func.coalesce(func.sum(Event.total_amount - func.coalesce(func.sum(case((Payment.is_refunded == 0, Payment.amount), else_=0)), 0)), 0)).filter(Event.event_date.between(sd, ed)).scalar()
+    to_ = db.session.query(func.coalesce(func.sum(Event.total_amount), 0) - func.coalesce(func.sum(Payment.amount), 0)).select_from(Event).outerjoin(Payment, (Payment.event_id == Event.id) & (Payment.is_refunded == 0)).filter(Event.event_date.between(sd, ed), Event.status.notin_(["annulé", "terminé"])).scalar()
     ods = export_financials_ods([], {"total_revenue": tr, "total_outstanding": to_}, datetime.now().strftime("%Y-%m-%d %H:%M"))
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=finances_{sd}_{ed}.ods"; return resp
