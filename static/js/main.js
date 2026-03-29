@@ -164,13 +164,60 @@ function toggleSidebar() {
 
 // ── Auto-inject CSRF ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-    // Flatpickr date inputs
+    // Flatpickr date inputs with calendar event coloring
     if (typeof flatpickr !== 'undefined') {
+        let calendarEvents = {};
+
+        function loadCalendarEvents(fp) {
+            const d = fp.currentYear ? new Date(fp.currentYear, fp.currentMonth) : new Date();
+            fetch(`/api/calendar-events?year=${d.getFullYear()}&month=${d.getMonth() + 1}`)
+                .then(r => r.json())
+                .then(events => {
+                    calendarEvents = {};
+                    events.forEach(ev => {
+                        if (ev.event_date) calendarEvents[ev.event_date] = ev.status;
+                    });
+                    fp.redraw();
+                })
+                .catch(() => { calendarEvents = {}; });
+        }
+
         flatpickr('input[type="date"], input[name="event_date"], input[name="expense_date"]', {
             dateFormat: 'Y-m-d',
             locale: 'fr',
             allowInput: true,
             closeOnSelect: true,
+            onReady: function(selectedDates, dateStr, instance) {
+                loadCalendarEvents(instance);
+            },
+            onMonthChange: function(selectedDates, dateStr, instance) {
+                loadCalendarEvents(instance);
+            },
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                if (dayElem.classList.contains('flatpickr-disabled') ||
+                    dayElem.classList.contains('prevMonthDay') ||
+                    dayElem.classList.contains('nextMonthDay')) return;
+
+                const date = dayElem.dateObj;
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+                const status = calendarEvents[dateStr];
+
+                if (status === 'confirmé' || status === 'terminé') {
+                    dayElem.style.background = 'rgba(6, 214, 160, 0.15)';
+                    dayElem.style.color = '#06d6a0';
+                    dayElem.style.fontWeight = '700';
+                    dayElem.title = `${dateStr} — ${status}`;
+                } else if (status === 'en attente') {
+                    dayElem.style.background = 'rgba(255, 209, 102, 0.15)';
+                    dayElem.style.color = '#ffd166';
+                    dayElem.style.fontWeight = '700';
+                    dayElem.title = `${dateStr} — ${status}`;
+                } else if (status === 'annulé') {
+                    dayElem.style.background = 'rgba(255, 100, 100, 0.10)';
+                    dayElem.style.color = '#ef476f';
+                    dayElem.title = `${dateStr} — ${status}`;
+                }
+            },
         });
     }
 });
