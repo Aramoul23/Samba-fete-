@@ -8,9 +8,18 @@ from datetime import datetime, date, timedelta
 
 from sqlalchemy import func, or_
 
-from app.models import db, Event, Client, EventLine, Payment, Expense, Venue
+from app.models import db, Event, Client, EventLine, Payment, Expense, Venue, AuditLog
 
 logger = logging.getLogger(__name__)
+
+
+def _audit(action, user=None, entity_type=None, entity_id=None, details=None):
+    """Helper to create audit log entry."""
+    try:
+        AuditLog.log(action, user=user, entity_type=entity_type,
+                     entity_id=entity_id, details=details)
+    except Exception:
+        pass  # Don't let audit failures break the main operation
 
 
 class BookingService:
@@ -112,6 +121,8 @@ class BookingService:
             ))
 
         db.session.commit()
+        _audit("event.create", entity_type="event", entity_id=event.id,
+               details=f"title={title}, amount={event.total_amount}")
         return event, []
 
     @staticmethod
@@ -144,6 +155,8 @@ class BookingService:
             logger.info("Event %d auto-confirmed (fully paid)", event_id)
 
         db.session.commit()
+        _audit("payment.create", entity_type="payment", entity_id=payment.id,
+               details=f"event_id={event_id}, amount={amount}, method={method}")
         return payment, None
 
     @staticmethod
@@ -161,6 +174,8 @@ class BookingService:
         event.status = new_status
         event.updated_at = datetime.now()
         db.session.commit()
+        _audit("event.status_change", entity_type="event", entity_id=event_id,
+               details=f"from={event.status}, to={new_status}")
         return None
 
     @staticmethod
@@ -168,6 +183,8 @@ class BookingService:
         """Delete event and all related data via cascade. Returns error or None."""
         event = Event.query.get_or_404(event_id)
         try:
+            _audit("event.delete", entity_type="event", entity_id=event_id,
+                   details=f"title={event.title}, amount={event.total_amount}")
             db.session.delete(event)
             db.session.commit()
             return None

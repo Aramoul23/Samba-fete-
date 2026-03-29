@@ -290,3 +290,48 @@ class Setting(db.Model):
             row = cls(key=key, value=value)
             db.session.add(row)
         db.session.commit()
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Audit Trail
+# ══════════════════════════════════════════════════════════════════════
+
+class AuditLog(db.Model):
+    """Financial and operational audit trail.
+
+    Records every significant action for compliance and debugging.
+    Never delete from this table.
+    """
+    __tablename__ = "audit_log"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    username = db.Column(db.Text)  # Denormalized for when user is deleted
+    action = db.Column(db.Text, nullable=False, index=True)  # e.g., "payment.create", "event.delete"
+    entity_type = db.Column(db.Text, index=True)  # e.g., "event", "payment", "expense"
+    entity_id = db.Column(db.Integer)
+    details = db.Column(db.Text)  # JSON with before/after or description
+    ip_address = db.Column(db.Text)
+
+    __table_args__ = (
+        db.Index("ix_audit_log_entity", "entity_type", "entity_id"),
+    )
+
+    def __repr__(self):
+        return f"<AuditLog {self.action} by {self.username} at {self.timestamp}>"
+
+    @classmethod
+    def log(cls, action, user=None, entity_type=None, entity_id=None, details=None, ip=None):
+        """Create an audit log entry."""
+        entry = cls(
+            user_id=user.id if user else None,
+            username=user.username if user else "system",
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            details=details,
+            ip_address=ip,
+        )
+        db.session.add(entry)
+        # Don't commit here — let the caller handle transaction

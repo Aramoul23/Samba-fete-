@@ -17,6 +17,8 @@ from flask_wtf.csrf import CSRFProtect
 
 from app.config import config_by_name
 from app.db import close_db_connection
+from app.logging_config import setup_logging
+from app.middleware import register_error_handlers, register_health_check
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,9 @@ def create_app(config_name=None):
             "SECRET_KEY not set — using random key (sessions will not persist across restarts)"
         )
     app.config["SECRET_KEY"] = _secret
+
+    # ── Logging ──────────────────────────────────────────────────────
+    setup_logging(app)
 
     # ── Extensions ───────────────────────────────────────────────────
     limiter.init_app(app)
@@ -130,27 +135,9 @@ def create_app(config_name=None):
     from app.settings import bp as settings_bp
     app.register_blueprint(settings_bp)
 
-    # ── Error handlers ───────────────────────────────────────────────
-    @app.errorhandler(429)
-    def rate_limit_exceeded(e):
-        from flask import flash, render_template as rt
-        flash("Trop de tentatives. Veuillez patienter une minute.", "danger")
-        return rt("auth/login.html"), 429
-
-    @app.errorhandler(500)
-    def internal_error(e):
-        import traceback
-        error_trace = traceback.format_exc()
-        logger.error("500 Error: %s\n%s", str(e), error_trace)
-        if app.config.get("FLASK_ENV") == "production":
-            return "Internal Server Error", 500
-        return (
-            f'<html><body style="font-family:monospace;padding:40px;background:#1a1a2e;color:#eee">'
-            f'<h1 style="color:#e74c3c">500 Error</h1>'
-            f'<pre style="background:#16213e;padding:20px;border-radius:8px;overflow-x:auto">'
-            f'{error_trace}</pre></body></html>',
-            500,
-        )
+    # ── Error handlers & health check ────────────────────────────────
+    register_error_handlers(app)
+    register_health_check(app)
 
     # ── Database init ────────────────────────────────────────────────
     with app.app_context():

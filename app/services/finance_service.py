@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, case
 
-from app.models import db, Event, Client, EventLine, Payment, Expense, Setting
+from app.models import db, Event, Client, EventLine, Payment, Expense, Setting, AuditLog
 
 logger = logging.getLogger(__name__)
 
@@ -111,4 +111,6 @@ class FinanceService:
         )
         db.session.add(expense)
         db.session.commit()
+        AuditLog.log("expense.create", entity_type="expense", entity_id=expense.id,
+                     details=f"category={category}, amount={amount}")
         return expense, None
