@@ -5,4 +5,4 @@ nixPkgs = ["...", "cairo", "pango", "gdk-pixbuf", "libffi", "shared-mime-info", 
 cmds = ["pip install --no-cache-dir -r requirements.txt"]
 
 [start]
-cmd = "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload"
+cmd = "gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --preload"
