@@ -1,7 +1,7 @@
 """Samba Fête — Test fixtures.
 
-conftest.py: test app factory, DB fixtures, auth helpers, sample data.
-Flask-WTF CSRF is disabled via WTF_CSRF_ENABLED=False in test config.
+Fresh SQLite database per test session, clean state per test.
+Flask-WTF CSRF disabled via WTF_CSRF_ENABLED=False.
 """
 import os
 import tempfile
@@ -44,46 +44,43 @@ def app(tmp_db_path):
 
 @pytest.fixture()
 def _reset_db(app, tmp_db_path):
-    from app.models import db as sqlalchemy_db
-    import gc
-    gc.collect()
+    """Reset DB — include in tests that need clean state."""
+    from app.models import db as sa
     with app.app_context():
-        sqlalchemy_db.drop_all()
-        sqlalchemy_db.create_all()
-        from app.models import User, Venue, Setting
-        for name, cap_m, cap_w in [("Grande Salle", 200, 200), ("Salle VIP", 80, 80)]:
-            sqlalchemy_db.session.add(Venue(name=name, capacity_men=cap_m, capacity_women=cap_w))
-        for key, val in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
-            sqlalchemy_db.session.add(Setting(key=key, value=val))
-        sqlalchemy_db.session.commit()
+        sa.session.rollback()
+        sa.drop_all()
+        sa.create_all()
+        from app.models import Venue, Setting
+        for name, m, w in [("Grande Salle", 200, 200), ("Salle VIP", 80, 80)]:
+            sa.session.add(Venue(name=name, capacity_men=m, capacity_women=w))
+        for k, v in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
+            sa.session.add(Setting(key=k, value=v))
+        sa.session.commit()
     yield
-    gc.collect()
 
 
 @pytest.fixture()
-def admin_user(_reset_db, app):
+def admin_user(app, _reset_db):
     from app.models import db, User
     with app.app_context():
-        user = User(username="admin", role="admin")
-        user.set_password("Admin123!")
-        db.session.add(user)
-        db.session.commit()
-        return {"id": user.id, "username": "admin", "password": "Admin123!", "role": "admin"}
+        u = User(username="admin", role="admin")
+        u.set_password("Admin123!")
+        db.session.add(u); db.session.commit()
+        return {"id": u.id, "username": "admin", "password": "Admin123!", "role": "admin"}
 
 
 @pytest.fixture()
-def manager_user(_reset_db, app):
+def manager_user(app, _reset_db):
     from app.models import db, User
     with app.app_context():
-        user = User(username="manager", role="manager")
-        user.set_password("Manager123!")
-        db.session.add(user)
-        db.session.commit()
-        return {"id": user.id, "username": "manager", "password": "Manager123!", "role": "manager"}
+        u = User(username="manager", role="manager")
+        u.set_password("Manager123!")
+        db.session.add(u); db.session.commit()
+        return {"id": u.id, "username": "manager", "password": "Manager123!", "role": "manager"}
 
 
 @pytest.fixture()
-def client(app, _reset_db):
+def client(app):
     return app.test_client()
 
 
@@ -102,37 +99,36 @@ def manager_client(app, manager_user):
 
 
 @pytest.fixture()
-def sample_client(_reset_db, app):
+def sample_client(app, _reset_db):
     from app.models import db, Client
     with app.app_context():
         c = Client(name="Ahmed Benali", phone="0555123456", email="ahmed@test.com")
-        db.session.add(c)
-        db.session.commit()
+        db.session.add(c); db.session.commit()
         return c.id
 
 
 @pytest.fixture()
 def sample_booking(app, admin_client, sample_client):
     import datetime
-    future_date = (datetime.date.today() + datetime.timedelta(days=30)).isoformat()
+    fd = (datetime.date.today() + datetime.timedelta(days=30)).isoformat()
     with admin_client.session_transaction() as sess:
         sess["csrf_token"] = "test-csrf-token"
     admin_client.post("/evenement/nouveau", data={
         "csrf_token": "test-csrf-token",
         "title": "Mariage Ahmed", "client_name": "Ahmed Benali",
         "client_phone": "0555123456", "client_email": "ahmed@test.com",
-        "venue_id": "1", "event_type": "Mariage", "event_date": future_date,
+        "venue_id": "1", "event_type": "Mariage", "event_date": fd,
         "time_slot": "Soirée", "guests_men": "150", "guests_women": "100",
         "total_amount": "500000", "deposit_required": "100000",
-        "price_location": "300000", "service_individuel": "on", "price_individuel": "50000",
-        "service_cafe": "on", "price_cafe": "100000", "notes": "Test booking",
+        "price_location": "300000", "service_individuel": "on",
+        "price_individuel": "50000", "service_cafe": "on", "price_cafe": "100000",
     }, follow_redirects=True)
     from app.models import Event
     with app.app_context():
-        event = Event.query.filter_by(title="Mariage Ahmed").first()
-        if event:
-            return {"id": event.id, "title": event.title, "event_date": event.event_date,
-                    "total_amount": event.total_amount, "status": event.status}
+        e = Event.query.filter_by(title="Mariage Ahmed").first()
+        if e:
+            return {"id": e.id, "title": e.title, "event_date": e.event_date,
+                    "total_amount": e.total_amount, "status": e.status}
         return None
 
 
@@ -140,16 +136,16 @@ def sample_booking(app, admin_client, sample_client):
 def sample_payment(app, admin_client, sample_booking):
     if not sample_booking:
         pytest.skip("No booking")
-    event_id = sample_booking["id"]
+    eid = sample_booking["id"]
     with admin_client.session_transaction() as sess:
         sess["csrf_token"] = "test-csrf-token"
-    admin_client.post(f"/evenement/{event_id}/paiement", data={
+    admin_client.post(f"/evenement/{eid}/paiement", data={
         "csrf_token": "test-csrf-token", "amount": "50000",
-        "method": "espèces", "payment_type": "acompte", "notes": "Test payment",
+        "method": "espèces", "payment_type": "acompte",
     })
     from app.models import Payment
     with app.app_context():
-        p = Payment.query.filter_by(event_id=event_id).order_by(Payment.id.desc()).first()
+        p = Payment.query.filter_by(event_id=eid).order_by(Payment.id.desc()).first()
         if p:
             return {"id": p.id, "event_id": p.event_id, "amount": p.amount}
         return None

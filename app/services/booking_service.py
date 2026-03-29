@@ -120,9 +120,9 @@ class BookingService:
                 payment_type="avance", method="espèces", payment_date=now,
             ))
 
-        db.session.commit()
         _audit("event.create", entity_type="event", entity_id=event.id,
                details=f"title={title}, amount={event.total_amount}")
+        db.session.commit()
         return event, []
 
     @staticmethod
@@ -154,9 +154,9 @@ class BookingService:
             event.status = "confirmé"
             logger.info("Event %d auto-confirmed (fully paid)", event_id)
 
-        db.session.commit()
         _audit("payment.create", entity_type="payment", entity_id=payment.id,
                details=f"event_id={event_id}, amount={amount}, method={method}")
+        db.session.commit()
         return payment, None
 
     @staticmethod
@@ -173,9 +173,9 @@ class BookingService:
 
         event.status = new_status
         event.updated_at = datetime.now()
-        db.session.commit()
         _audit("event.status_change", entity_type="event", entity_id=event_id,
                details=f"from={event.status}, to={new_status}")
+        db.session.commit()
         return None
 
     @staticmethod
