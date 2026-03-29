@@ -1,24 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
+    "builder": "DOCKERFILE"
   },
   "deploy": {
-    "runtime": "V2",
-    "numReplicas": 1,
-    "startCommand": "sh -c \"gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --preload\"",
+    "startCommand": "sh -c 'gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120'",
     "healthcheckPath": "/health",
-    "sleepApplication": false,
-    "useLegacyStacker": false,
-    "ipv6EgressEnabled": false,
-    "multiRegionConfig": {
-      "europe-west4-drams3a": {
-        "numReplicas": 1
-      }
-    },
-    "restartPolicyType": "ON_FAILURE",
-    "healthcheckTimeout": 60,
-    "restartPolicyMaxRetries": 10
+    "healthcheckTimeout": 90
   }
 }
