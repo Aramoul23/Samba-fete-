@@ -165,9 +165,6 @@ def event_form(event_id=None):
     custom_lines = []
 
     if event:
-        if not event:
-            flash("Événement introuvable", "danger")
-            return redirect(url_for("finance.dashboard"))
         from app.bookings.helpers import PREDEFINED_NAMES
         event_lines = [ln for ln in event.service_lines.all() if ln.description in PREDEFINED_NAMES]
         custom_lines = [ln for ln in event.service_lines.all() if ln.description not in PREDEFINED_NAMES]
@@ -240,11 +237,10 @@ def event_form(event_id=None):
             db.session.add(event)
             db.session.flush()
             event_id = event.id
-
-        # Auto deposit
-        if deposit_required and deposit_required > 0:
-            db.session.add(Payment(event_id=event_id, amount=deposit_required,
-                                   payment_type="avance", method="espèces", payment_date=now))
+            # Auto deposit (only on create)
+            if deposit_required and deposit_required > 0:
+                db.session.add(Payment(event_id=event_id, amount=deposit_required,
+                                       payment_type="avance", method="espèces", payment_date=now))
 
         # Service lines
         insert_service_lines(event_id, data)
@@ -494,6 +490,9 @@ def generate_receipt(event_id, payment_id):
     try:
         event = Event.query.get_or_404(event_id)
         payment = Payment.query.get_or_404(payment_id)
+        if payment.event_id != event_id:
+            flash("Paiement introuvable pour cet événement", "danger")
+            return redirect(url_for("bookings.event_detail", event_id=event_id))
         date_str = str(payment.payment_date)[:19]
         total_before = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
             Payment.event_id == event_id, Payment.payment_date < date_str, Payment.is_refunded == 0

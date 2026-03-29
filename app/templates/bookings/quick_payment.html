@@ -41,7 +41,7 @@
                                 <div class="client-pick-name">{{ c.name }}</div>
                                 <div class="client-pick-phone"><i class="fas fa-phone me-1"></i>{{ c.phone }}</div>
                                 <div class="client-pick-meta">
-                                    <span class="badge-slot">{{ c.active_events }} événement(s)</span>
+                                    <span class="badge-slot">{{ c.event_count }} événement(s)</span>
                                     {% if c.total_owed > 0 %}
                                     <span class="badge-amount" style="background: var(--warning-soft); color: #8a6d1b;">
                                         {{ c.total_owed | format_da }}
@@ -117,7 +117,7 @@
                         <tr {% if selected_event_id == ev.id %}style="background: var(--primary-soft);"{% endif %}>
                             <td style="font-weight: 500;">{{ ev.title }}</td>
                             <td>{{ ev.event_date|date_only }}</td>
-                            <td>{{ ev.venue_name }}</td>
+                            <td>{{ ev.venue.name if ev.venue else '—' }}</td>
                             <td class="text-end" style="font-weight: 600;">{{ ev.total_amount | format_da }}</td>
                             <td class="text-end" style="font-weight: 600; color: var(--success);">{{ ev.total_paid | format_da }}</td>
                             <td class="text-end" style="font-weight: 700; color: {% if reste > 0 %}var(--danger){% else %}var(--success){% endif %};">
@@ -171,7 +171,7 @@
                             <span class="mx-2">·</span>
                             <i class="fas fa-calendar me-1"></i>{{ selected_event.event_date|date_only }}
                             <span class="mx-2">·</span>
-                            <i class="fas fa-map-marker-alt me-1"></i>{{ selected_event.venue_name }}
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ selected_event.venue.name if selected_event.venue else "—" }}
                         </div>
                     </div>
 

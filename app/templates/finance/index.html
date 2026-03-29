@@ -9,7 +9,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="welcome-title">{{ hall_name }}</h1>
-                <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — {{ pending_count }} en attente · Prochain: {% if next_event %}{{ next_event.event_date|date_only }} ({{ next_event.client_name }}){% else %}Aucun{% endif %}</p>
+                <p class="welcome-subtitle">{{ month_name }} {{ today.year }} — {{ pending_count }} en attente · Prochain: {% if next_event %}{{ next_event.event_date|date_only }} ({{ next_event.client.name }}){% else %}Aucun{% endif %}</p>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary btn-lg">
@@ -90,7 +90,7 @@
             </div>
             {% if next_event %}
             <div class="stat-card-number stat-card-number-sm">{{ next_event.event_date|date_only }}</div>
-            <div class="stat-card-label">{{ next_event.client_name }}</div>
+            <div class="stat-card-label">{{ next_event.client.name }}</div>
             {% else %}
             <div class="stat-card-number">—</div>
             <div class="stat-card-label">Prochain événement</div>
@@ -152,8 +152,8 @@
                                 <tr class="clickable-row" onclick="window.location='{{ url_for('bookings.event_detail', event_id=ev.id) }}'">
                                     <td><strong>{{ ev.event_date|date_only }}</strong></td>
                                     <td style="font-weight: 500;">{{ ev.title }}</td>
-                                    <td class="d-none d-md-table-cell">{{ ev.client_name }}</td>
-                                    <td class="d-none d-lg-table-cell">{{ ev.venue_name }}</td>
+                                    <td class="d-none d-md-table-cell">{{ ev.client.name }}</td>
+                                    <td class="d-none d-lg-table-cell">{{ ev.venue.name if ev.venue else '—' }}</td>
                                     <td>
                                         <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
                                             {{ ev.status }}
@@ -213,8 +213,8 @@
                         {% for p in recent_payments %}
                         <div class="payment-item">
                             <div class="payment-info">
-                                <strong>{{ p.client_name }}</strong>
-                                <small class="text-muted d-block">{{ p.title }}</small>
+                                <strong>{{ p.event.client.name }}</strong>
+                                <small class="text-muted d-block">{{ p.event.title }}</small>
                                 <small class="text-muted">{{ p.payment_date|date_only }} · {{ p.method }}</small>
                             </div>
                             <div class="payment-amount">

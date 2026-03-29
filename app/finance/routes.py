@@ -12,6 +12,7 @@ from flask import Blueprint, flash, make_response, redirect, render_template, re
 from flask_login import login_required
 from sqlalchemy import func, case
 
+from app.auth.decorators import admin_required
 from app.models import db, Event, Client, EventLine, Payment, Expense, Venue, Setting
 from app.bookings.helpers import MONTH_NAMES_FR
 from export_functions import (
@@ -250,6 +251,7 @@ def delete_expense(expense_id):
 
 
 # ─── Exports ─────────────────────────────────────────────────────────
+@admin_required
 @bp.route("/export/events.ods")
 @login_required
 def export_events():
@@ -258,6 +260,7 @@ def export_events():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=evenements_{date.today().isoformat()}.ods"; return resp
 
+@admin_required
 @bp.route("/export/clients.ods")
 @login_required
 def export_clients():
@@ -266,6 +269,7 @@ def export_clients():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=clients_{date.today().isoformat()}.ods"; return resp
 
+@admin_required
 @bp.route("/export/payments.ods")
 @login_required
 def export_payments():
@@ -277,6 +281,7 @@ def export_payments():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=paiements_{date.today().isoformat()}.ods"; return resp
 
+@admin_required
 @bp.route("/export/finances.ods")
 @login_required
 def export_finances():
@@ -288,6 +293,7 @@ def export_finances():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=finances_{sd}_{ed}.ods"; return resp
 
+@admin_required
 @bp.route("/export/expenses.ods")
 @login_required
 def export_expenses():
@@ -298,6 +304,7 @@ def export_expenses():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=depenses_{sd}_{ed}.ods"; return resp
 
+@admin_required
 @bp.route("/export/pl.ods")
 @login_required
 def export_pl():

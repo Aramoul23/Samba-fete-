@@ -3,6 +3,7 @@ import logging
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
 
+from app.auth.decorators import admin_required
 from app.models import db, Venue, Setting
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,7 @@ bp = Blueprint("settings", __name__, template_folder="../templates")
 
 @bp.route("/parametres", methods=["GET", "POST"])
 @login_required
+@admin_required
 def settings():
     if request.method == "POST":
         try:
@@ -49,6 +51,7 @@ def settings():
 
 @bp.route("/parametres/lieu/<int:venue_id>/supprimer", methods=["POST"])
 @login_required
+@admin_required
 def delete_venue(venue_id):
     try:
         v = Venue.query.get_or_404(venue_id)

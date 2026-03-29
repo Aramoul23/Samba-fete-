@@ -91,7 +91,7 @@
                     <td>{{ exp.expense_date }}</td>
                     <td><span class="badge bg-secondary">{{ exp.category }}</span></td>
                     <td>{{ exp.description }}</td>
-                    <td>{{ exp.event_title or '—' }}</td>
+                    <td>{{ exp.event.title if exp.event else '—' }}</td>
                     <td><strong>{{ exp.amount | format_da }}</strong></td>
                     <td>
                         <form method="POST" action="{{ url_for('finance.delete_expense', expense_id=exp.id) }}"
