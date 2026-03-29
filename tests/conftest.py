@@ -1,7 +1,9 @@
-"""Samba Fête — Test fixtures."""
+"""Samba Fête — Test fixtures.
+
+DELETE-based cleanup (no drop/create). Single file-based SQLite.
+"""
 import os
 import tempfile
-import gc
 import pytest
 
 os.environ["FLASK_ENV"] = "testing"
@@ -16,10 +18,12 @@ def app():
     tmpdir = tempfile.mkdtemp(prefix="samba_test_")
     db_path = os.path.join(tmpdir, "test.db")
     os.environ["SQLITE_DB_PATH"] = db_path
+
     from app import create_app
     a = create_app("testing")
     a.config.update(TESTING=True, SECRET_KEY="test-secret-key-not-for-production",
-                    SERVER_NAME="localhost", SQLALCHEMY_DATABASE_URI=f"sqlite:///{db_path}",
+                    SERVER_NAME="localhost",
+                    SQLALCHEMY_DATABASE_URI=f"sqlite:///{db_path}",
                     WTF_CSRF_ENABLED=False)
     from app import limiter
     limiter.enabled = False
@@ -28,27 +32,26 @@ def app():
     shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def _db(app):
+    """Clean data between tests."""
     from app.models import db as sa
-    gc.collect()
+    from app.models import User, Client, Event, EventLine, Payment, Expense, AuditLog
+
     ctx = app.app_context()
     ctx.push()
     sa.session.rollback()
-    sa.drop_all()
-    sa.create_all()
-    from app.models import Venue, Setting
-    for n, m, w in [("Grande Salle", 200, 200), ("Salle VIP", 80, 80)]:
-        sa.session.add(Venue(name=n, capacity_men=m, capacity_women=w))
-    for k, v in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
-        sa.session.add(Setting(key=k, value=v))
+    for model in [AuditLog, Payment, Expense, EventLine, Event, Client, User]:
+        sa.session.query(model).delete()
     sa.session.commit()
     yield
+    sa.session.rollback()
+    sa.session.close()
     ctx.pop()
 
 
 @pytest.fixture()
-def admin_user(_db, app):
+def admin_user(app, _db):
     from app.models import db, User
     u = User(username="admin", role="admin"); u.set_password("Admin123!")
     db.session.add(u); db.session.commit()
@@ -56,7 +59,7 @@ def admin_user(_db, app):
 
 
 @pytest.fixture()
-def manager_user(_db, app):
+def manager_user(app, _db):
     from app.models import db, User
     u = User(username="manager", role="manager"); u.set_password("Manager123!")
     db.session.add(u); db.session.commit()
@@ -83,7 +86,7 @@ def manager_client(app, manager_user):
 
 
 @pytest.fixture()
-def sample_client(_db, app):
+def sample_client(app, _db):
     from app.models import db, Client
     c = Client(name="Ahmed Benali", phone="0555123456", email="ahmed@test.com")
     db.session.add(c); db.session.commit()
@@ -113,8 +116,7 @@ def sample_booking(app, admin_client, sample_client):
 
 @pytest.fixture()
 def sample_payment(app, admin_client, sample_booking):
-    if not sample_booking:
-        pytest.skip("No booking")
+    if not sample_booking: pytest.skip("No booking")
     eid = sample_booking["id"]
     with admin_client.session_transaction() as sess:
         sess["csrf_token"] = "test-csrf-token"
