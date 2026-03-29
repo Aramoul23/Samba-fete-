@@ -3,7 +3,7 @@
 Matches the existing PostgreSQL/SQLite schema exactly.
 Column names, types, and defaults preserved for seamless migration.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.Text, nullable=False, default="manager")
     is_active = db.Column(db.Integer, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<User {self.username} ({self.role})>"
@@ -83,7 +83,7 @@ class Client(db.Model):
     phone2 = db.Column(db.Text)
     email = db.Column(db.Text)
     address = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     events = db.relationship("Event", backref="client", lazy="dynamic",
@@ -130,9 +130,9 @@ class Event(db.Model):
     notes = db.Column(db.Text)
     total_amount = db.Column(db.Float, default=0)
     deposit_required = db.Column(db.Float, default=20000)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow,
-                           onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     venue = db.relationship("Venue", foreign_keys=[venue_id], backref="events")
@@ -219,7 +219,7 @@ class Payment(db.Model):
     method = db.Column(db.Text, default="Espèces")
     reference = db.Column(db.Text)
     notes = db.Column(db.Text)
-    payment_date = db.Column(db.DateTime, default=datetime.utcnow)
+    payment_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_refunded = db.Column(db.Integer, default=0)
 
     __table_args__ = (
@@ -248,7 +248,7 @@ class Expense(db.Model):
     method = db.Column(db.Text, default="espèces")
     reference = db.Column(db.Text)
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         db.Index("ix_expenses_expense_date", "expense_date"),
@@ -305,7 +305,7 @@ class AuditLog(db.Model):
     __tablename__ = "audit_log"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     username = db.Column(db.Text)  # Denormalized for when user is deleted
     action = db.Column(db.Text, nullable=False, index=True)  # e.g., "payment.create", "event.delete"

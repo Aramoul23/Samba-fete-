@@ -5,6 +5,7 @@
 {% block content %}
 <div class="container-fluid">
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-4">
             <!-- Global Settings -->
             <div class="col-lg-6">
@@ -43,6 +44,7 @@
                                 <h6 class="mb-0" style="font-size: 0.9375rem; font-weight: 600;">{{ v.name }}</h6>
                                 <form method="POST" action="{{ url_for('settings.delete_venue', venue_id=v.id) }}"
                                       onsubmit="return confirm('Supprimer ce lieu ?')" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-trash"></i>
                                     </button>

@@ -17,25 +17,25 @@
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label class="form-label">Titre <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" placeholder="Ex: Mariage Ahmed & Fatima" required>
+                            <input type="text" name="title" class="form-control" placeholder="Ex: Mariage Ahmed & Fatima" value="{{ event.title }}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Type</label>
                             <select name="event_type" class="form-select">
                                 {% for t in event_types %}
-                                <option value="{{ t }}">{{ t }}</option>
+                                <option value="{{ t }}" {% if event.event_type == t %}selected{% endif %}>{{ t }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Date <span class="text-danger">*</span></label>
-                            <input type="date" name="event_date" class="form-control" required>
+                            <input type="date" name="event_date" class="form-control" value="{{ event.event_date }}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Créneau</label>
                             <select name="time_slot" class="form-select">
                                 {% for s in time_slots %}
-                                <option value="{{ s }}">{{ s }}</option>
+                                <option value="{{ s }}" {% if event.time_slot == s %}selected{% endif %}>{{ s }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -43,21 +43,29 @@
                             <label class="form-label">Lieu <span class="text-danger">*</span></label>
                             <select name="venue_id" class="form-select" required>
                                 {% for v in venues %}
-                                <option value="{{ v.id }}">{{ v.name }} ({{ v.capacity_men }}+{{ v.capacity_women }})</option>
+                                <option value="{{ v.id }}" {% if event.venue_id == v.id %}selected{% endif %}>{{ v.name }} ({{ v.capacity_men }}+{{ v.capacity_women }})</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Hommes</label>
-                            <input type="number" name="guests_men" class="form-control" value="0" min="0">
+                            <input type="number" name="guests_men" class="form-control" value="{{ event.guests_men }}" min="0">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Femmes</label>
-                            <input type="number" name="guests_women" class="form-control" value="0" min="0">
+                            <input type="number" name="guests_women" class="form-control" value="{{ event.guests_women }}" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Statut</label>
+                            <select name="status" class="form-select">
+                                {% for s in statuses %}
+                                <option value="{{ s }}" {% if event.status == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="2" placeholder="Informations supplémentaires..."></textarea>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Informations supplémentaires...">{{ event.notes or '' }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -72,23 +80,23 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nom complet <span class="text-danger">*</span></label>
-                            <input type="text" name="client_name" class="form-control" placeholder="Nom du client" required>
+                            <input type="text" name="client_name" class="form-control" placeholder="Nom du client" value="{{ client.name if client else '' }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Téléphone <span class="text-danger">*</span></label>
-                            <input type="tel" name="client_phone" class="form-control" placeholder="05XX XXX XXX" required>
+                            <input type="tel" name="client_phone" class="form-control" placeholder="05XX XXX XXX" value="{{ client.phone if client else '' }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Téléphone 2</label>
-                            <input type="tel" name="client_phone2" class="form-control">
+                            <input type="tel" name="client_phone2" class="form-control" value="{{ client.phone2 if client and client.phone2 else '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
-                            <input type="email" name="client_email" class="form-control">
+                            <input type="email" name="client_email" class="form-control" value="{{ client.email if client and client.email else '' }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">Adresse</label>
-                            <input type="text" name="client_address" class="form-control">
+                            <input type="text" name="client_address" class="form-control" value="{{ client.address if client and client.address else '' }}">
                         </div>
                     </div>
                 </div>
@@ -110,52 +118,58 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {# Build a lookup dict from existing event_lines #}
+                                {% set line_lookup = {} %}
+                                {% for ln in event_lines %}
+                                    {% if line_lookup.update({ln.description: ln.amount}) %}{% endif %}
+                                {% endfor %}
+
                                 <tr>
                                     <td></td>
                                     <td><strong>Location de la salle</strong></td>
-                                    <td><input type="number" name="price_location" class="form-control form-control-sm text-end" value="0" min="0"></td>
+                                    <td><input type="number" name="price_location" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Location de la salle', 0) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_individuel" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_individuel" class="form-check-input" {% if 'Service individuel' in line_lookup %}checked{% endif %}></td>
                                     <td>Service individuel</td>
-                                    <td><input type="number" name="price_individuel" class="form-control form-control-sm text-end" value="5000" min="0"></td>
+                                    <td><input type="number" name="price_individuel" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Service individuel', 5000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_cafe" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_cafe" class="form-check-input" {% if 'Service café' in line_lookup %}checked{% endif %}></td>
                                     <td>Service café</td>
-                                    <td><input type="number" name="price_cafe" class="form-control form-control-sm text-end" value="10000" min="0"></td>
+                                    <td><input type="number" name="price_cafe" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Service café', 10000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_groupe" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_groupe" class="form-check-input" {% if 'Groupe interdit' in line_lookup %}checked{% endif %}></td>
                                     <td>Groupe interdit</td>
-                                    <td><input type="number" name="price_groupe" class="form-control form-control-sm text-end" value="15000" min="0"></td>
+                                    <td><input type="number" name="price_groupe" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Groupe interdit', 15000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_photo" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_photo" class="form-check-input" {% if 'Photo' in line_lookup %}checked{% endif %}></td>
                                     <td>Photo</td>
-                                    <td><input type="number" name="price_photo" class="form-control form-control-sm text-end" value="8000" min="0"></td>
+                                    <td><input type="number" name="price_photo" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Photo', 8000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_deco" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_deco" class="form-check-input" {% if 'Déco el Hana' in line_lookup %}checked{% endif %}></td>
                                     <td>Déco el Hana</td>
-                                    <td><input type="number" name="price_deco" class="form-control form-control-sm text-end" value="25000" min="0"></td>
+                                    <td><input type="number" name="price_deco" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Déco el Hana', 25000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_panneaux" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_panneaux" class="form-check-input" {% if 'Panneaux de réception' in line_lookup %}checked{% endif %}></td>
                                     <td>Panneaux de réception</td>
-                                    <td><input type="number" name="price_panneaux" class="form-control form-control-sm text-end" value="12000" min="0"></td>
+                                    <td><input type="number" name="price_panneaux" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Panneaux de réception', 12000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_table" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_table" class="form-check-input" {% if 'Table d\'honneur' in line_lookup %}checked{% endif %}></td>
                                     <td>Table d'honneur</td>
-                                    <td><input type="number" name="price_table" class="form-control form-control-sm text-end" value="7000" min="0"></td>
+                                    <td><input type="number" name="price_table" class="form-control form-control-sm text-end" value="{{ line_lookup.get('Table d\'honneur', 7000) | int }}" min="0"></td>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="service_autre" class="form-check-input"></td>
+                                    <td><input type="checkbox" name="service_autre" class="form-check-input" {% if custom_lines %}checked{% endif %}></td>
                                     <td>
-                                        <input type="text" name="autre_name" class="form-control form-control-sm" placeholder="Autre service...">
+                                        <input type="text" name="autre_name" class="form-control form-control-sm" placeholder="Autre service..." value="{{ custom_lines[0].description if custom_lines else '' }}">
                                     </td>
-                                    <td><input type="number" name="price_autre" class="form-control form-control-sm text-end" value="0" min="0"></td>
+                                    <td><input type="number" name="price_autre" class="form-control form-control-sm text-end" value="{{ custom_lines[0].amount | int if custom_lines else 0 }}" min="0"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -173,12 +187,11 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Montant total (DA)</label>
-                        <input type="number" name="total_amount" class="form-control form-control-lg" value="0" min="0" required>
+                        <input type="number" name="total_amount" class="form-control form-control-lg" value="{{ event.total_amount | int }}" min="0" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Avance (DA)</label>
-                        <input type="number" name="deposit_required" class="form-control" value="0" min="0">
-                        <small class="text-muted">Un paiement sera créé automatiquement</small>
+                        <input type="number" name="deposit_required" class="form-control" value="{{ event.deposit_required | int }}" min="0">
                     </div>
                 </div>
             </div>
@@ -189,7 +202,7 @@
                     <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
                         <i class="fas fa-check me-2"></i>Enregistrer les modifications
                     </button>
-                    <a href="/evenements" class="btn btn-outline-secondary w-100">
+                    <a href="{{ url_for('bookings.event_detail', event_id=event.id) }}" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-times me-2"></i>Annuler
                     </a>
                 </div>

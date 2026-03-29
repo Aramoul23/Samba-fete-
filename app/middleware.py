@@ -35,13 +35,23 @@ def register_error_handlers(app: Flask):
     def not_found(e):
         if request.accept_mimetypes.accept_json:
             return jsonify(error="Not found", path=request.path), 404
-        return "Not found", 404
+        return (
+            '<html><head><title>404 - Page non trouvée</title>'
+            '<style>body{font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8f9fa;color:#333}'
+            '.box{text-align:center}h1{font-size:6rem;margin:0;color:#dc3545}p{font-size:1.2rem;color:#6c757d}a{color:#0d6efd;text-decoration:none}</style></head>'
+            '<body><div class="box"><h1>404</h1><p>Page non trouvée</p><a href="/">← Retour à l\'accueil</a></div></body></html>'
+        ), 404
 
     @app.errorhandler(405)
     def method_not_allowed(e):
         if request.accept_mimetypes.accept_json:
             return jsonify(error="Method not allowed"), 405
-        return "Method not allowed", 405
+        return (
+            '<html><head><title>405 - Méthode non autorisée</title>'
+            '<style>body{font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8f9fa;color:#333}'
+            '.box{text-align:center}h1{font-size:6rem;margin:0;color:#dc3545}p{font-size:1.2rem;color:#6c757d}a{color:#0d6efd;text-decoration:none}</style></head>'
+            '<body><div class="box"><h1>405</h1><p>Méthode non autorisée</p><a href="/">← Retour à l\'accueil</a></div></body></html>'
+        ), 405
 
     @app.errorhandler(429)
     def rate_limit_exceeded(e):
