@@ -544,10 +544,12 @@ select.form-input-elegant {
 body { background-color: var(--bg) !important; color: var(--text) !important; }
 .bg-white, .bg-light, .bg-body { background-color: var(--bg-elevated) !important; }
 .bg-body-tertiary { background-color: var(--bg-subtle) !important; }
-.table { color: var(--text); background-color: var(--bg-elevated); }
-.table thead th { color: var(--text-tertiary); border-color: var(--border); background: var(--bg-subtle); }
-.table td, .table th { border-color: var(--border-light); background-color: var(--bg-elevated); }
-.table tbody tr { background-color: var(--bg-elevated); }
+.table { color: var(--text) !important; background-color: var(--bg-elevated) !important; }
+.table thead th { color: var(--text-tertiary) !important; border-color: var(--border) !important; background: var(--bg-subtle) !important; }
+.table td, .table th { border-color: var(--border-light) !important; background-color: var(--bg-elevated) !important; color: var(--text) !important; }
+.table tbody tr { background-color: var(--bg-elevated) !important; }
+.table tbody tr:hover { background-color: rgba(233,195,73,0.06) !important; }
+.table strong { color: var(--text) !important; }
 .table-hover tbody tr:hover { color: var(--text); background-color: rgba(233,195,73,0.04); }
 .table-striped > tbody > tr:nth-of-type(2n) { background-color: rgba(233,195,73,0.02); }
 .form-control, .form-select { background-color: var(--bg-subtle); border-color: var(--border); color: var(--text); }
