@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 
 from flask import Blueprint, flash, make_response, redirect, render_template, request, url_for
 from flask_login import login_required
-from sqlalchemy import func, case, cast, Date
+from sqlalchemy import func, case
 
 from app.auth.decorators import admin_required
 from app.models import db, Event, Client, EventLine, Payment, Expense, Venue, Setting
@@ -23,6 +23,11 @@ from export_functions import (
 logger = logging.getLogger(__name__)
 bp = Blueprint("finance", __name__, template_folder="../templates")
 EXPENSE_CATEGORIES = ["Serveurs", "Nettoyeurs", "Sécurité", "Autre"]
+
+
+def _pdt(sd, ed):
+    """Parse date strings to datetime range for DateTime column queries."""
+    return datetime.strptime(sd, "%Y-%m-%d"), datetime.strptime(ed, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
 
 
 # ─── Dashboard ───────────────────────────────────────────────────────
@@ -41,10 +46,10 @@ def dashboard():
 
     events_this_month = Event.query.filter(Event.event_date.between(first_day.isoformat(), last_day.isoformat()), Event.status != "annulé").count()
     revenue_month = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
-        cast(Payment.payment_date, Date).between(first_day.isoformat(), last_day.isoformat()),
+        Payment.payment_date.between(*_pdt(first_day.isoformat(), last_day.isoformat())),
         Event.status != "annulé", Payment.is_refunded == 0).scalar()
     last_month_revenue = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
-        cast(Payment.payment_date, Date).between(pf.isoformat(), pl.isoformat()),
+        Payment.payment_date.between(*_pdt(pf.isoformat(), pl.isoformat())),
         Event.status != "annulé", Payment.is_refunded == 0).scalar()
     month_expenses = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(
         Expense.expense_date.between(first_day.isoformat(), last_day.isoformat())).scalar()
@@ -69,7 +74,7 @@ def dashboard():
         while m <= 0: m, y = m + 12, y - 1
         mf, ml = date(y, m, 1), (date(y + 1, 1, 1) - timedelta(days=1) if m == 12 else date(y, m + 1, 1) - timedelta(days=1))
         mr = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
-            cast(Payment.payment_date, Date).between(mf.isoformat(), ml.isoformat()), Event.status != "annulé", Payment.is_refunded == 0).scalar()
+            Payment.payment_date.between(*_pdt(mf.isoformat(), ml.isoformat())), Event.status != "annulé", Payment.is_refunded == 0).scalar()
         me = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(
             Expense.expense_date.between(mf.isoformat(), ml.isoformat())).scalar()
         chart_labels.append(MONTH_NAMES_FR[m][:3])
@@ -115,9 +120,9 @@ def _financials_impl():
     export_csv = request.args.get("export", type=int)
 
     total_revenue = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).join(Event).filter(
-        cast(Payment.payment_date, Date).between(sd, ed), Payment.is_refunded == 0).scalar()
+        Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 0).scalar()
     total_refunded = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
-        cast(Payment.payment_date, Date).between(sd, ed), Payment.is_refunded == 1).scalar()
+        Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 1).scalar()
 
     revenue_by_type = db.session.query(
         Event.event_type, func.coalesce(func.sum(Payment.amount), 0).label("revenue"),
@@ -134,7 +139,7 @@ def _financials_impl():
         func.sum(Event.total_amount) > 0).order_by(func.sum(Event.total_amount).desc()).limit(10).all()
 
     payments = Payment.query.join(Event).join(Client).filter(
-        cast(Payment.payment_date, Date).between(sd, ed)).order_by(Payment.payment_date.desc()).all()
+        Payment.payment_date.between(*_pdt(sd, ed))).order_by(Payment.payment_date.desc()).all()
 
     ef_raw = db.session.query(
         Event.id, Event.title, Event.event_date, Event.event_type, Event.status, Event.total_amount,
@@ -176,7 +181,7 @@ def _financials_impl():
 def accounting():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
-    total_income = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(cast(Payment.payment_date, Date).between(sd, ed), Payment.is_refunded == 0).scalar() or 0)
+    total_income = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 0).scalar() or 0)
     total_expenses = float(db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(Expense.expense_date.between(sd, ed)).scalar() or 0)
     net_profit = total_income - total_expenses
 
@@ -189,7 +194,7 @@ def accounting():
     end = datetime.strptime(ed, "%Y-%m-%d")
     while cur <= end:
         ms, me = cur.strftime("%Y-%m-%d"), ((cur.replace(year=cur.year + 1, month=1, day=1) - timedelta(days=1)) if cur.month == 12 else (cur.replace(month=cur.month + 1, day=1) - timedelta(days=1))).strftime("%Y-%m-%d")
-        mi = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(cast(Payment.payment_date, Date).between(ms, me), Payment.is_refunded == 0).scalar() or 0)
+        mi = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.payment_date.between(*_pdt(ms, me)), Payment.is_refunded == 0).scalar() or 0)
         mx = float(db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(Expense.expense_date.between(ms, me)).scalar() or 0)
         monthly_pl.append({"month": ms[:7], "month_name": f"{MONTH_NAMES_FR[cur.month]} {cur.year}", "income": mi, "expenses": mx, "profit": mi - mx, "margin": ((mi - mx) / mi * 100) if mi > 0 else 0})
         cur = cur.replace(year=cur.year + 1, month=1) if cur.month == 12 else cur.replace(month=cur.month + 1)
@@ -296,7 +301,7 @@ def export_payments():
 def export_finances():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
-    tr = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(cast(Payment.payment_date, Date).between(sd, ed), Payment.is_refunded == 0).scalar()
+    tr = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.payment_date.between(*_pdt(sd, ed)), Payment.is_refunded == 0).scalar()
     to_ = db.session.query(func.coalesce(func.sum(Event.total_amount), 0) - func.coalesce(func.sum(Payment.amount), 0)).select_from(Event).outerjoin(Payment, (Payment.event_id == Event.id) & (Payment.is_refunded == 0)).filter(Event.event_date.between(sd, ed), Event.status.notin_(["annulé", "terminé"])).scalar()
     ods = export_financials_ods([], {"total_revenue": tr, "total_outstanding": to_}, datetime.now().strftime("%Y-%m-%d %H:%M"))
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
@@ -325,7 +330,7 @@ def export_pl():
     while cur <= end:
         ms = cur.strftime("%Y-%m-%d")
         me = ((cur.replace(year=cur.year + 1, month=1, day=1) - timedelta(days=1)) if cur.month == 12 else (cur.replace(month=cur.month + 1, day=1) - timedelta(days=1))).strftime("%Y-%m-%d")
-        mi = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(cast(Payment.payment_date, Date).between(ms, me), Payment.is_refunded == 0).scalar() or 0)
+        mi = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.payment_date.between(*_pdt(ms, me)), Payment.is_refunded == 0).scalar() or 0)
         mx = float(db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(Expense.expense_date.between(ms, me)).scalar() or 0)
         monthly.append({"month": f"{MONTH_NAMES_FR[cur.month]} {cur.year}", "income": mi, "expenses": mx})
         cur = cur.replace(year=cur.year + 1, month=1) if cur.month == 12 else cur.replace(month=cur.month + 1)
