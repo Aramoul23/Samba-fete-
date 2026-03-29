@@ -43,7 +43,7 @@ class TestLogin:
         assert resp.status_code == 200
         assert b"incorrect" in resp.data.lower() or b"Samba" in resp.data
 
-    def test_login_nonexistent_user(self, client, _reset_db):
+    def test_login_nonexistent_user(self, client, _db):
         """Login with nonexistent user should fail."""
         resp = client.post("/login", data={
             "username": "ghost",
@@ -51,7 +51,7 @@ class TestLogin:
         }, follow_redirects=True)
         assert resp.status_code == 200
 
-    def test_login_empty_username(self, client, _reset_db):
+    def test_login_empty_username(self, client, _db):
         """Login with empty username should fail."""
         resp = client.post("/login", data={
             "username": "",
@@ -115,7 +115,7 @@ class TestLogout:
 class TestAccessControl:
     """Test authentication and authorization guards."""
 
-    def test_unauthenticated_redirects_to_login(self, client, _reset_db):
+    def test_unauthenticated_redirects_to_login(self, client, _db):
         """Accessing protected routes without login should redirect."""
         protected_urls = [
             "/",

@@ -245,7 +245,7 @@ class TestViewEditBooking:
         finally:
             db.close()
 
-    def test_view_nonexistent_booking(self, admin_client, _reset_db):
+    def test_view_nonexistent_booking(self, admin_client, _db):
         """Viewing a nonexistent booking should return 404."""
         pytest.skip("get_or_404 returns 404 — correct behavior")
         """Viewing a nonexistent booking should redirect with error."""

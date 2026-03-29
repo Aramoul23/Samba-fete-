@@ -357,7 +357,7 @@ class TestPDFGeneration:
         assert "application/pdf" in resp.content_type
         assert resp.data[:4] == b"%PDF"
 
-    def test_contract_nonexistent_event(self, admin_client, _reset_db):
+    def test_contract_nonexistent_event(self, admin_client, _db):
         """Contract for nonexistent event should return 404."""
         pytest.skip("get_or_404 returns 404 — correct behavior")
         """Contract for nonexistent event should redirect."""

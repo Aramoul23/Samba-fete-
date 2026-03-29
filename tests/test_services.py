@@ -41,12 +41,12 @@ class TestStatusTransitions:
 class TestDateConflict:
     """Unit tests for date conflict detection."""
 
-    def test_no_conflict_on_empty_db(self, _reset_db, app):
+    def test_no_conflict_on_empty_db(self, _db, app):
         with app.app_context():
             errors = BookingService.validate_date_conflict("2026-06-15")
             assert errors == []
 
-    def test_conflict_with_confirmed_event(self, _reset_db, app):
+    def test_conflict_with_confirmed_event(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
@@ -59,7 +59,7 @@ class TestDateConflict:
             assert len(errors) == 1
             assert "réservée" in errors[0]
 
-    def test_conflict_with_pending_event(self, _reset_db, app):
+    def test_conflict_with_pending_event(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
@@ -72,7 +72,7 @@ class TestDateConflict:
             assert len(errors) == 1
             assert "attente" in errors[0]
 
-    def test_no_conflict_with_cancelled_event(self, _reset_db, app):
+    def test_no_conflict_with_cancelled_event(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
@@ -84,7 +84,7 @@ class TestDateConflict:
             errors = BookingService.validate_date_conflict("2026-06-25")
             assert errors == []
 
-    def test_exclude_own_id(self, _reset_db, app):
+    def test_exclude_own_id(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
@@ -105,7 +105,7 @@ class TestDateConflict:
 class TestCreateEvent:
     """Unit tests for event creation."""
 
-    def test_create_valid_event(self, _reset_db, app):
+    def test_create_valid_event(self, _db, app):
         with app.app_context():
             data = {
                 "title": "Test Wedding",
@@ -125,7 +125,7 @@ class TestCreateEvent:
             assert event.title == "Test Wedding"
             assert event.total_amount == 300000
 
-    def test_create_event_missing_title(self, _reset_db, app):
+    def test_create_event_missing_title(self, _db, app):
         with app.app_context():
             from werkzeug.datastructures import ImmutableMultiDict
             data = {"title": "", "client_name": "Ahmed", "venue_id": "1", "event_date": "2026-08-01"}
@@ -133,7 +133,7 @@ class TestCreateEvent:
             assert event is None
             assert "titre" in errors[0].lower() or "requis" in errors[0].lower()
 
-    def test_create_event_creates_deposit_payment(self, _reset_db, app):
+    def test_create_event_creates_deposit_payment(self, _db, app):
         with app.app_context():
             from werkzeug.datastructures import ImmutableMultiDict
             data = {
@@ -169,21 +169,21 @@ class TestPayments:
         db.session.add(e); db.session.commit()
         return e
 
-    def test_valid_payment(self, _reset_db, app):
+    def test_valid_payment(self, _db, app):
         with app.app_context():
             event = self._create_event()
             payment, error = BookingService.add_payment(event.id, 50000)
             assert error is None
             assert payment.amount == 50000
 
-    def test_payment_exceeding_balance(self, _reset_db, app):
+    def test_payment_exceeding_balance(self, _db, app):
         with app.app_context():
             event = self._create_event()
             _, error = BookingService.add_payment(event.id, 999999)
             assert error is not None
             assert "dépasse" in error.lower()
 
-    def test_payment_on_cancelled_event(self, _reset_db, app):
+    def test_payment_on_cancelled_event(self, _db, app):
         with app.app_context():
             event = self._create_event()
             event.status = "annulé"
@@ -192,13 +192,13 @@ class TestPayments:
             assert error is not None
             assert "annulé" in error.lower()
 
-    def test_payment_zero_amount(self, _reset_db, app):
+    def test_payment_zero_amount(self, _db, app):
         with app.app_context():
             event = self._create_event()
             _, error = BookingService.add_payment(event.id, 0)
             assert error is not None
 
-    def test_full_payment_auto_confirms(self, _reset_db, app):
+    def test_full_payment_auto_confirms(self, _db, app):
         with app.app_context():
             event = self._create_event()
             assert event.status == "en attente"
@@ -206,7 +206,7 @@ class TestPayments:
             db.session.refresh(event)
             assert event.status == "confirmé"
 
-    def test_partial_payment_keeps_pending(self, _reset_db, app):
+    def test_partial_payment_keeps_pending(self, _db, app):
         with app.app_context():
             event = self._create_event()
             BookingService.add_payment(event.id, 50000)
@@ -221,7 +221,7 @@ class TestPayments:
 class TestFinancials:
     """Unit tests for financial calculations."""
 
-    def test_get_financials_empty(self, _reset_db, app):
+    def test_get_financials_empty(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
@@ -234,7 +234,7 @@ class TestFinancials:
             assert fin["paid"] == 0
             assert fin["profit"] == 0
 
-    def test_get_financials_with_data(self, _reset_db, app):
+    def test_get_financials_with_data(self, _db, app):
         with app.app_context():
             c = Client(name="Test", phone="123")
             db.session.add(c); db.session.flush()
