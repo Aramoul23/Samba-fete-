@@ -1,1 +1,1 @@
-web: bash start.sh
+web: /bin/bash start.sh

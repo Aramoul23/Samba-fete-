@@ -1,0 +1,10 @@
+[variables]
+PIP_NO_CACHE_DIR = "1"
+
+[phases.setup]
+nixPkgs = ["...", "gcc"]
+
+[phases.install]
+cmds = [
+    "pip install --no-cache-dir -r requirements.txt"
+]
