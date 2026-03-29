@@ -12,4 +12,4 @@ COPY . .
 RUN chmod +x start.sh
 
 ENV PORT=5000
-CMD ["./start.sh"]
+CMD exec gunicorn run:app --bind "0.0.0.0:${PORT}" --workers 2 --timeout 120
