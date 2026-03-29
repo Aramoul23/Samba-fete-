@@ -205,4 +205,35 @@
         </div>
     </div>
 </form>
+
+<script>
+function calcTotal() {
+    let total = 0;
+    // Location de la salle — always included
+    total += parseFloat(document.querySelector('[name="price_location"]').value) || 0;
+    // Other services — only if checkbox is checked
+    const services = ['individuel', 'cafe', 'groupe', 'photo', 'deco', 'panneaux', 'table', 'autre'];
+    services.forEach(s => {
+        const cb = document.querySelector(`[name="service_${s}"]`);
+        const price = document.querySelector(`[name="price_${s}"]`);
+        if (cb && cb.checked && price) {
+            total += parseFloat(price.value) || 0;
+        }
+    });
+    document.querySelector('[name="total_amount"]').value = total;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Listen to checkbox changes
+    document.querySelectorAll('input[type="checkbox"][name^="service_"]').forEach(cb => {
+        cb.addEventListener('change', calcTotal);
+    });
+    // Listen to price input changes
+    document.querySelectorAll('input[name^="price_"]').forEach(input => {
+        input.addEventListener('input', calcTotal);
+    });
+    // Initial calculation
+    calcTotal();
+});
+</script>
 {% endblock %}
