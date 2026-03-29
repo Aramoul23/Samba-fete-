@@ -4,10 +4,12 @@
 services:
   - type: web
     name: samba-fete-staging
-    runtime: docker
+    runtime: python
     plan: free
     region: frankfurt
     branch: main
+    buildCommand: bash render_build.sh
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: FLASK_ENV
         value: production
