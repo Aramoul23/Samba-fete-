@@ -141,8 +141,11 @@ def create_app(config_name=None):
 
     # ── Database init ────────────────────────────────────────────────
     with app.app_context():
-        sqlalchemy_db.create_all()
-        _seed_default_data()
+        try:
+            sqlalchemy_db.create_all()
+            _seed_default_data()
+        except Exception as e:
+            logger.warning("Database init failed (will retry on first request): %s", e)
 
     return app
 

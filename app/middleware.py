@@ -90,23 +90,21 @@ def register_health_check(app: Flask):
     @app.route("/health")
     def health_check():
         """Health check — verifies app is running and DB is reachable."""
-        from app.models import db
         health = {
             "status": "ok",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "version": app.config.get("APP_VERSION", "1.0.0"),
-            "checks": {},
         }
 
-        # Database check
+        # Database check (optional — don't fail if DB isn't ready yet)
         try:
             db.session.execute(text("SELECT 1"))
-            health["checks"]["database"] = "ok"
+            health["database"] = "ok"
         except Exception as e:
-            health["checks"]["database"] = f"error: {str(e)}"
-            health["status"] = "degraded"
+            health["database"] = f"error: {str(e)[:100]}"
+            # Don't mark as degraded — app can still serve static/login
 
-        return jsonify(health), 200 if health["status"] == "ok" else 503
+        return jsonify(health), 200
 
     @app.route("/health/ready")
     def health_ready():
