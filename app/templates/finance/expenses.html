@@ -4,48 +4,57 @@
 
 {% block content %}
 <!-- KPI Cards -->
-<div class="row mb-4">
+<div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-muted small">Ce mois</div>
-                <div class="h4 mb-0">{{ expenses_this_month | format_da }}</div>
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-soft">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" style="font-size: 1.25rem;">{{ expenses_this_month | format_da }}</span>
+                <span class="stat-label">Ce mois</span>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-muted small">Période filtrée</div>
-                <div class="h4 mb-0">{{ total_expenses | format_da }}</div>
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-soft">
+                <i class="fas fa-filter"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" style="font-size: 1.25rem;">{{ total_expenses | format_da }}</span>
+                <span class="stat-label">Période filtrée</span>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-muted small">Moyenne</div>
-                <div class="h4 mb-0">{{ avg_expense | format_da }}</div>
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-soft">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" style="font-size: 1.25rem;">{{ avg_expense | format_da }}</span>
+                <span class="stat-label">Moyenne</span>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
+<div class="card-custom mb-4">
+    <div class="card-body-custom">
         <form method="GET" class="row g-3 align-items-end">
             <div class="col-md-2">
-                <label class="form-label small">Du</label>
-                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                <label class="form-label-elegant">Du</label>
+                <input type="text" name="start_date" class="form-input-elegant" value="{{ start_date }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Au</label>
-                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                <label class="form-label-elegant">Au</label>
+                <input type="text" name="end_date" class="form-input-elegant" value="{{ end_date }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Catégorie</label>
-                <select name="category" class="form-select">
+                <label class="form-label-elegant">Catégorie</label>
+                <select name="category" class="form-input-elegant">
                     <option value="">Toutes</option>
                     {% for cat in categories %}
                     <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
@@ -72,77 +81,86 @@
 </div>
 
 <!-- Expenses Table -->
-<div class="card shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Catégorie</th>
-                    <th>Description</th>
-                    <th>Événement</th>
-                    <th>Montant</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for exp in expenses %}
-                <tr>
-                    <td>{{ exp.expense_date }}</td>
-                    <td><span class="badge bg-secondary">{{ exp.category }}</span></td>
-                    <td>{{ exp.description }}</td>
-                    <td>{{ exp.event.title if exp.event else '—' }}</td>
-                    <td><strong>{{ exp.amount | format_da }}</strong></td>
-                    <td>
-                        <form method="POST" action="{{ url_for('finance.delete_expense', expense_id=exp.id) }}"
-                              style="display:inline" onsubmit="return confirm('Supprimer?')">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="6" class="text-center text-muted py-4">Aucune dépense</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card-custom">
+    <div class="card-body-custom" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="table-elegant">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Catégorie</th>
+                        <th>Description</th>
+                        <th>Événement</th>
+                        <th class="text-end">Montant</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in expenses %}
+                    <tr>
+                        <td><strong>{{ exp.expense_date }}</strong></td>
+                        <td><span class="badge-slot">{{ exp.category }}</span></td>
+                        <td>{{ exp.description }}</td>
+                        <td>{{ exp.event.title if exp.event else '—' }}</td>
+                        <td class="text-end" style="font-weight: 700;">{{ exp.amount | format_da }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('finance.delete_expense', expense_id=exp.id) }}"
+                                  style="display:inline" onsubmit="return confirm('Supprimer?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state small">
+                                <i class="fas fa-receipt"></i>
+                                <p>Aucune dépense</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Add Expense Modal -->
-<div class="modal fade" id="addExpenseModal" tabindex="-1">
+<div class="modal fade modal-gold" id="addExpenseModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('finance.add_expense') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nouvelle dépense</h5>
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nouvelle dépense</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="expense_date" class="form-control" value="{{ today_str }}" required>
+                        <label class="form-label-elegant">Date</label>
+                        <input type="text" name="expense_date" class="form-input-elegant" value="{{ today_str }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Catégorie</label>
-                        <select name="category" class="form-select" required>
+                        <label class="form-label-elegant">Catégorie</label>
+                        <select name="category" class="form-input-elegant" required>
                             {% for cat in categories %}
                             <option value="{{ cat }}">{{ cat }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" name="description" class="form-control">
+                        <label class="form-label-elegant">Description</label>
+                        <input type="text" name="description" class="form-input-elegant">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Montant (DA)</label>
-                        <input type="number" name="amount" class="form-control" min="1" required>
+                        <label class="form-label-elegant">Montant (DA)</label>
+                        <input type="number" name="amount" class="form-input-elegant" min="1" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Événement (optionnel)</label>
-                        <select name="event_id" class="form-select">
+                    <div class="mb-0">
+                        <label class="form-label-elegant">Événement (optionnel)</label>
+                        <select name="event_id" class="form-input-elegant">
                             <option value="">Aucun</option>
                             {% for ev in recent_events %}
                             <option value="{{ ev.id }}">{{ ev.title }} — {{ ev.event_date }}</option>
@@ -151,7 +169,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                 </div>
             </form>

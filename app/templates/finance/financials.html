@@ -153,8 +153,9 @@
                                 <td style="font-weight: 500;">{{ c.name }}</td>
                                 <td class="text-end">{{ c.total_billed | format_da }}</td>
                                 <td class="text-end text-success">{{ c.total_paid | format_da }}</td>
-                                <td class="text-end {% if c.total_remaining > 0 %}text-danger{% endif %}">
-                                    {{ c.total_remaining | format_da }}
+                                {% set total_remaining = (c.total_billed - c.total_paid) %}
+                                <td class="text-end {% if total_remaining > 0 %}text-danger{% endif %}">
+                                    {{ total_remaining | format_da }}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -199,10 +200,10 @@
                             <td><strong>{{ p.payment_date|date_only }}</strong></td>
                             <td>
                                 <a href="{{ url_for('bookings.event_detail', event_id=p.event_id) }}" class="text-decoration-none">
-                                    {{ p.title }}
+                                    {{ p.event.title }}
                                 </a>
                             </td>
-                            <td class="d-none d-md-table-cell">{{ p.client_name }}</td>
+                            <td class="d-none d-md-table-cell">{{ p.event.client.name }}</td>
                             <td class="text-end" style="font-weight: 600; font-variant-numeric: tabular-nums;">
                                 {% if p.is_refunded %}<del>{% endif %}
                                 {{ p.amount | format_da }}

@@ -170,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dateFormat: 'Y-m-d',
             locale: 'fr',
             allowInput: true,
+            closeOnSelect: true,
         });
     }
 });

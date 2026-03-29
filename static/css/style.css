@@ -502,9 +502,10 @@ select.form-input-elegant {
 body { background-color: var(--bg) !important; color: var(--text) !important; }
 .bg-white, .bg-light, .bg-body { background-color: var(--bg-elevated) !important; }
 .bg-body-tertiary { background-color: var(--bg-subtle) !important; }
-.table { color: var(--text); }
+.table { color: var(--text); background-color: var(--bg-elevated); }
 .table thead th { color: var(--text-tertiary); border-color: var(--border); background: var(--bg-subtle); }
-.table td, .table th { border-color: var(--border-light); }
+.table td, .table th { border-color: var(--border-light); background-color: var(--bg-elevated); }
+.table tbody tr { background-color: var(--bg-elevated); }
 .table-hover tbody tr:hover { color: var(--text); background-color: rgba(233,195,73,0.04); }
 .table-striped > tbody > tr:nth-of-type(2n) { background-color: rgba(233,195,73,0.02); }
 .form-control, .form-select { background-color: var(--bg-subtle); border-color: var(--border); color: var(--text); }
@@ -514,8 +515,10 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
 .form-label { color: var(--text-secondary); font-weight: 500; }
 .input-group-text { background-color: var(--bg-elevated); border-color: var(--border); color: var(--text-secondary); }
 .card { background-color: var(--bg-elevated); border-color: var(--border-light); color: var(--text); }
+.card-body { background-color: var(--bg-elevated); color: var(--text); }
 .card-header { background-color: var(--bg-subtle); border-color: var(--border-light); color: var(--text); }
 .card-footer { background-color: var(--bg-subtle); border-color: var(--border-light); }
+.card .shadow-sm { box-shadow: var(--shadow-sm) !important; }
 .dropdown-menu { background-color: var(--bg-elevated); border-color: var(--border-light); }
 .dropdown-item { color: var(--text); }
 .dropdown-item:hover, .dropdown-item:focus { background-color: var(--sidebar-hover); color: var(--primary); }
@@ -788,9 +791,6 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow-xl) !important;
     z-index: 99999 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
 }
 .flatpickr-wrapper {
     z-index: 99998 !important;

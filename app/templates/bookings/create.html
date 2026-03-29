@@ -6,102 +6,110 @@
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <div class="row">
+    <div class="row g-4">
         <!-- Left Column: Event Details -->
         <div class="col-lg-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Informations de l'événement</h6>
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-calendar-alt"></i> Informations de l'événement</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body-custom">
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Titre <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" placeholder="Ex: Mariage Ahmed & Fatima" required>
+                            <label class="form-label-elegant">Titre <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="title" class="form-input-elegant" placeholder="Ex: Mariage Ahmed & Fatima" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Type</label>
-                            <select name="event_type" class="form-select">
+                            <label class="form-label-elegant">Type</label>
+                            <select name="event_type" class="form-input-elegant">
                                 {% for t in event_types %}
                                 <option value="{{ t }}">{{ t }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Date <span class="text-danger">*</span></label>
-                            <input type="date" name="event_date" class="form-control" required>
+                            <label class="form-label-elegant">Date <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="event_date" class="form-input-elegant" required placeholder="Choisir une date">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Créneau</label>
-                            <select name="time_slot" class="form-select">
+                            <label class="form-label-elegant">Créneau</label>
+                            <select name="time_slot" class="form-input-elegant">
                                 {% for s in time_slots %}
                                 <option value="{{ s }}">{{ s }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Lieu <span class="text-danger">*</span></label>
-                            <select name="venue_id" class="form-select" required>
+                            <label class="form-label-elegant">Lieu <span style="color: var(--danger);">*</span></label>
+                            <select name="venue_id" class="form-input-elegant" required>
                                 {% for v in venues %}
                                 <option value="{{ v.id }}">{{ v.name }} ({{ v.capacity_men }}+{{ v.capacity_women }})</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Hommes</label>
-                            <input type="number" name="guests_men" class="form-control" value="0" min="0">
+                            <label class="form-label-elegant">Hommes</label>
+                            <input type="number" name="guests_men" class="form-input-elegant" value="0" min="0">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Femmes</label>
-                            <input type="number" name="guests_women" class="form-control" value="0" min="0">
+                            <label class="form-label-elegant">Femmes</label>
+                            <input type="number" name="guests_women" class="form-input-elegant" value="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-elegant">Statut</label>
+                            <select name="status" class="form-input-elegant">
+                                {% for s in statuses %}
+                                <option value="{{ s }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="2" placeholder="Informations supplémentaires..."></textarea>
+                            <label class="form-label-elegant">Notes</label>
+                            <textarea name="notes" class="form-input-elegant" rows="2" placeholder="Informations supplémentaires..."></textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Client Info -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Informations du client</h6>
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-user"></i> Informations du client</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body-custom">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Nom complet <span class="text-danger">*</span></label>
-                            <input type="text" name="client_name" class="form-control" placeholder="Nom du client" required>
+                            <label class="form-label-elegant">Nom complet <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="client_name" class="form-input-elegant" placeholder="Nom du client" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Téléphone <span class="text-danger">*</span></label>
-                            <input type="tel" name="client_phone" class="form-control" placeholder="05XX XXX XXX" required>
+                            <label class="form-label-elegant">Téléphone <span style="color: var(--danger);">*</span></label>
+                            <input type="tel" name="client_phone" class="form-input-elegant" placeholder="05XX XXX XXX" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Téléphone 2</label>
-                            <input type="tel" name="client_phone2" class="form-control">
+                            <label class="form-label-elegant">Téléphone 2</label>
+                            <input type="tel" name="client_phone2" class="form-input-elegant">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="client_email" class="form-control">
+                            <label class="form-label-elegant">Email</label>
+                            <input type="email" name="client_email" class="form-input-elegant">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label">Adresse</label>
-                            <input type="text" name="client_address" class="form-control">
+                            <label class="form-label-elegant">Adresse</label>
+                            <input type="text" name="client_address" class="form-input-elegant">
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Services -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-concierge-bell me-2"></i>Prestations</h6>
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-concierge-bell"></i> Prestations</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body-custom">
                     <div class="table-responsive">
-                        <table class="table table-sm">
+                        <table class="table-elegant">
                             <thead>
                                 <tr>
                                     <th style="width:40px"></th>
@@ -112,50 +120,50 @@
                             <tbody>
                                 <tr>
                                     <td></td>
-                                    <td><strong>Location de la salle</strong></td>
-                                    <td><input type="number" name="price_location" class="form-control form-control-sm text-end" value="0" min="0"></td>
+                                    <td style="font-weight: 600;">Location de la salle</td>
+                                    <td><input type="number" name="price_location" class="form-input-elegant text-end" style="padding: 6px 12px;" value="0" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_individuel" class="form-check-input"></td>
                                     <td>Service individuel</td>
-                                    <td><input type="number" name="price_individuel" class="form-control form-control-sm text-end" value="5000" min="0"></td>
+                                    <td><input type="number" name="price_individuel" class="form-input-elegant text-end" style="padding: 6px 12px;" value="5000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_cafe" class="form-check-input"></td>
                                     <td>Service café</td>
-                                    <td><input type="number" name="price_cafe" class="form-control form-control-sm text-end" value="10000" min="0"></td>
+                                    <td><input type="number" name="price_cafe" class="form-input-elegant text-end" style="padding: 6px 12px;" value="10000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_groupe" class="form-check-input"></td>
                                     <td>Groupe interdit</td>
-                                    <td><input type="number" name="price_groupe" class="form-control form-control-sm text-end" value="15000" min="0"></td>
+                                    <td><input type="number" name="price_groupe" class="form-input-elegant text-end" style="padding: 6px 12px;" value="15000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_photo" class="form-check-input"></td>
                                     <td>Photo</td>
-                                    <td><input type="number" name="price_photo" class="form-control form-control-sm text-end" value="8000" min="0"></td>
+                                    <td><input type="number" name="price_photo" class="form-input-elegant text-end" style="padding: 6px 12px;" value="8000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_deco" class="form-check-input"></td>
                                     <td>Déco el Hana</td>
-                                    <td><input type="number" name="price_deco" class="form-control form-control-sm text-end" value="25000" min="0"></td>
+                                    <td><input type="number" name="price_deco" class="form-input-elegant text-end" style="padding: 6px 12px;" value="25000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_panneaux" class="form-check-input"></td>
                                     <td>Panneaux de réception</td>
-                                    <td><input type="number" name="price_panneaux" class="form-control form-control-sm text-end" value="12000" min="0"></td>
+                                    <td><input type="number" name="price_panneaux" class="form-input-elegant text-end" style="padding: 6px 12px;" value="12000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_table" class="form-check-input"></td>
                                     <td>Table d'honneur</td>
-                                    <td><input type="number" name="price_table" class="form-control form-control-sm text-end" value="7000" min="0"></td>
+                                    <td><input type="number" name="price_table" class="form-input-elegant text-end" style="padding: 6px 12px;" value="7000" min="0"></td>
                                 </tr>
                                 <tr>
                                     <td><input type="checkbox" name="service_autre" class="form-check-input"></td>
                                     <td>
-                                        <input type="text" name="autre_name" class="form-control form-control-sm" placeholder="Autre service...">
+                                        <input type="text" name="autre_name" class="form-input-elegant" style="padding: 6px 12px;" placeholder="Autre service...">
                                     </td>
-                                    <td><input type="number" name="price_autre" class="form-control form-control-sm text-end" value="0" min="0"></td>
+                                    <td><input type="number" name="price_autre" class="form-input-elegant text-end" style="padding: 6px 12px;" value="0" min="0"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -166,26 +174,26 @@
 
         <!-- Right Column: Financial + Submit -->
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-money-bill me-2"></i>Montants</h6>
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-money-bill"></i> Montants</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body-custom">
                     <div class="mb-3">
-                        <label class="form-label">Montant total (DA)</label>
-                        <input type="number" name="total_amount" class="form-control form-control-lg" value="0" min="0" required>
+                        <label class="form-label-elegant">Montant total (DA)</label>
+                        <input type="number" name="total_amount" class="form-input-elegant" style="font-size: 1.125rem; font-weight: 700; padding: 14px 16px;" value="0" min="0" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Avance (DA)</label>
-                        <input type="number" name="deposit_required" class="form-control" value="0" min="0">
-                        <small class="text-muted">Un paiement sera créé automatiquement</small>
+                    <div class="mb-0">
+                        <label class="form-label-elegant">Avance (DA)</label>
+                        <input type="number" name="deposit_required" class="form-input-elegant" value="0" min="0">
+                        <small style="color: var(--text-tertiary); font-size: 0.75rem;">Un paiement sera créé automatiquement</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Submit Button — STICKY -->
-            <div class="card shadow-sm" style="position: sticky; top: 20px;">
-                <div class="card-body">
+            <!-- Submit Button -->
+            <div class="card-custom" style="position: sticky; top: calc(var(--topbar-height) + 20px);">
+                <div class="card-body-custom">
                     <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
                         <i class="fas fa-check me-2"></i>Créer l'événement
                     </button>
