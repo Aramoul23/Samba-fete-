@@ -1,24 +1,16 @@
 FROM python:3.12-slim
 
-# Install system deps for WeasyPrint
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf-2.0-0 \
-    libffi-dev \
-    shared-mime-info \
+    libglib2.0-0 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
 
-# PORT is set by Railway
 ENV PORT=5000
 
-CMD gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --graceful-timeout 30 --keep-alive 5
+# Use shell form so $PORT gets expanded
+CMD python -c "import os; os.execvp('gunicorn', ['gunicorn', 'run:app', '--bind', f'0.0.0.0:{os.environ.get(\"PORT\", \"5000\")}', '--workers', '2', '--timeout', '120'])"
