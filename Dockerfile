@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE $PORT
+# PORT is set by Railway
+ENV PORT=5000
 
-CMD gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+CMD gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --graceful-timeout 30 --keep-alive 5
