@@ -582,7 +582,7 @@ def api_calendar_events():
     ).order_by(Event.event_date).all()
 
     return jsonify([{
-        "id": e.id, "title": e.title, "event_date": e.event_date,
+        "id": e.id, "title": e.title, "event_date": e.event_date.isoformat() if e.event_date else None,
         "time_slot": e.time_slot, "status": e.status,
         "client_name": e.client.name, "venue_name": e.venue.name,
         "venue2_name": e.venue2.name if e.venue2 else "",
