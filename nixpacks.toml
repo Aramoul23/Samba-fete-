@@ -1,5 +1,0 @@
-[phases.setup]
-nixPkgs = ["cairo", "pango", "gdk-pixbuf", "libffi", "shared-mime-info", "glib"]
-
-[phases.install]
-cmds = ["pip install --no-cache-dir -r requirements.txt"]
