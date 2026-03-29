@@ -9,3 +9,4 @@ app.log.*
 *.Zone.Identifier
 flask_output.log
 .env
+*.Zone.Identifier
