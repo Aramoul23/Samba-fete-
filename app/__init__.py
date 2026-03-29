@@ -68,7 +68,7 @@ def create_app(config_name=None):
     @login_manager.user_loader
     def load_user(user_id):
         from app.models import User
-        return db.session.get(User, int(user_id))
+        return sqlalchemy_db.session.get(User, int(user_id))
 
     # ── Database teardown ────────────────────────────────────────────
     app.teardown_appcontext(close_db_connection)
@@ -191,7 +191,7 @@ def _seed_default_data_sqlalchemy():
 
     # Default settings
     for key, default in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
-        if not Setting.query.get(key):
+        if not db.session.get(Setting, key):
             db.session.add(Setting(key=key, value=default))
     db.session.commit()
 

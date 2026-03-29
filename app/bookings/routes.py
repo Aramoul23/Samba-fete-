@@ -1,4 +1,4 @@
-"""Samba Fête — Booking routes.
+"""Samba Fête — Booking routes (SQLAlchemy ORM).
 
 All event/booking CRUD, calendar, payments, status transitions,
 contracts, receipts, and the quick-payment page.
@@ -6,6 +6,7 @@ contracts, receipts, and the quick-payment page.
 import calendar as _calendar
 import logging
 from datetime import date, datetime, timedelta
+from urllib.parse import urlparse
 
 from flask import (
     Blueprint,
@@ -18,86 +19,118 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
+from sqlalchemy import or_, func, case
 
-from app.auth.decorators import admin_required
-from app.db import get_db_connection
+from app.models import db, Event, Client, EventLine, Payment, Expense, Venue
 from app.bookings.helpers import (
     EVENT_STATUSES,
     EVENT_TYPES,
     MONTH_NAMES_FR,
-    PAYMENT_METHODS,
-    PREDEFINED_NAMES,
     TIME_SLOTS,
-    check_pending_events,
-    insert_service_lines,
-    validate_event_date,
 )
 
 logger = logging.getLogger(__name__)
-
 bp = Blueprint("bookings", __name__, template_folder="../templates")
 
-# ─── Database error helper ───────────────────────────────────────────
-try:
-    import psycopg2
-    import sqlite3
-    DatabaseError = (sqlite3.Error, psycopg2.Error)
-except ImportError:
-    import sqlite3
-    DatabaseError = (sqlite3.Error,)
 
+# ─── Helpers ─────────────────────────────────────────────────────────
 
-# ─── Role helpers (lightweight, avoid circular imports) ───────────────
 def _is_admin():
     return current_user.is_authenticated and current_user.role == "admin"
+
+
+def validate_event_date(event_date, event_id=0):
+    """Check for double-bookings. Returns list of error strings."""
+    if not event_date:
+        return []
+    conflict = Event.query.filter(
+        Event.event_date == event_date,
+        Event.status.in_(["confirmé", "en attente"]),
+        Event.id != (event_id or 0),
+    ).first()
+    if not conflict:
+        return []
+    venue_label = f" ({conflict.venue.name})" if conflict.venue else ""
+    if conflict.status == "confirmé":
+        return [f"⛔ Date réservée! '{conflict.title}' le {event_date}{venue_label} — 🔒 verrouillée"]
+    return [f"⚠️ '{conflict.title}' en attente pour le {event_date}{venue_label}"]
+
+
+def insert_service_lines(event_id, form_data):
+    """Insert service lines from form data."""
+    # Location (always if price > 0)
+    price = form_data.get("price_location", 0, type=float)
+    if price > 0:
+        db.session.add(EventLine(event_id=event_id, description="Location de la salle", amount=price))
+
+    # Checkbox-driven services
+    from app.bookings.helpers import DEFAULT_SERVICES
+    for key, name, _ in DEFAULT_SERVICES:
+        if key == "location":
+            continue
+        if not form_data.get(f"service_{key}"):
+            continue
+        price = form_data.get(f"price_{key}", 0, type=float)
+        if price > 0:
+            db.session.add(EventLine(event_id=event_id, description=name, amount=price))
+
+    # Autre
+    if form_data.get("service_autre"):
+        price = form_data.get("price_autre", 0, type=float)
+        name = form_data.get("autre_name", "").strip() or "Autre"
+        if price > 0:
+            db.session.add(EventLine(event_id=event_id, description=name, amount=price))
+
+    # Free-form lines
+    for i, desc in enumerate(form_data.getlist("line_desc[]")):
+        if desc.strip():
+            amount = float(form_data.getlist("line_amount[]")[i]) if i < len(form_data.getlist("line_amount[]")) else 0
+            is_cost = 1 if str(i) in form_data.getlist("line_is_cost[]") else 0
+            db.session.add(EventLine(event_id=event_id, description=desc.strip(), amount=amount, is_cost=is_cost))
+
+
+def check_pending_events():
+    """Events 'en attente' > 48h in next 30 days."""
+    threshold = (datetime.now() - timedelta(hours=48)).strftime("%Y-%m-%d %H:%M:%S")
+    future = (date.today() + timedelta(days=30)).isoformat()
+    today = date.today().isoformat()
+    return Event.query.filter(
+        Event.status == "en attente",
+        Event.event_date.between(today, future),
+        Event.created_at < threshold,
+    ).all()
 
 
 # ─── Calendar ────────────────────────────────────────────────────────
 @bp.route("/calendrier")
 @login_required
 def calendar_view():
-    """Affiche le calendrier des événements."""
-    db = get_db_connection()
     year = request.args.get("year", date.today().year, type=int)
     month = request.args.get("month", date.today().month, type=int)
-
     first = f"{year}-{month:02d}-01"
     last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
-
     venue_filter = request.args.get("venue", type=int)
 
-    query = (
-        "SELECT id, event_date, time_slot, title, status FROM events "
-        "WHERE event_date >= ? AND event_date < ? AND status != 'annulé'"
-    )
-    params = [first, last]
-
+    q = Event.query.filter(
+        Event.event_date >= first, Event.event_date < last,
+        Event.status != "annulé",
+    ).order_by(Event.event_date)
     if venue_filter:
-        query += " AND (venue_id = ? OR venue_id2 = ?)"
-        params.extend([venue_filter, venue_filter])
-
-    query += " ORDER BY event_date"
-    booked = db.execute(query, params).fetchall()
+        q = q.filter(or_(Event.venue_id == venue_filter, Event.venue_id2 == venue_filter))
 
     booked_dict = {}
-    for b in booked:
-        booked_dict.setdefault(b["event_date"], []).append(b)
-
-    weeks = _calendar.Calendar(firstweekday=0).monthdayscalendar(year, month)
-    venues = db.execute("SELECT * FROM venues WHERE is_active=1").fetchall()
+    for ev in q.all():
+        booked_dict.setdefault(ev.event_date, []).append(ev)
 
     return render_template(
         "bookings/calendar.html",
-        year=year,
-        month=month,
-        month_name=MONTH_NAMES_FR[month],
-        weeks=weeks,
+        year=year, month=month, month_name=MONTH_NAMES_FR[month],
+        weeks=_calendar.Calendar(firstweekday=0).monthdayscalendar(year, month),
         booked_dict=booked_dict,
         today_str=date.today().isoformat(),
-        venues=venues,
-        time_slots=TIME_SLOTS,
-        venue_filter=venue_filter or "",
-        pending_needs_attention=check_pending_events(db),
+        venues=Venue.query.filter_by(is_active=1).all(),
+        time_slots=TIME_SLOTS, venue_filter=venue_filter or "",
+        pending_needs_attention=check_pending_events(),
     )
 
 
@@ -105,37 +138,19 @@ def calendar_view():
 @bp.route("/evenements")
 @login_required
 def event_list():
-    """Liste filtrable des événements."""
-    db = get_db_connection()
     status_filter = request.args.get("status", "")
     search = request.args.get("q", "").strip()
 
-    query = (
-        "SELECT e.*, c.name as client_name, v.name as venue_name, "
-        "COALESCE((SELECT SUM(p.amount) FROM payments p "
-        "  WHERE p.event_id=e.id AND p.is_refunded=0), 0) as total_paid "
-        "FROM events e "
-        "JOIN clients c ON e.client_id=c.id "
-        "JOIN venues v ON e.venue_id=v.id WHERE 1=1"
-    )
-    params = []
-
+    q = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id)
     if status_filter:
-        query += " AND e.status=?"
-        params.append(status_filter)
+        q = q.filter(Event.status == status_filter)
     if search:
-        query += " AND (e.title LIKE ? OR c.name LIKE ?)"
-        params.extend([f"%{search}%", f"%{search}%"])
-
-    query += " ORDER BY e.event_date DESC"
-    events = db.execute(query, params).fetchall()
+        q = q.filter(or_(Event.title.ilike(f"%{search}%"), Client.name.ilike(f"%{search}%")))
+    events = q.order_by(Event.event_date.desc()).all()
 
     return render_template(
-        "bookings/list.html",
-        events=events,
-        statuses=EVENT_STATUSES,
-        status_filter=status_filter,
-        search=search,
+        "bookings/list.html", events=events,
+        statuses=EVENT_STATUSES, status_filter=status_filter, search=search,
     )
 
 
@@ -144,31 +159,22 @@ def event_list():
 @bp.route("/evenement/<int:event_id>/modifier", methods=["GET", "POST"])
 @login_required
 def event_form(event_id=None):
-    """Formulaire de création ou modification d'un événement."""
-    db = get_db_connection()
-    event = None
-    client = None
+    event = Event.query.get(event_id) if event_id else None
+    client = Client.query.get(event.client_id) if event else None
     event_lines = []
     custom_lines = []
 
-    if event_id:
-        event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
+    if event:
         if not event:
             flash("Événement introuvable", "danger")
             return redirect(url_for("finance.dashboard"))
-        client = db.execute(
-            "SELECT * FROM clients WHERE id=?", (event["client_id"],)
-        ).fetchone()
-        all_lines = db.execute(
-            "SELECT * FROM event_lines WHERE event_id=?", (event_id,)
-        ).fetchall()
-        for line in all_lines:
-            if line["description"] in PREDEFINED_NAMES:
-                event_lines.append(line)
-            else:
-                custom_lines.append(line)
+        for line in event.service_lines.all():
+            (custom_lines if line.description not in (list(zip(*DEFAULT_SERVICES))[1] if False else []) else event_lines).append(line)
+        from app.bookings.helpers import PREDEFINED_NAMES
+        event_lines = [l for l in event.service_lines.all() if l.description in PREDEFINED_NAMES]
+        custom_lines = [l for l in event.service_lines.all() if l.description not in PREDEFINED_NAMES]
 
-    venues = db.execute("SELECT * FROM venues WHERE is_active=1").fetchall()
+    venues = Venue.query.filter_by(is_active=1).all()
 
     if request.method == "POST":
         data = request.form
@@ -181,108 +187,78 @@ def event_form(event_id=None):
         venue_id = data.get("venue_id", type=int)
         venue_id2 = data.get("venue_id2", type=int)
         event_type = data.get("event_type", "Mariage")
-        event_date = data.get("event_date")
+        event_date_val = data.get("event_date")
         time_slot = data.get("time_slot", "Soirée")
         guests_men = data.get("guests_men", 0, type=int)
         guests_women = data.get("guests_women", 0, type=int)
-        status = (
-            data.get("status", "en attente")
-            if not event_id
-            else data.get("status", event["status"])
-        )
+        status = data.get("status", "en attente") if not event_id else data.get("status", event.status)
         notes = data.get("notes", "").strip()
         total_amount = data.get("total_amount", 0, type=float)
         deposit_required = data.get("deposit_required", 0, type=float)
 
-        # ── Validation ───────────────────────────────────────────────
+        # Validation
         errors = []
-        if not title:
-            errors.append("Le titre est requis")
-        if not client_name:
-            errors.append("Le nom du client est requis")
-        if not client_phone:
-            errors.append("Le téléphone est requis")
-        if not event_date:
-            errors.append("La date est requise")
-        if not venue_id:
-            errors.append("Le lieu est requis")
-        errors.extend(validate_event_date(db, event_date, event_id or 0))
+        if not title: errors.append("Le titre est requis")
+        if not client_name: errors.append("Le nom du client est requis")
+        if not client_phone: errors.append("Le téléphone est requis")
+        if not event_date_val: errors.append("La date est requise")
+        if not venue_id: errors.append("Le lieu est requis")
+        errors.extend(validate_event_date(event_date_val, event_id or 0))
 
         if errors:
-            for e in errors:
-                flash(e, "danger")
+            for e in errors: flash(e, "danger")
             return render_template(
                 "bookings/create.html" if not event_id else "bookings/edit.html",
-                event=event, client=client,
-                event_lines=event_lines, custom_lines=custom_lines,
-                venues=venues, time_slots=TIME_SLOTS,
-                event_types=EVENT_TYPES, statuses=EVENT_STATUSES,
-                event_id=event_id,
+                event=event, client=client, event_lines=event_lines, custom_lines=custom_lines,
+                venues=venues, time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
+                statuses=EVENT_STATUSES, event_id=event_id,
             )
 
-        # ── Upsert client ────────────────────────────────────────────
+        # Upsert client
         if client:
-            db.execute(
-                "UPDATE clients SET name=?, phone=?, phone2=?, email=?, address=? WHERE id=?",
-                (client_name, client_phone, client_phone2, client_email,
-                 client_address, client["id"]),
+            client.name, client.phone, client.phone2, client.email, client.address = (
+                client_name, client_phone, client_phone2, client_email, client_address
             )
-            client_id = client["id"]
         else:
-            cur = db.execute(
-                "INSERT INTO clients (name, phone, phone2, email, address) VALUES (?,?,?,?,?)",
-                (client_name, client_phone, client_phone2, client_email, client_address),
-            )
-            client_id = cur.lastrowid
+            client = Client(name=client_name, phone=client_phone, phone2=client_phone2,
+                            email=client_email, address=client_address)
+            db.session.add(client)
+            db.session.flush()
 
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # ── Upsert event ─────────────────────────────────────────────
+        now = datetime.now()
         if event:
-            db.execute(
-                "UPDATE events SET title=?, client_id=?, venue_id=?, venue_id2=?, "
-                "event_type=?, event_date=?, time_slot=?, guests_men=?, guests_women=?, "
-                "status=?, notes=?, total_amount=?, deposit_required=?, updated_at=? "
-                "WHERE id=?",
-                (title, client_id, venue_id, venue_id2, event_type, event_date,
-                 time_slot, guests_men, guests_women, status, notes,
-                 total_amount, deposit_required, now_str, event_id),
-            )
-            db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
+            event.title, event.client_id, event.venue_id, event.venue_id2 = title, client.id, venue_id, venue_id2
+            event.event_type, event.event_date, event.time_slot = event_type, event_date_val, time_slot
+            event.guests_men, event.guests_women, event.status = guests_men, guests_women, status
+            event.notes, event.total_amount, event.deposit_required, event.updated_at = notes, total_amount, deposit_required, now
+            EventLine.query.filter_by(event_id=event.id).delete()
+            event_id = event.id
         else:
-            cur = db.execute(
-                "INSERT INTO events (title, client_id, venue_id, venue_id2, "
-                "event_type, event_date, time_slot, guests_men, guests_women, "
-                "status, notes, total_amount, deposit_required, created_at, updated_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (title, client_id, venue_id, venue_id2, event_type, event_date,
-                 time_slot, guests_men, guests_women, status, notes,
-                 total_amount, deposit_required, now_str, now_str),
-            )
-            event_id = cur.lastrowid
+            event = Event(title=title, client_id=client.id, venue_id=venue_id, venue_id2=venue_id2,
+                          event_type=event_type, event_date=event_date_val, time_slot=time_slot,
+                          guests_men=guests_men, guests_women=guests_women, status=status,
+                          notes=notes, total_amount=total_amount, deposit_required=deposit_required,
+                          created_at=now, updated_at=now)
+            db.session.add(event)
+            db.session.flush()
+            event_id = event.id
 
-        # ── Auto-create deposit payment ──────────────────────────────
+        # Auto deposit
         if deposit_required and deposit_required > 0:
-            db.execute(
-                "INSERT INTO payments (event_id, amount, payment_type, method, payment_date) "
-                "VALUES (?, ?, 'avance', 'espèces', ?)",
-                (event_id, deposit_required, now_str),
-            )
+            db.session.add(Payment(event_id=event_id, amount=deposit_required,
+                                   payment_type="avance", method="espèces", payment_date=now))
 
-        # ── Service lines (DRY helper) ───────────────────────────────
-        insert_service_lines(db, event_id, data)
-
-        db.commit()
-        flash("Événement créé avec succès! Vous pouvez maintenant encaisser un paiement.", "success")
+        # Service lines
+        insert_service_lines(event_id, data)
+        db.session.commit()
+        flash("Événement créé avec succès!", "success")
         return redirect(url_for("bookings.event_detail", event_id=event_id))
 
     template = "bookings/create.html" if not event_id else "bookings/edit.html"
     return render_template(
-        template, event=event, client=client,
-        event_lines=event_lines, custom_lines=custom_lines,
-        venues=venues, time_slots=TIME_SLOTS,
-        event_types=EVENT_TYPES, statuses=EVENT_STATUSES,
-        event_id=event_id,
+        template, event=event, client=client, event_lines=event_lines,
+        custom_lines=custom_lines, venues=venues, time_slots=TIME_SLOTS,
+        event_types=EVENT_TYPES, statuses=EVENT_STATUSES, event_id=event_id,
     )
 
 
@@ -290,96 +266,38 @@ def event_form(event_id=None):
 @bp.route("/evenement/<int:event_id>")
 @login_required
 def event_detail(event_id):
-    """Détails d'un événement avec finances."""
-    db = get_db_connection()
-    event = db.execute(
-        "SELECT e.*, c.name as client_name, c.id as client_id, c.phone, "
-        "c.phone2, c.email, c.address, "
-        "v.name as venue_name, v.capacity_men, v.capacity_women, "
-        "v2.name as venue2_name FROM events e "
-        "JOIN clients c ON e.client_id=c.id "
-        "JOIN venues v ON e.venue_id=v.id "
-        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
-        "WHERE e.id=?",
-        (event_id,),
-    ).fetchone()
+    event = Event.query.get_or_404(event_id)
 
-    if not event:
-        flash("Événement introuvable", "danger")
-        return redirect(url_for("finance.dashboard"))
-
-    event_lines = db.execute(
-        "SELECT * FROM event_lines WHERE event_id=?", (event_id,)
-    ).fetchall()
-    payments = db.execute(
-        "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC",
-        (event_id,),
-    ).fetchall()
-
-    total_paid = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE event_id=? AND is_refunded=0", (event_id,),
-    ).fetchone()["s"]
-
-    total_refunded = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE event_id=? AND is_refunded=1", (event_id,),
-    ).fetchone()["s"]
-
-    deposit = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE event_id=? AND payment_type='dépôt' AND is_refunded=0",
-        (event_id,),
-    ).fetchone()["s"]
-
-    total_revenue = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM event_lines "
-        "WHERE event_id=? AND is_cost=0", (event_id,),
-    ).fetchone()["s"]
-
-    total_costs = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM event_lines "
-        "WHERE event_id=? AND is_cost=1", (event_id,),
-    ).fetchone()["s"]
+    total_paid = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.event_id == event_id, Payment.is_refunded == 0).scalar()
+    total_refunded = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.event_id == event_id, Payment.is_refunded == 1).scalar()
+    total_revenue = db.session.query(func.coalesce(func.sum(EventLine.amount), 0)).filter(
+        EventLine.event_id == event_id, EventLine.is_cost == 0).scalar()
+    total_costs = db.session.query(func.coalesce(func.sum(EventLine.amount), 0)).filter(
+        EventLine.event_id == event_id, EventLine.is_cost == 1).scalar()
+    total_expenses = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(
+        Expense.event_id == event_id).scalar()
+    deposit = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.event_id == event_id, Payment.payment_type == "dépôt", Payment.is_refunded == 0).scalar()
 
     profit = float(total_revenue) - float(total_costs)
-
-    event_expenses = db.execute(
-        "SELECT * FROM expenses WHERE event_id=? ORDER BY expense_date DESC",
-        (event_id,),
-    ).fetchall()
-    total_expenses = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM expenses WHERE event_id=?",
-        (event_id,),
-    ).fetchone()["s"]
-
     adjusted_profit = round(profit - float(total_expenses), 2)
 
     needs_confirmation = False
-    if event["status"] == "en attente":
-        try:
-            created_at = event["created_at"]
-            if created_at:
-                if isinstance(created_at, str):
-                    created = datetime.strptime(created_at[:19], "%Y-%m-%d %H:%M:%S")
-                else:
-                    created = created_at
-                if (datetime.now() - created) > timedelta(hours=48):
-                    needs_confirmation = True
-        except (ValueError, TypeError, KeyError):
-            pass
+    if event.status == "en attente" and event.created_at:
+        created = event.created_at if isinstance(event.created_at, datetime) else datetime.strptime(str(event.created_at)[:19], "%Y-%m-%d %H:%M:%S")
+        if (datetime.now() - created) > timedelta(hours=48):
+            needs_confirmation = True
 
     return render_template(
-        "bookings/view.html",
-        event=event, event_lines=event_lines, payments=payments,
-        total_paid=total_paid, deposit=deposit,
-        total_refunded=total_refunded,
-        total_revenue=total_revenue, total_costs=total_costs,
-        profit=profit, needs_confirmation=needs_confirmation,
-        statuses=EVENT_STATUSES,
-        event_expenses=event_expenses,
-        total_expenses=float(total_expenses),
-        adjusted_profit=adjusted_profit,
+        "bookings/view.html", event=event,
+        event_lines=event.service_lines.all(), payments=event.payments.order_by(Payment.payment_date.desc()).all(),
+        total_paid=total_paid, deposit=deposit, total_refunded=total_refunded,
+        total_revenue=total_revenue, total_costs=total_costs, profit=profit,
+        needs_confirmation=needs_confirmation, statuses=EVENT_STATUSES,
+        event_expenses=event.expenses.order_by(Expense.expense_date.desc()).all(),
+        total_expenses=float(total_expenses), adjusted_profit=adjusted_profit,
         today_str=date.today().isoformat(),
     )
 
@@ -388,76 +306,50 @@ def event_detail(event_id):
 @bp.route("/evenement/<int:event_id>/paiement", methods=["POST"])
 @login_required
 def add_payment(event_id):
-    """Enregistre un paiement avec validation anti-dépassement."""
     data = request.form
     try:
-        db = get_db_connection()
+        event = Event.query.get_or_404(event_id)
         amount = data.get("amount", 0, type=float)
-        method = data.get("method", "espèces")
-        payment_type = data.get("payment_type", "dépôt").lower()
-        reference = data.get("reference", "").strip()
-        notes = data.get("notes", "").strip()
 
         if amount <= 0:
             flash("Montant invalide", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
-
-        event = db.execute(
-            "SELECT total_amount, status FROM events WHERE id=?", (event_id,)
-        ).fetchone()
-        if not event:
-            flash("Événement introuvable", "danger")
-            return redirect(url_for("finance.dashboard"))
-        if event["status"] == "annulé":
+        if event.status == "annulé":
             flash("Impossible d'encaisser sur un événement annulé", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        total_paid = db.execute(
-            "SELECT COALESCE(SUM(amount), 0) as s FROM payments "
-            "WHERE event_id=? AND is_refunded=0", (event_id,),
-        ).fetchone()["s"]
-        remaining = float(event["total_amount"]) - float(total_paid)
-
+        remaining = event.remaining
         if remaining <= 0:
             flash("Cet événement est déjà soldé!", "warning")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
         if amount > remaining:
-            flash(
-                f"Le montant ({amount:,.0f} DA) dépasse le reste à payer "
-                f"({remaining:,.0f} DA). Maximum autorisé: {remaining:,.0f} DA.",
-                "danger",
-            )
+            flash(f"Le montant ({amount:,.0f} DA) dépasse le reste ({remaining:,.0f} DA).", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        db.execute(
-            "INSERT INTO payments (event_id, amount, method, payment_type, reference, notes) "
-            "VALUES (?,?,?,?,?,?)",
-            (event_id, amount, method, payment_type, reference, notes),
+        payment = Payment(
+            event_id=event_id, amount=amount,
+            method=data.get("method", "espèces"),
+            payment_type=data.get("payment_type", "dépôt").lower(),
+            reference=data.get("reference", "").strip(),
+            notes=data.get("notes", "").strip(),
         )
+        db.session.add(payment)
 
-        new_total_paid = float(total_paid) + amount
-        if new_total_paid >= float(event["total_amount"]):
-            if event["status"] == "en attente":
-                db.execute("UPDATE events SET status='confirmé' WHERE id=?", (event_id,))
-                logger.info("Event %d auto-confirmed (fully paid)", event_id)
+        new_total = float(event.total_paid) + amount
+        if new_total >= float(event.total_amount) and event.status == "en attente":
+            event.status = "confirmé"
+            logger.info("Event %d auto-confirmed (fully paid)", event_id)
 
-        db.commit()
-        logger.info("Payment added: %.2f DA for event %d", amount, event_id)
-
-        if new_total_paid >= float(event["total_amount"]):
-            flash("Paiement enregistré — événement soldé! ✓", "success")
-        else:
-            reste = float(event["total_amount"]) - new_total_paid
-            flash(f"Paiement enregistré! Reste: {reste:,.0f} DA", "success")
-
-    except (DatabaseError, ValueError):
-        db.rollback()
+        db.session.commit()
+        flash("Paiement enregistré — soldé! ✓" if new_total >= event.total_amount
+              else f"Paiement enregistré! Reste: {event.total_amount - new_total:,.0f} DA", "success")
+    except Exception:
+        db.session.rollback()
         logger.exception("Failed to add payment for event %s", event_id)
-        flash("Une erreur est survenue lors de l'enregistrement du paiement.", "danger")
+        flash("Erreur lors de l'enregistrement du paiement.", "danger")
 
     next_url = data.get("next") or request.args.get("next")
     if next_url:
-        from urllib.parse import urlparse
         parsed = urlparse(next_url)
         if not parsed.netloc or parsed.netloc == request.host:
             return redirect(next_url)
@@ -468,32 +360,19 @@ def add_payment(event_id):
 @bp.route("/evenement/<int:event_id>/paiement/<int:payment_id>/rembourser", methods=["POST"])
 @login_required
 def refund_payment(event_id, payment_id):
-    """Marquer un paiement comme remboursé (piste d'audit — jamais supprimé)."""
     try:
-        db = get_db_connection()
-        reason = request.form.get("refund_reason", "").strip()
-
-        payment = db.execute(
-            "SELECT * FROM payments WHERE id=? AND event_id=?", (payment_id, event_id)
-        ).fetchone()
-
-        if not payment:
-            flash("Paiement introuvable", "danger")
-        elif payment["is_refunded"]:
+        payment = Payment.query.get_or_404(payment_id)
+        if payment.is_refunded:
             flash("Ce paiement a déjà été remboursé", "warning")
         else:
-            existing_notes = payment.get("notes", "") or ""
-            refund_note = f" [REMBOURSÉ: {reason}]" if reason else " [REMBOURSÉ]"
-            db.execute(
-                "UPDATE payments SET is_refunded=1, notes=? WHERE id=?",
-                (existing_notes + refund_note, payment_id),
-            )
-            db.commit()
+            reason = request.form.get("refund_reason", "").strip()
+            payment.is_refunded = 1
+            payment.notes = (payment.notes or "") + f" [REMBOURSÉ: {reason}]" if reason else " [REMBOURSÉ]"
+            db.session.commit()
             flash("Paiement marqué comme remboursé", "success")
-    except DatabaseError:
-        db.rollback()
-        logger.exception("Failed to refund payment %s for event %s", payment_id, event_id)
-        flash("Une erreur est survenue lors du remboursement.", "danger")
+    except Exception:
+        db.session.rollback()
+        flash("Erreur lors du remboursement.", "danger")
     return redirect(url_for("bookings.event_detail", event_id=event_id))
 
 
@@ -501,67 +380,37 @@ def refund_payment(event_id, payment_id):
 @bp.route("/evenement/<int:event_id>/statut", methods=["POST"])
 @login_required
 def update_event_status(event_id):
-    """Mise à jour du statut avec validation des transitions."""
     try:
-        db = get_db_connection()
+        event = Event.query.get_or_404(event_id)
         new_status = request.form.get("status", "")
-        new_date = request.form.get("new_date", "").strip()
 
         if new_status not in EVENT_STATUSES:
             flash("Statut invalide", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        current_event = db.execute(
-            "SELECT status FROM events WHERE id = ?", (event_id,)
-        ).fetchone()
-        if not current_event:
-            flash("Événement introuvable", "danger")
-            return redirect(url_for("bookings.event_detail", event_id=event_id))
-
-        current_status = current_event["status"]
-        allowed_transitions = {
+        allowed = {
             "confirmé": ["annulé", "changé de date"],
             "en attente": ["confirmé", "annulé"],
-            "annulé": [],
-            "terminé": [],
+            "annulé": [], "terminé": [],
             "changé de date": ["confirmé", "annulé"],
         }
-
-        if (current_status in allowed_transitions
-                and new_status not in allowed_transitions.get(current_status, [])):
-            flash(
-                f"⚠️ Transition non autorisée: Impossible de passer de "
-                f"'{current_status}' à '{new_status}'.",
-                "danger",
-            )
+        if event.status in allowed and new_status not in allowed.get(event.status, []):
+            flash(f"⚠️ Transition non autorisée: '{event.status}' → '{new_status}'", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if new_status == "changé de date":
+            new_date = request.form.get("new_date", "").strip()
+            if new_date:
+                event.event_date = new_date
+                flash(f"Date changée à {new_date}.", "success")
 
-        if new_status == "changé de date" and new_date:
-            db.execute(
-                "UPDATE events SET status=?, event_date=?, updated_at=? WHERE id=?",
-                (new_status, new_date, now_str, event_id),
-            )
-            flash(f"Date changée à {new_date}. Statut mis à jour.", "success")
-        else:
-            db.execute(
-                "UPDATE events SET status=?, updated_at=? WHERE id=?",
-                (new_status, now_str, event_id),
-            )
-            msgs = {
-                "confirmé": "Événement confirmé!",
-                "en attente": "Statut remis à 'en attente'",
-                "terminé": "Événement marqué comme terminé",
-                "annulé": "Événement annulé",
-            }
-            flash(msgs.get(new_status, "Statut mis à jour"), "success")
-
-        db.commit()
-    except DatabaseError:
-        db.rollback()
-        logger.exception("Failed to update status for event %s", event_id)
-        flash("Une erreur est survenue lors de la mise à jour du statut.", "danger")
+        event.status = new_status
+        event.updated_at = datetime.now()
+        db.session.commit()
+        flash({"confirmé": "Événement confirmé!", "terminé": "Marqué terminé", "annulé": "Événement annulé"}.get(new_status, "Statut mis à jour"), "success")
+    except Exception:
+        db.session.rollback()
+        flash("Erreur lors de la mise à jour du statut.", "danger")
     return redirect(url_for("bookings.event_detail", event_id=event_id))
 
 
@@ -569,23 +418,17 @@ def update_event_status(event_id):
 @bp.route("/evenement/<int:event_id>/supprimer", methods=["POST"])
 @login_required
 def delete_event(event_id):
-    """Supprime un événement et toutes ses données (admin uniquement)."""
     if not _is_admin():
-        flash("Seuls les administrateurs peuvent supprimer des événements", "danger")
+        flash("Seuls les administrateurs peuvent supprimer", "danger")
         return redirect(url_for("bookings.event_detail", event_id=event_id))
     try:
-        db = get_db_connection()
-        db.execute("DELETE FROM event_lines WHERE event_id=?", (event_id,))
-        db.execute("DELETE FROM payments WHERE event_id=?", (event_id,))
-        db.execute("DELETE FROM expenses WHERE event_id=?", (event_id,))
-        db.execute("DELETE FROM events WHERE id=?", (event_id,))
-        db.commit()
-        logger.info("Event deleted: %d", event_id)
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)  # cascade handles lines, payments, expenses
+        db.session.commit()
         flash("Événement supprimé", "success")
-    except DatabaseError:
-        db.rollback()
-        logger.exception("Failed to delete event %s", event_id)
-        flash("Une erreur est survenue lors de la suppression.", "danger")
+    except Exception:
+        db.session.rollback()
+        flash("Erreur lors de la suppression.", "danger")
     return redirect(url_for("finance.dashboard"))
 
 
@@ -593,48 +436,29 @@ def delete_event(event_id):
 @bp.route("/evenement/<int:event_id>/depense", methods=["POST"])
 @login_required
 def add_event_expense(event_id):
-    """Ajoute des dépenses liées à un événement (multi-catégories)."""
     try:
-        db = get_db_connection()
         expense_date = request.form.get("expense_date", date.today().isoformat())
-        categories_added = 0
-
-        for cat_key, cat_name, default_price in [
-            ("serveurs", "Serveurs", 15000),
-            ("nettoyeurs", "Nettoyeurs", 8000),
-            ("securite", "Sécurité", 10000),
-        ]:
+        added = 0
+        for cat_key, cat_name, default in [("serveurs", "Serveurs", 15000), ("nettoyeurs", "Nettoyeurs", 8000), ("securite", "Sécurité", 10000)]:
             if request.form.get(f"cat_{cat_key}"):
-                amount = request.form.get(f"amount_{cat_key}", default_price, type=float)
+                amount = request.form.get(f"amount_{cat_key}", default, type=float)
                 if amount > 0:
-                    db.execute(
-                        "INSERT INTO expenses (expense_date, category, description, "
-                        "amount, event_id, method) VALUES (?, ?, ?, ?, ?, ?)",
-                        (expense_date, cat_name, cat_name, amount, event_id, "espèces"),
-                    )
-                    categories_added += 1
-
+                    db.session.add(Expense(event_id=event_id, category=cat_name, description=cat_name, amount=amount, expense_date=expense_date))
+                    added += 1
         if request.form.get("cat_autre"):
-            autre_name = request.form.get("autre_name", "").strip() or "Autre"
-            autre_amount = request.form.get("amount_autre", 0, type=float)
-            if autre_amount > 0:
-                db.execute(
-                    "INSERT INTO expenses (expense_date, category, description, "
-                    "amount, event_id, method) VALUES (?, ?, ?, ?, ?, ?)",
-                    (expense_date, "Autre", f"Autre: {autre_name}",
-                     autre_amount, event_id, "espèces"),
-                )
-                categories_added += 1
-
-        if categories_added > 0:
-            db.commit()
-            flash(f"{categories_added} dépense(s) enregistrée(s)!", "success")
+            name = request.form.get("autre_name", "").strip() or "Autre"
+            amount = request.form.get("amount_autre", 0, type=float)
+            if amount > 0:
+                db.session.add(Expense(event_id=event_id, category="Autre", description=f"Autre: {name}", amount=amount, expense_date=expense_date))
+                added += 1
+        if added:
+            db.session.commit()
+            flash(f"{added} dépense(s) enregistrée(s)!", "success")
         else:
-            flash("Sélectionnez au moins une catégorie avec un montant", "warning")
-    except (DatabaseError, ValueError):
-        db.rollback()
-        logger.exception("Failed to add expense for event %s", event_id)
-        flash("Une erreur est survenue lors de l'enregistrement de la dépense.", "danger")
+            flash("Sélectionnez au moins une catégorie", "warning")
+    except Exception:
+        db.session.rollback()
+        flash("Erreur lors de l'enregistrement.", "danger")
     return redirect(url_for("bookings.event_detail", event_id=event_id))
 
 
@@ -642,47 +466,25 @@ def add_event_expense(event_id):
 @bp.route("/evenement/<int:event_id>/contrat")
 @login_required
 def generate_contract(event_id):
-    """Génère le PDF du contrat."""
     from contract_generator import generate_contract_pdf
     try:
-        db = get_db_connection()
-        event = db.execute(
-            "SELECT e.*, c.name as client_name, c.phone, c.phone2, c.email, c.address, "
-            "v.name as venue_name, v.capacity_men, v.capacity_women, "
-            "v2.name as venue2_name FROM events e "
-            "JOIN clients c ON e.client_id=c.id "
-            "JOIN venues v ON e.venue_id=v.id "
-            "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
-            "WHERE e.id=?", (event_id,),
-        ).fetchone()
+        event = Event.query.get_or_404(event_id)
+        payments = Payment.query.filter_by(event_id=event_id, is_refunded=0).order_by(Payment.payment_date.desc()).all()
+        total_paid = event.total_paid
+        lines = event.service_lines.all()
 
-        if not event:
-            flash("Événement introuvable", "danger")
-            return redirect(url_for("finance.dashboard"))
-
-        payments = db.execute(
-            "SELECT * FROM payments WHERE event_id=? AND is_refunded=0 "
-            "ORDER BY payment_date DESC", (event_id,),
-        ).fetchall()
-        total_paid = db.execute(
-            "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-            "WHERE event_id=? AND is_refunded=0", (event_id,),
-        ).fetchone()["s"]
-        event_lines = db.execute(
-            "SELECT * FROM event_lines WHERE event_id=?", (event_id,),
-        ).fetchall()
-
-        pdf_bytes = generate_contract_pdf(event, payments, total_paid, event_lines)
-        response = make_response(pdf_bytes)
-        response.headers["Content-Type"] = "application/pdf"
-        safe_title = event["title"].replace(" ", "_")[:30]
-        response.headers["Content-Disposition"] = (
-            f"inline; filename=contrat_{safe_title}_{event_id}.pdf"
+        # PDF generators expect dict-like objects — convert ORM to dict
+        pdf_bytes = generate_contract_pdf(
+            _event_to_dict(event), [_payment_to_dict(p) for p in payments],
+            total_paid, [_line_to_dict(l) for l in lines]
         )
-        return response
+        resp = make_response(pdf_bytes)
+        resp.headers["Content-Type"] = "application/pdf"
+        resp.headers["Content-Disposition"] = f"inline; filename=contrat_{event.title.replace(' ', '_')[:30]}_{event_id}.pdf"
+        return resp
     except Exception as e:
-        logger.error("Contract generation error: %s", e)
-        flash(f"Erreur lors de la génération du contrat: {str(e)}", "danger")
+        logger.error("Contract error: %s", e)
+        flash(f"Erreur: {str(e)}", "danger")
         return redirect(url_for("bookings.event_detail", event_id=event_id))
 
 
@@ -690,164 +492,111 @@ def generate_contract(event_id):
 @bp.route("/evenement/<int:event_id>/recu/<int:payment_id>")
 @login_required
 def generate_receipt(event_id, payment_id):
-    """Génère le PDF du reçu pour un paiement."""
     from receipt_generator import generate_receipt_pdf
-    db = get_db_connection()
-    event = db.execute(
-        "SELECT e.*, c.name as client_name, c.phone, c.address, "
-        "v.name as venue_name FROM events e "
-        "JOIN clients c ON e.client_id=c.id "
-        "JOIN venues v ON e.venue_id=v.id "
-        "WHERE e.id=?", (event_id,),
-    ).fetchone()
-
-    if not event:
-        flash("Événement introuvable", "danger")
-        return redirect(url_for("finance.dashboard"))
-
-    payment = db.execute(
-        "SELECT * FROM payments WHERE id=? AND event_id=?", (payment_id, event_id)
-    ).fetchone()
-    if not payment:
-        flash("Paiement introuvable", "danger")
-        return redirect(url_for("bookings.event_detail", event_id=event_id))
-
-    date_str = str(payment["payment_date"])[:19]
-    total_paid_before = db.execute(
-        "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-        "WHERE event_id=? AND payment_date < ? AND is_refunded=0",
-        (event_id, date_str),
-    ).fetchone()["s"]
-    total_paid_after = float(total_paid_before) + float(payment["amount"])
-    remaining = round(float(event["total_amount"]) - total_paid_after, 2)
-    receipt_no = f"{date_str[:4]}-{payment_id:04d}"
-
     try:
+        event = Event.query.get_or_404(event_id)
+        payment = Payment.query.get_or_404(payment_id)
+        date_str = str(payment.payment_date)[:19]
+        total_before = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+            Payment.event_id == event_id, Payment.payment_date < date_str, Payment.is_refunded == 0
+        ).scalar()
+        total_after = float(total_before) + float(payment.amount)
+        remaining = round(float(event.total_amount) - total_after, 2)
+        receipt_no = f"{date_str[:4]}-{payment_id:04d}"
+
         pdf_bytes = generate_receipt_pdf(
-            event, payment, total_paid_before, total_paid_after, remaining, receipt_no
+            _event_to_dict(event), _payment_to_dict(payment),
+            total_before, total_after, remaining, receipt_no
         )
-        response = make_response(pdf_bytes)
-        response.headers["Content-Type"] = "application/pdf"
-        safe_title = event["client_name"].replace(" ", "_")[:20]
-        response.headers["Content-Disposition"] = (
-            f"inline; filename=recu_{safe_title}_{payment_id}.pdf"
-        )
-        return response
+        resp = make_response(pdf_bytes)
+        resp.headers["Content-Type"] = "application/pdf"
+        resp.headers["Content-Disposition"] = f"inline; filename=recu_{payment_id}.pdf"
+        return resp
     except Exception as e:
-        logger.error("Receipt generation error: %s", e)
-        flash(f"Erreur lors de la génération du reçu: {str(e)}", "danger")
+        logger.error("Receipt error: %s", e)
+        flash(f"Erreur: {str(e)}", "danger")
         return redirect(url_for("bookings.event_detail", event_id=event_id))
 
 
-# ─── Quick Payment (Walk-In) ────────────────────────────────────────
+# ─── Quick Payment ───────────────────────────────────────────────────
 @bp.route("/paiement-rapide", methods=["GET", "POST"])
 @login_required
 def quick_payment():
-    """Paiement rapide : recherche client → voir événements → encaisser."""
-    db = get_db_connection()
     search = request.args.get("q", "").strip()
     selected_client_id = request.args.get("client_id", type=int)
     selected_event_id = request.args.get("event_id", type=int)
 
     clients = []
+    if search:
+        clients = Client.query.filter(
+            or_(Client.name.ilike(f"%{search}%"), Client.phone.ilike(f"%{search}%"))
+        ).order_by(Client.name).limit(20).all()
+
+    selected_client = Client.query.get(selected_client_id) if selected_client_id else None
     client_events = []
-    selected_client = None
-    selected_event = None
+    if selected_client:
+        client_events = Event.query.filter(
+            Event.client_id == selected_client_id,
+            Event.status.notin_(["annulé", "terminé"])
+        ).order_by(Event.event_date).all()
+
+    selected_event = Event.query.get(selected_event_id) if selected_event_id else None
     event_payments = []
     event_financials = None
-
-    if search:
-        clients = db.execute(
-            "SELECT c.*, "
-            "(SELECT COUNT(*) FROM events WHERE client_id=c.id "
-            "  AND status NOT IN ('annulé','terminé')) as active_events, "
-            "(SELECT COALESCE(SUM(e.total_amount),0) FROM events e "
-            "  WHERE e.client_id=c.id AND e.status NOT IN ('annulé','terminé')) as total_owed "
-            "FROM clients c WHERE c.name LIKE ? OR c.phone LIKE ? "
-            "ORDER BY c.name LIMIT 20",
-            (f"%{search}%", f"%{search}%"),
-        ).fetchall()
-
-    if selected_client_id:
-        selected_client = db.execute(
-            "SELECT * FROM clients WHERE id=?", (selected_client_id,)
-        ).fetchone()
-        if selected_client:
-            client_events = db.execute(
-                "SELECT e.*, v.name as venue_name, "
-                "COALESCE((SELECT SUM(p.amount) FROM payments p "
-                "  WHERE p.event_id=e.id AND p.is_refunded=0), 0) as total_paid "
-                "FROM events e JOIN venues v ON e.venue_id=v.id "
-                "WHERE e.client_id=? AND e.status NOT IN ('annulé','terminé') "
-                "ORDER BY e.event_date ASC",
-                (selected_client_id,),
-            ).fetchall()
-
-    if selected_event_id:
-        selected_event = db.execute(
-            "SELECT e.*, c.name as client_name, c.phone, v.name as venue_name "
-            "FROM events e JOIN clients c ON e.client_id=c.id "
-            "JOIN venues v ON e.venue_id=v.id WHERE e.id=?",
-            (selected_event_id,),
-        ).fetchone()
-        if selected_event:
-            event_payments = db.execute(
-                "SELECT * FROM payments WHERE event_id=? ORDER BY payment_date DESC",
-                (selected_event_id,),
-            ).fetchall()
-            pay_stats = db.execute(
-                "SELECT "
-                "COALESCE(SUM(CASE WHEN is_refunded=0 THEN amount ELSE 0 END), 0) as tp, "
-                "COALESCE(SUM(CASE WHEN is_refunded=1 THEN amount ELSE 0 END), 0) as tr "
-                "FROM payments WHERE event_id=?",
-                (selected_event_id,),
-            ).fetchone()
-            total_paid = float(pay_stats["tp"])
-            event_total = float(selected_event["total_amount"])
-            event_financials = {
-                "total": event_total,
-                "paid": total_paid,
-                "remaining": round(event_total - total_paid, 2),
-                "refunded": float(pay_stats["tr"]),
-            }
+    if selected_event:
+        event_payments = Payment.query.filter_by(event_id=selected_event_id).order_by(Payment.payment_date.desc()).all()
+        tp = selected_event.total_paid
+        event_financials = {
+            "total": selected_event.total_amount,
+            "paid": tp,
+            "remaining": selected_event.remaining,
+            "refunded": db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+                Payment.event_id == selected_event_id, Payment.is_refunded == 1).scalar(),
+        }
 
     return render_template(
         "bookings/quick_payment.html",
         search=search, clients=clients,
-        selected_client_id=selected_client_id,
-        selected_client=selected_client,
-        client_events=client_events,
-        selected_event_id=selected_event_id,
-        selected_event=selected_event,
-        event_payments=event_payments,
-        event_financials=event_financials,
-        today_str=date.today().isoformat(),
+        selected_client_id=selected_client_id, selected_client=selected_client,
+        client_events=client_events, selected_event_id=selected_event_id,
+        selected_event=selected_event, event_payments=event_payments,
+        event_financials=event_financials, today_str=date.today().isoformat(),
     )
 
 
-# ─── API: Calendar Events (JSON) ────────────────────────────────────
+# ─── API ─────────────────────────────────────────────────────────────
 @bp.route("/api/calendar-events")
 @login_required
 def api_calendar_events():
-    """Événements du calendrier au format JSON."""
-    db = get_db_connection()
     year = request.args.get("year", date.today().year, type=int)
     month = request.args.get("month", date.today().month, type=int)
-
     first = f"{year}-{month:02d}-01"
     last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
 
-    events = db.execute(
-        "SELECT e.id, e.title, e.event_date, e.time_slot, e.status, "
-        "c.name as client_name, v.name as venue_name, "
-        "COALESCE(v2.name, '') as venue2_name "
-        "FROM events e "
-        "JOIN clients c ON e.client_id=c.id "
-        "JOIN venues v ON e.venue_id=v.id "
-        "LEFT JOIN venues v2 ON e.venue_id2=v2.id "
-        "WHERE e.event_date >= ? AND e.event_date < ? AND e.status != 'annulé' "
-        "ORDER BY e.event_date",
-        (first, last),
-    ).fetchall()
+    events = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id).outerjoin(Venue, Event.venue_id2 == Venue.id).filter(
+        Event.event_date >= first, Event.event_date < last, Event.status != "annulé"
+    ).order_by(Event.event_date).all()
 
-    return jsonify(events)
+    return jsonify([{
+        "id": e.id, "title": e.title, "event_date": e.event_date,
+        "time_slot": e.time_slot, "status": e.status,
+        "client_name": e.client.name, "venue_name": e.venue.name,
+        "venue2_name": e.venue2.name if e.venue2 else "",
+    } for e in events])
+
+
+# ─── Dict converters (for PDF generators that expect dicts) ──────────
+def _event_to_dict(e):
+    return {c.name: getattr(e, c.name) for c in e.__table__.columns} | {
+        "client_name": e.client.name, "phone": e.client.phone, "phone2": e.client.phone2,
+        "email": e.client.email, "address": e.client.address,
+        "venue_name": e.venue.name, "capacity_men": e.venue.capacity_men,
+        "capacity_women": e.venue.capacity_women,
+        "venue2_name": e.venue2.name if e.venue2 else "",
+    }
+
+def _payment_to_dict(p):
+    return {c.name: getattr(p, c.name) for c in p.__table__.columns}
+
+def _line_to_dict(l):
+    return {c.name: getattr(l, c.name) for c in l.__table__.columns}

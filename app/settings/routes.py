@@ -1,11 +1,9 @@
-"""Samba Fête — Settings blueprint."""
+"""Samba Fête — Settings blueprint (SQLAlchemy ORM)."""
 import logging
-
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
-from models import get_setting, set_setting
 
-from app.db import get_db_connection
+from app.models import db, Venue, Setting
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("settings", __name__, template_folder="../templates")
@@ -14,51 +12,34 @@ bp = Blueprint("settings", __name__, template_folder="../templates")
 @bp.route("/parametres", methods=["GET", "POST"])
 @login_required
 def settings():
-    """Page de paramètres."""
-    db = get_db_connection()
     if request.method == "POST":
-        for venue_id in request.form.getlist("venue_id"):
-            cap_m = request.form.get(f"capacity_men_{venue_id}", 0, type=int)
-            cap_w = request.form.get(f"capacity_women_{venue_id}", 0, type=int)
-            db.execute(
-                "UPDATE venues SET capacity_men=?, capacity_women=? WHERE id=?",
-                (cap_m, cap_w, venue_id),
-            )
-        set_setting("deposit_min", str(request.form.get("deposit_min", 0, type=float)))
-        set_setting("hall_name", request.form.get("hall_name", "Samba Fête"))
-        set_setting("currency", request.form.get("currency", "DA"))
-
+        for vid in request.form.getlist("venue_id"):
+            v = Venue.query.get(int(vid))
+            if v:
+                v.capacity_men = request.form.get(f"capacity_men_{vid}", 0, type=int)
+                v.capacity_women = request.form.get(f"capacity_women_{vid}", 0, type=int)
+        Setting.set("deposit_min", str(request.form.get("deposit_min", 0, type=float)))
+        Setting.set("hall_name", request.form.get("hall_name", "Samba Fête"))
+        Setting.set("currency", request.form.get("currency", "DA"))
         new_name = request.form.get("new_venue_name", "").strip()
         if new_name:
-            db.execute(
-                "INSERT INTO venues (name, capacity_men, capacity_women) VALUES (?,?,?)",
-                (new_name, request.form.get("new_venue_cap_m", 0, type=int),
-                 request.form.get("new_venue_cap_w", 0, type=int)),
-            )
-        db.commit()
+            db.session.add(Venue(name=new_name, capacity_men=request.form.get("new_venue_cap_m", 0, type=int),
+                                 capacity_women=request.form.get("new_venue_cap_w", 0, type=int)))
+        db.session.commit()
         flash("Paramètres enregistrés!", "success")
 
-    venues = db.execute("SELECT * FROM venues ORDER BY id").fetchall()
-    return render_template(
-        "settings/settings.html", venues=venues,
-        deposit_min=get_setting("deposit_min", "20000"),
-        hall_name=get_setting("hall_name", "Samba Fête"),
-        currency=get_setting("currency", "DA"),
-    )
+    return render_template("settings/settings.html", venues=Venue.query.order_by(Venue.id).all(),
+                           deposit_min=Setting.get("deposit_min", "20000"),
+                           hall_name=Setting.get("hall_name", "Samba Fête"),
+                           currency=Setting.get("currency", "DA"))
 
 
 @bp.route("/parametres/lieu/<int:venue_id>/supprimer", methods=["POST"])
 @login_required
 def delete_venue(venue_id):
-    """Supprime un lieu s'il n'a pas d'événements."""
-    db = get_db_connection()
-    count = db.execute(
-        "SELECT COUNT(*) as c FROM events WHERE venue_id=?", (venue_id,)
-    ).fetchone()["c"]
-    if count > 0:
+    v = Venue.query.get_or_404(venue_id)
+    if v.events.count() > 0:
         flash("Impossible de supprimer: ce lieu a des événements", "danger")
     else:
-        db.execute("DELETE FROM venues WHERE id=?", (venue_id,))
-        db.commit()
-        flash("Lieu supprimé", "success")
+        db.session.delete(v); db.session.commit(); flash("Lieu supprimé", "success")
     return redirect(url_for("settings.settings"))

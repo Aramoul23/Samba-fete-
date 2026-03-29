@@ -109,78 +109,71 @@ def insert_service_lines(db, event_id, form_data):
     return inserted
 
 
-def validate_event_date(db, event_date, event_id=0):
+def validate_event_date(db_or_date, event_date_or_id=0, event_id=0):
     """Check for double-bookings on the same date.
 
-    Returns:
-        list of error strings (empty = no conflicts).
+    Can be called as:
+      validate_event_date(event_date, event_id)  — ORM version (bookings routes)
+      validate_event_date(db, event_date, event_id) — legacy raw SQL
     """
-    errors = []
+    # Auto-detect call signature
+    if isinstance(db_or_date, str) or db_or_date is None:
+        # ORM call: validate_event_date(event_date, event_id)
+        event_date = db_or_date
+        eid = event_date_or_id or 0
+    else:
+        # Legacy call: validate_event_date(db, event_date, event_id)
+        event_date = event_date_or_id
+        eid = event_id or 0
+
     if not event_date:
-        return errors
+        return []
 
-    conflict = db.execute(
-        "SELECT e.id, e.title, e.status, COALESCE(v.name, '') as venue_name "
-        "FROM events e LEFT JOIN venues v ON e.venue_id = v.id "
-        "WHERE e.event_date = ? AND e.status IN ('confirmé', 'en attente') AND e.id != ?",
-        (event_date, event_id or 0),
-    ).fetchone()
+    from app.models import Event
+    conflict = Event.query.filter(
+        Event.event_date == event_date,
+        Event.status.in_(["confirmé", "en attente"]),
+        Event.id != (eid or 0),
+    ).first()
 
-    if conflict:
-        venue_label = f" ({conflict['venue_name']})" if conflict["venue_name"] else ""
-        if conflict["status"] == "confirmé":
-            errors.append(
-                f"⛔ Date déjà réservée! '{conflict['title']}' est prévu le "
-                f"{event_date}{venue_label} — 🔒 Cette date est verrouillée"
-            )
-        else:
-            errors.append(
-                f"⚠️ Attention! '{conflict['title']}' est en attente pour le "
-                f"{event_date}{venue_label} — La validation est en cours"
-            )
-    return errors
+    if not conflict:
+        return []
+
+    venue_label = f" ({conflict.venue.name})" if conflict.venue else ""
+    if conflict.status == "confirmé":
+        return [f"⛔ Date réservée! '{conflict.title}' le {event_date}{venue_label} — 🔒 verrouillée"]
+    return [f"⚠️ '{conflict.title}' en attente pour le {event_date}{venue_label}"]
 
 
-def check_pending_events(db):
+def check_pending_events(db=None):
     """Return events 'en attente' for more than 48h (next 30 days only)."""
-    now = datetime.now()
-    threshold = (now - timedelta(hours=48)).strftime("%Y-%m-%d %H:%M:%S")
+    from app.models import Event
+    threshold = (datetime.now() - timedelta(hours=48)).strftime("%Y-%m-%d %H:%M:%S")
     future_date = (date.today() + timedelta(days=30)).isoformat()
     today = date.today().isoformat()
 
-    return db.execute(
-        "SELECT id, title, created_at, event_date FROM events "
-        "WHERE status = 'en attente' "
-        "AND event_date BETWEEN ? AND ? "
-        "AND created_at < ?",
-        (today, future_date, threshold),
-    ).fetchall()
+    return Event.query.filter(
+        Event.status == "en attente",
+        Event.event_date.between(today, future_date),
+        Event.created_at < threshold,
+    ).all()
 
 
-def get_event_financials(db, event_id):
-    """Complete financial summary for one event (single-connection version)."""
-    revenue = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) as t FROM event_lines WHERE event_id=? AND is_cost=0",
-        (event_id,),
-    ).fetchone()["t"]
+def get_event_financials(event_id):
+    """Complete financial summary for one event (SQLAlchemy version)."""
+    from app.models import db, EventLine, Payment, Event
+    from sqlalchemy import func
 
-    costs = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) as t FROM event_lines WHERE event_id=? AND is_cost=1",
-        (event_id,),
-    ).fetchone()["t"]
-
-    paid = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) as t FROM payments WHERE event_id=? AND is_refunded=0",
-        (event_id,),
-    ).fetchone()["t"]
-
-    refunded = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) as t FROM payments WHERE event_id=? AND is_refunded=1",
-        (event_id,),
-    ).fetchone()["t"]
-
-    event = db.execute("SELECT total_amount FROM events WHERE id=?", (event_id,)).fetchone()
-    event_total = event["total_amount"] if event else 0
+    revenue = db.session.query(func.coalesce(func.sum(EventLine.amount), 0)).filter(
+        EventLine.event_id == event_id, EventLine.is_cost == 0).scalar()
+    costs = db.session.query(func.coalesce(func.sum(EventLine.amount), 0)).filter(
+        EventLine.event_id == event_id, EventLine.is_cost == 1).scalar()
+    paid = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.event_id == event_id, Payment.is_refunded == 0).scalar()
+    refunded = db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+        Payment.event_id == event_id, Payment.is_refunded == 1).scalar()
+    event = db.session.get(Event, event_id)
+    event_total = event.total_amount if event else 0
 
     return {
         "revenue": float(revenue),
