@@ -1,102 +1,175 @@
-/* ═══════════════════════════════════════════════════════
-   Samba Fête — Main JavaScript
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   Samba Fête — HTMX-enhanced interactions
+   ═══════════════════════════════════════════════════════════════════ */
 
-// ─── Sidebar Toggle (Mobile) ────────────────────────
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-    if (sidebar) {
-        sidebar.classList.toggle('open');
-        if (overlay) {
-            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
-        }
-    }
+// ── FullCalendar Integration ────────────────────────────────────────
+function initCalendar(containerId, eventsUrl) {
+    const container = document.getElementById(containerId);
+    if (!container || typeof FullCalendar === 'undefined') return;
+
+    const calendar = new FullCalendar.Calendar(container, {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        events: eventsUrl,
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            if (info.event.url) {
+                window.location.href = info.event.url;
+            }
+        },
+        eventContent: function(arg) {
+            const status = arg.event.extendedProps.status;
+            const colors = {
+                'confirmé': '#06d6a0',
+                'en attente': '#ffd166',
+                'annulé': '#ef476f',
+                'changé de date': '#118ab2',
+                'terminé': '#8d99ae'
+            };
+            arg.event.setProp('backgroundColor', colors[status] || '#6C63FF');
+            arg.event.setProp('borderColor', colors[status] || '#6C63FF');
+        },
+        height: 'auto',
+        dayMaxEvents: 3,
+        navLinks: true,
+        nowIndicator: true,
+    });
+
+    calendar.render();
+    return calendar;
 }
 
-// ─── Swipe Gestures for Mobile ──────────────────────
-(function() {
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    document.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-    
-    document.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
-    
-    function handleSwipe() {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar) return;
-        
-        const diff = touchEndX - touchStartX;
-        const threshold = 80;
-        
-        // Swipe right to open sidebar
-        if (diff > threshold && touchStartX < 30) {
-            sidebar.classList.add('open');
-            document.querySelector('.sidebar-overlay')?.classList.add('active');
-        }
-        // Swipe left to close sidebar
-        else if (diff < -threshold && sidebar.classList.contains('open')) {
-            sidebar.classList.remove('open');
-            document.querySelector('.sidebar-overlay')?.classList.remove('active');
-        }
-    }
-})();
+// ── Live Search ─────────────────────────────────────────────────────
+function initLiveSearch(inputId, targetUrl, containerId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
 
-// ─── Auto-dismiss alerts ─────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.alert-dismissible');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-            bsAlert.close();
-        }, 5000);
+    let timeout;
+    input.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const q = input.value.trim();
+            const url = q ? `${targetUrl}?q=${encodeURIComponent(q)}` : targetUrl;
+            htmx.ajax('GET', url, {target: `#${containerId}`, swap: 'innerHTML'});
+        }, 300);
+    });
+}
+
+// ── PDF Preview Modal ───────────────────────────────────────────────
+function previewPDF(url, title) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white; border-radius: 16px; width: 90%; max-width: 900px;
+        height: 85vh; display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    `;
+
+    content.innerHTML = `
+        <div style="padding: 16px 20px; display: flex; justify-content: space-between;
+                    align-items: center; border-bottom: 1px solid #eee;">
+            <h3 style="margin: 0; font-size: 1.1rem;">${title || 'Aperçu PDF'}</h3>
+            <div style="display: flex; gap: 8px;">
+                <a href="${url}" download class="btn btn-sm btn-success">
+                    <i class="fas fa-download"></i> Télécharger
+                </a>
+                <button onclick="this.closest('[style*=fixed]').remove()"
+                        class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times"></i> Fermer
+                </button>
+            </div>
+        </div>
+        <iframe src="${url}" style="flex: 1; border: none;"></iframe>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Close on overlay click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
     });
 
-    // Format currency inputs
-    const currencyInputs = document.querySelectorAll('input[name="total_amount"], input[name="deposit_required"], input[name="amount"], input[name^="line_amount"]');
-    currencyInputs.forEach(function(input) {
-        input.addEventListener('blur', function() {
-            if (this.value) {
-                this.value = Math.round(parseFloat(this.value) || 0);
-            }
-        });
+    // Close on Escape
+    document.addEventListener('keydown', function handler(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', handler);
+        }
     });
+}
 
-    // Form validation for deposit
-    const depositInput = document.querySelector('input[name="deposit_required"]');
-    if (depositInput) {
-        depositInput.addEventListener('change', function() {
-            if (parseFloat(this.value) < 20000) {
-                this.value = 20000;
-                showToast('L\'acompte minimum est de 20,000 DA', 'warning');
-            }
-        });
+// ── HTMX Event Handlers ─────────────────────────────────────────────
+document.addEventListener('htmx:beforeRequest', function(e) {
+    // Show loading spinner on the triggering element
+    const el = e.detail.elt;
+    if (el.tagName === 'BUTTON' || el.classList.contains('btn')) {
+        el.classList.add('btn-loading');
     }
 });
 
-// ─── Toast Notifications ─────────────────────────────
-function showToast(message, type) {
-    const container = document.getElementById('toast-container') || createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast-item toast-${type}`;
-    toast.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
-        <span>${message}</span>
+document.addEventListener('htmx:afterRequest', function(e) {
+    const el = e.detail.elt;
+    el.classList.remove('btn-loading');
+
+    // Flash messages for HTMX responses
+    if (e.detail.xhr.getResponseHeader('X-Flash-Message')) {
+        const msg = e.detail.xhr.getResponseHeader('X-Flash-Message');
+        const cat = e.detail.xhr.getResponseHeader('X-Flash-Category') || 'info';
+        showFlash(msg, cat);
+    }
+});
+
+// ── Flash Messages ──────────────────────────────────────────────────
+function showFlash(message, category) {
+    const container = document.querySelector('.container-fluid.px-4');
+    if (!container) return;
+
+    const icons = {
+        success: 'check-circle', danger: 'exclamation-circle',
+        warning: 'exclamation-triangle', info: 'info-circle'
+    };
+
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${category} alert-dismissible fade show mt-3`;
+    alert.innerHTML = `
+        <i class="fas fa-${icons[category] || 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
+    container.insertBefore(alert, container.firstChild);
+
+    // Auto-dismiss after 5s
+    setTimeout(() => alert.remove(), 5000);
 }
 
-function createToastContainer() {
-    const div = document.createElement('div');
-    div.id = 'toast-container';
-    div.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
-    document.body.appendChild(div);
-    return div;
+// ── Sidebar Toggle ──────────────────────────────────────────────────
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('active');
 }
+
+// ── Auto-inject CSRF ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    // Flatpickr date inputs
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr('input[type="date"], input[name="event_date"], input[name="expense_date"]', {
+            dateFormat: 'Y-m-d',
+            locale: 'fr',
+            allowInput: true,
+        });
+    }
+});

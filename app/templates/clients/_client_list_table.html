@@ -1,0 +1,48 @@
+{# Partial: Client list table #}
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Téléphone</th>
+                    <th>Email</th>
+                    <th>Événements</th>
+                    <th>Total facturé</th>
+                    <th>Solde</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients %}
+                <tr class="clickable-row" onclick="window.location='{{ url_for("clients.client_detail", client_id=c.id) }}'">
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.phone }}</td>
+                    <td>{{ c.email or '—' }}</td>
+                    <td><span class="badge bg-secondary">{{ c.event_count }}</span></td>
+                    <td>{{ c.total_owed | format_da }}</td>
+                    <td>
+                        {% set balance = c.total_owed - c.total_paid %}
+                        <span class="text-{{ 'success' if balance <= 0 else 'danger' }}">
+                            {{ balance | format_da }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('clients.client_detail', client_id=c.id) }}"
+                           class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation()">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                        Aucun client trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
