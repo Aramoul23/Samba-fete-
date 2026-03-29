@@ -170,7 +170,7 @@ def _financials_impl():
             func.coalesce(func.sum(case((EventLine.is_cost == 1, EventLine.amount), else_=0)), 0).label("total_costs"),
         ).join(Client).outerjoin(EventLine).filter(
             Event.event_date.between(sd, ed), Event.status != "annulé"
-        ).group_by(Event.id).order_by(Event.event_date.desc()).all()
+        ).group_by(Event.id, Client.name).order_by(Event.event_date.desc()).all()
     except Exception:
         logger.error("FAILED: ef_raw query", exc_info=True)
         raise
