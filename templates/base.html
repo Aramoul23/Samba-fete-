@@ -26,52 +26,52 @@
         <ul class="sidebar-nav">
             <li class="nav-section-title">Principal</li>
             <li class="nav-item">
-                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                <a href="{{ url_for('finance.dashboard') }}" class="nav-link {% if request.endpoint == 'finance.dashboard' %}active{% endif %}">
                     <i class="fas fa-th-large"></i> <span>Tableau de Bord</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('calendar_view') }}" class="nav-link {% if request.endpoint == 'calendar_view' %}active{% endif %}">
+                <a href="{{ url_for('bookings.calendar_view') }}" class="nav-link {% if request.endpoint == 'bookings.calendar_view' %}active{% endif %}">
                     <i class="fas fa-calendar-alt"></i> <span>Calendrier</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('event_list') }}" class="nav-link {% if request.endpoint == 'event_list' %}active{% endif %}">
+                <a href="{{ url_for('bookings.event_list') }}" class="nav-link {% if request.endpoint == 'bookings.event_list' %}active{% endif %}">
                     <i class="fas fa-list-ul"></i> <span>Événements</span>
                 </a>
             </li>
 
             <li class="nav-item">
-                <a href="{{ url_for('quick_payment') }}" class="nav-link {% if request.endpoint == 'quick_payment' %}active{% endif %}" style="background: rgba(6, 214, 160, 0.1);">
+                <a href="{{ url_for('bookings.quick_payment') }}" class="nav-link {% if request.endpoint == 'bookings.quick_payment' %}active{% endif %}" style="background: rgba(6, 214, 160, 0.1);">
                     <i class="fas fa-bolt" style="color: var(--success);"></i> <span>Paiement Rapide</span>
                 </a>
             </li>
 
             <li class="nav-section-title">Gestion</li>
             <li class="nav-item">
-                <a href="{{ url_for('client_list') }}" class="nav-link {% if request.endpoint == 'client_list' or request.endpoint == 'client_detail' %}active{% endif %}">
+                <a href="{{ url_for('clients.client_list') }}" class="nav-link {% if request.endpoint == 'clients.client_list' or request.endpoint == 'clients.client_detail' %}active{% endif %}">
                     <i class="fas fa-users"></i> <span>Clients</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('financials') }}" class="nav-link {% if request.endpoint == 'financials' %}active{% endif %}">
+                <a href="{{ url_for('finance.financials') }}" class="nav-link {% if request.endpoint == 'finance.financials' %}active{% endif %}">
                     <i class="fas fa-chart-line"></i> <span>Finances</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('accounting') }}" class="nav-link {% if request.endpoint == 'accounting' %}active{% endif %}">
+                <a href="{{ url_for('finance.accounting') }}" class="nav-link {% if request.endpoint == 'finance.accounting' %}active{% endif %}">
                     <i class="fas fa-calculator"></i> <span>Comptabilité</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('expenses') }}" class="nav-link {% if request.endpoint == 'expenses' %}active{% endif %}">
+                <a href="{{ url_for('finance.expenses') }}" class="nav-link {% if request.endpoint == 'finance.expenses' %}active{% endif %}">
                     <i class="fas fa-receipt"></i> <span>Dépenses</span>
                 </a>
             </li>
             <li class="sidebar-divider"></li>
 
             <li class="nav-item">
-                <a href="{{ url_for('event_form') }}" class="nav-link {% if request.endpoint == 'event_form' %}active{% endif %}">
+                <a href="{{ url_for('bookings.event_form') }}" class="nav-link {% if request.endpoint == 'bookings.event_form' %}active{% endif %}">
                     <i class="fas fa-plus-circle"></i> <span>Nouvel Événement</span>
                 </a>
             </li>
@@ -80,13 +80,13 @@
         <div class="sidebar-footer">
             {% if current_user.is_authenticated %}
             <li class="nav-item" style="list-style: none;">
-                <a href="{{ url_for('settings') }}" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                <a href="{{ url_for('settings.settings') }}" class="nav-link {% if request.endpoint == 'settings.settings' %}active{% endif %}">
                     <i class="fas fa-cog"></i> <span>Paramètres</span>
                 </a>
             </li>
             {% if current_user.role == 'admin' %}
             <li class="nav-item" style="list-style: none;">
-                <a href="{{ url_for('users') }}" class="nav-link {% if request.endpoint == 'users' %}active{% endif %}">
+                <a href="{{ url_for('auth.users') }}" class="nav-link {% if request.endpoint == 'auth.users' %}active{% endif %}">
                     <i class="fas fa-users-cog"></i> <span>Utilisateurs</span>
                 </a>
             </li>
@@ -116,14 +116,14 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text text-muted small">{{ current_user.username }} ({{ current_user.role }})</span></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
                     </ul>
                 </div>
                 {% endif %}
-                <a href="{{ url_for('client_list') }}" class="btn btn-outline-gold btn-sm" title="Clients">
+                <a href="{{ url_for('clients.client_list') }}" class="btn btn-outline-gold btn-sm" title="Clients">
                     <i class="fas fa-users"></i>
                 </a>
-                <a href="{{ url_for('event_form') }}" class="btn btn-primary btn-sm">
+                <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> <span class="d-none d-sm-inline">Nouvel Événement</span>
                 </a>
             </div>

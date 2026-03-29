@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% block title %}Paiement Rapide{% endblock %}
+{% block page_title %}<i class="fas fa-bolt me-2"></i>Paiement Rapide{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Step 1: Search Client -->
+    <div class="card-custom mb-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0">
+                <span class="badge bg-primary me-2" style="font-size: 0.75rem;">1</span>
+                Rechercher un Client
+            </h5>
+        </div>
+        <div class="card-body-custom">
+            <form method="GET" action="{{ url_for('bookings.quick_payment') }}" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label-elegant">Nom ou Téléphone</label>
+                    <input type="text" name="q" class="form-input-elegant form-control-lg" 
+                           value="{{ search }}" placeholder="Tapez le nom ou le téléphone du client..."
+                           autofocus autocomplete="off">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-search me-2"></i>Rechercher
+                    </button>
+                </div>
+            </form>
+
+            {% if search and not selected_client %}
+            <!-- Search Results -->
+            {% if clients %}
+            <div class="mt-4">
+                <p class="text-muted mb-3">{{ clients|length }} résultat(s) trouvé(s)</p>
+                <div class="row g-3">
+                    {% for c in clients %}
+                    <div class="col-md-4">
+                        <a href="{{ url_for('quick_payment', client_id=c.id) }}" class="text-decoration-none">
+                            <div class="client-pick-card">
+                                <div class="client-pick-name">{{ c.name }}</div>
+                                <div class="client-pick-phone"><i class="fas fa-phone me-1"></i>{{ c.phone }}</div>
+                                <div class="client-pick-meta">
+                                    <span class="badge-slot">{{ c.active_events }} événement(s)</span>
+                                    {% if c.total_owed > 0 %}
+                                    <span class="badge-amount" style="background: var(--warning-soft); color: #8a6d1b;">
+                                        {{ c.total_owed | format_da }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state mt-4">
+                <i class="fas fa-user-slash"></i>
+                <p>Aucun client trouvé pour "{{ search }}"</p>
+                <a href="{{ url_for('bookings.event_form') }}" class="btn btn-outline-gold">
+                    <i class="fas fa-plus me-2"></i>Créer un Nouveau Client
+                </a>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    {% if selected_client %}
+    <!-- Step 2: Select Event -->
+    <div class="card-custom mb-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0">
+                <span class="badge bg-primary me-2" style="font-size: 0.75rem;">2</span>
+                Sélectionner l'Événement — {{ selected_client.name }}
+            </h5>
+            <a href="{{ url_for('quick_payment', q=search) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Changer de client
+            </a>
+        </div>
+        <div class="card-body-custom">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="detail-label">Client</div>
+                    <div class="detail-value" style="font-weight: 600; font-size: 1.1rem;">{{ selected_client.name }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-label">Téléphone</div>
+                    <div class="detail-value"><a href="tel:{{ selected_client.phone }}">{{ selected_client.phone }}</a></div>
+                </div>
+                {% if selected_client.phone2 %}
+                <div class="col-md-4">
+                    <div class="detail-label">Téléphone 2</div>
+                    <div class="detail-value">{{ selected_client.phone2 }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if client_events %}
+            <div class="table-responsive mt-4">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Événement</th>
+                            <th>Date</th>
+                            <th class="d-none d-md-table-cell">Lieu</th>
+                            <th class="text-end d-none d-md-table-cell">Total</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Reste</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ev in client_events %}
+                        {% set reste = ev.total_amount - ev.total_paid %}
+                        <tr {% if selected_event_id == ev.id %}style="background: var(--primary-soft);"{% endif %}>
+                            <td style="font-weight: 500;">{{ ev.title }}</td>
+                            <td>{{ ev.event_date|date_only }}</td>
+                            <td>{{ ev.venue_name }}</td>
+                            <td class="text-end" style="font-weight: 600;">{{ ev.total_amount | format_da }}</td>
+                            <td class="text-end" style="font-weight: 600; color: var(--success);">{{ ev.total_paid | format_da }}</td>
+                            <td class="text-end" style="font-weight: 700; color: {% if reste > 0 %}var(--danger){% else %}var(--success){% endif %};">
+                                {{ reste | format_da }}
+                            </td>
+                            <td class="text-center">
+                                {% if reste > 0 %}
+                                <a href="{{ url_for('quick_payment', client_id=selected_client.id, event_id=ev.id, q=search) }}"
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                                </a>
+                                {% else %}
+                                <span class="badge-status status-confirmé" style="font-size: 0.7rem;">Soldé ✓</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state mt-3">
+                <i class="fas fa-calendar-times"></i>
+                <p>Aucun événement actif pour ce client</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if selected_event %}
+    <!-- Step 3: Record Payment -->
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <span class="badge bg-success me-2" style="font-size: 0.75rem;">3</span>
+                        Encaisser le Paiement
+                    </h5>
+                    <a href="{{ url_for('quick_payment', client_id=selected_client.id, q=search) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Autre événement
+                    </a>
+                </div>
+                <div class="card-body-custom">
+                    <!-- Event Info -->
+                    <div class="quick-pay-event-header mb-4">
+                        <h5 style="margin-bottom: 4px;">{{ selected_event.title }}</h5>
+                        <div class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ selected_event.client_name }}
+                            <span class="mx-2">·</span>
+                            <i class="fas fa-calendar me-1"></i>{{ selected_event.event_date|date_only }}
+                            <span class="mx-2">·</span>
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ selected_event.venue_name }}
+                        </div>
+                    </div>
+
+                    <!-- Quick Payment Buttons -->
+                    <div class="mb-4">
+                        <label class="form-label-elegant mb-2">Paiement Rapide</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if event_financials.remaining > 0 %}
+                            <button type="button" class="btn btn-success btn-lg quick-pay-btn" 
+                                    data-amount="{{ event_financials.remaining }}">
+                                💰 Solde Complet<br>
+                                <small style="font-size: 0.75rem;">{{ event_financials.remaining | format_da }}</small>
+                            </button>
+                            {% endif %}
+                            {% if event_financials.remaining >= 50000 %}
+                            <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
+                                    data-amount="50000">
+                                💵 50,000 DA
+                            </button>
+                            {% elif event_financials.remaining > 0 %}
+                            <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
+                                    data-amount="{{ event_financials.remaining }}">
+                                💵 {{ event_financials.remaining | format_da }}
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
+                                    data-amount="20000">
+                                💵 20,000 DA
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-lg quick-pay-btn" 
+                                    data-amount="30000">
+                                💵 30,000 DA
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form method="POST" action="{{ url_for('add_payment', event_id=selected_event.id) }}" id="quickPaymentForm">
+                        <input type="hidden" name="next" value="{{ url_for('quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Montant (DA) *</label>
+                                <div class="input-group">
+                                    <input type="number" name="amount" id="paymentAmount" class="form-input-elegant form-control-lg" 
+                                           step="100" min="1" required autofocus>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Méthode</label>
+                                <select name="method" class="form-input-elegant form-control-lg">
+                                    <option value="espèces">💵 Espèces</option>
+                                    <option value="chèque">📝 Chèque</option>
+                                    <option value="virement">🏦 Virement</option>
+                                    <option value="carte">💳 Carte</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-elegant">Type</label>
+                                <input type="text" class="form-input-elegant form-control-lg" id="paymentTypeDisplay" value="Avance" readonly style="background: var(--bg-subtle); cursor: default;">
+                                <input type="hidden" name="payment_type" id="paymentType" value="avance">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Référence</label>
+                                <input type="text" name="reference" class="form-input-elegant" placeholder="N° chèque, virement...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Notes</label>
+                                <input type="text" name="notes" class="form-input-elegant" placeholder="Optionnel">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success btn-lg w-100" id="submitPaymentBtn">
+                                <i class="fas fa-check-circle me-2"></i>Enregistrer le Paiement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Summary & History -->
+        <div class="col-lg-5">
+            <!-- Financial Summary -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Résumé</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Montant Total</span>
+                            <strong>{{ event_financials.total | format_da }}</strong>
+                        </div>
+                        <hr style="margin: 8px 0; border-color: var(--border-light);">
+                        <div class="summary-row">
+                            <span>Total Payé</span>
+                            <strong class="text-success">{{ event_financials.paid | format_da }}</strong>
+                        </div>
+                        {% if event_financials.refunded > 0 %}
+                        <div class="summary-row">
+                            <span>Remboursé</span>
+                            <strong class="text-danger">{{ event_financials.refunded | format_da }}</strong>
+                        </div>
+                        {% endif %}
+                        <hr style="margin: 8px 0; border-color: var(--border-light);">
+                        <div class="summary-row total-row">
+                            <span>Reste à Payer</span>
+                            <strong class="{% if event_financials.remaining > 0 %}text-danger{% else %}text-success{% endif %}"
+                                    style="font-size: 1.25rem;">
+                                {{ event_financials.remaining | format_da }}
+                            </strong>
+                        </div>
+                    </div>
+                    <!-- Progress Bar -->
+                    {% set pct = (event_financials.paid / event_financials.total * 100) if event_financials.total > 0 else 0 %}
+                    <div class="mt-3">
+                        <div class="progress-label">
+                            <span>Progression</span>
+                            <strong>{{ "%.0f"|format(pct) }}%</strong>
+                        </div>
+                        <div class="progress payment-progress" style="height: 12px;">
+                            <div class="progress-bar bg-gold" style="width: {{ pct }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique</h5>
+                    <a href="{{ url_for('event_detail', event_id=selected_event.id) }}" class="btn btn-sm btn-outline-gold">
+                        <i class="fas fa-external-link-alt me-1"></i>Détails
+                    </a>
+                </div>
+                <div class="card-body-custom" style="padding-top: 8px;">
+                    {% if event_payments %}
+                        {% for p in event_payments %}
+                        <div class="payment-item {% if p.is_refunded %}opacity-50{% endif %}">
+                            <div class="payment-info">
+                                <strong>
+                                    {% if p.is_refunded %}<del>{% endif %}
+                                    {{ p.amount | format_da }}
+                                    {% if p.is_refunded %}</del>{% endif %}
+                                </strong>
+                                <small class="text-muted d-block">
+                                    {{ p.payment_date|date_only }} · {{ p.method }} · {{ p.payment_type }}
+                                </small>
+                                {% if p.is_refunded %}
+                                <span class="badge-status" style="background: var(--danger); font-size: 0.6rem;">Remboursé</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-1">
+                                {% if not p.is_refunded %}
+                                <a href="{{ url_for('generate_receipt', event_id=selected_event.id, payment_id=p.id) }}"
+                                   class="btn btn-sm btn-outline-gold" target="_blank" title="Imprimer Reçu">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state small">
+                            <i class="fas fa-receipt"></i>
+                            <p>Aucun paiement enregistré</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Quick payment buttons - with safe default
+const remaining = {{ event_financials.remaining if event_financials and event_financials.remaining else 0 }};
+
+function updatePaymentType() {
+    const amtInput = document.getElementById('paymentAmount');
+    if (!amtInput) return;
+    
+    const amount = parseFloat(amtInput.value) || 0;
+    const typeInput = document.getElementById('paymentType');
+    const typeDisplay = document.getElementById('paymentTypeDisplay');
+    
+    if (remaining > 0 && amount >= remaining) {
+        typeInput.value = 'solde';
+        typeDisplay.value = 'Solde ✓';
+        typeDisplay.style.color = 'var(--success)';
+    } else if (amount > 0) {
+        typeInput.value = 'avance';
+        typeDisplay.value = 'Avance';
+        typeDisplay.style.color = 'var(--warning)';
+    } else {
+        typeInput.value = 'avance';
+        typeDisplay.value = 'Avance';
+        typeDisplay.style.color = 'var(--text)';
+    }
+}
+
+document.querySelectorAll('.quick-pay-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const amount = parseFloat(this.dataset.amount) || 0;
+        document.getElementById('paymentAmount').value = amount;
+        document.getElementById('paymentAmount').focus();
+        document.getElementById('paymentAmount').select();
+        updatePaymentType();
+        
+        // Highlight selected button
+        document.querySelectorAll('.quick-pay-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Auto-detect type when amount changes
+const amountInput = document.getElementById('paymentAmount');
+if (amountInput) {
+    amountInput.addEventListener('input', updatePaymentType);
+    amountInput.focus();
+}
+
+// Validate amount before submit
+const form = document.getElementById('quickPaymentForm');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        const amtInput = document.getElementById('paymentAmount');
+        if (!amtInput) {
+            e.preventDefault();
+            alert(' Champ de montant introuvable');
+            return;
+        }
+        
+        // Clean the value - remove any non-numeric chars except decimal point
+        let valStr = amtInput.value.toString().replace(/[^\d.]/g, '');
+        const val = parseFloat(valStr) || 0;
+        
+        console.log('Submitting payment - amount:', val, 'remaining:', remaining);
+        
+        if (isNaN(val) || val <= 0) {
+            e.preventDefault();
+            alert('Veuillez entrer un montant valide supérieur à 0');
+            return;
+        }
+        if (val > remaining) {
+            e.preventDefault();
+            alert('Le montant dépasse le reste à payer (' + remaining.toLocaleString() + ' DA)');
+            return;
+        }
+    });
+}
+</script>
+
+<style>
+.client-pick-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    transition: all 0.2s var(--ease-out);
+    cursor: pointer;
+}
+.client-pick-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+    transform: translateY(-2px);
+}
+.client-pick-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.client-pick-phone {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 4px 0;
+}
+.client-pick-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+.quick-pay-event-header {
+    background: var(--bg);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary);
+}
+.quick-pay-btn.active {
+    box-shadow: var(--shadow-success);
+    transform: scale(1.02);
+}
+.opacity-50 {
+    opacity: 0.5;
+}
+</style>
+{% endblock %}

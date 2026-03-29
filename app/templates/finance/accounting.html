@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Comptabilité{% endblock %}
+{% block page_title %}Comptabilité & Finances{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Period Filter -->
+    <div class="card-custom mb-4">
+        <div class="card-body-custom">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Date début</label>
+                    <input type="date" name="start_date" class="form-input-elegant" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Date fin</label>
+                    <input type="date" name="end_date" class="form-input-elegant" value="{{ end_date }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="dropdown d-inline">
+                        <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Exporter
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('export_pl', start_date=start_date, end_date=end_date) }}">
+                                <i class="fas fa-file-excel me-2"></i>Rapport P&L (ODS)
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('export_expenses', start_date=start_date, end_date=end_date) }}">
+                                <i class="fas fa-file-excel me-2"></i>Dépenses (ODS)
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('export_finances', start_date=start_date, end_date=end_date) }}">
+                                <i class="fas fa-file-excel me-2"></i>Revenus (ODS)
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success-soft">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.125rem;">{{ total_income | format_da }}</span>
+                    <span class="stat-label">Revenus Totaux</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger-soft">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.125rem;">{{ total_expenses | format_da }}</span>
+                    <span class="stat-label">Dépenses Totales</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon {% if net_profit >= 0 %}bg-success-soft{% else %}bg-danger-soft{% endif %}">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value {% if net_profit < 0 %}text-danger{% endif %}" style="font-size: 1.125rem;">
+                        {{ net_profit | format_da }}
+                    </span>
+                    <span class="stat-label">Bénéfice Net</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-soft">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="font-size: 1.125rem;">{{ "%.1f"|format(profit_margin) }}%</span>
+                    <span class="stat-label">Marge Bénéficiaire</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Flow Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>Flux de Trésorerie</h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span><i class="fas fa-arrow-down text-success me-2"></i>Entrées (Paiements reçus)</span>
+                            <strong class="text-success">{{ total_income | format_da }}</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-arrow-up text-danger me-2"></i>Sorties (Dépenses payées)</span>
+                            <strong class="text-danger">{{ total_expenses | format_da }}</strong>
+                        </div>
+                        <hr style="border-color: var(--border-light);">
+                        <div class="summary-row total-row">
+                            <span><i class="fas fa-balance-scale me-2"></i>Flux Net</span>
+                            <strong class="{% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ net_profit | format_da }}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <!-- Cash Flow Bar -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2" style="font-size: 0.75rem; color: var(--text-secondary);">
+                            <span>Entrées</span>
+                            <span>Sorties</span>
+                        </div>
+                        <div style="height: 24px; background: var(--bg); border-radius: var(--radius-full); overflow: hidden; position: relative;">
+                            {% set income_pct = (total_income / (total_income + total_expenses) * 100) if (total_income + total_expenses) > 0 else 50 %}
+                            <div style="position: absolute; left: 0; top: 0; height: 100%; width: {{ income_pct }}%; background: linear-gradient(90deg, var(--success), #34e4b5); border-radius: var(--radius-full) 0 0 var(--radius-full);"></div>
+                            <div style="position: absolute; right: 0; top: 0; height: 100%; width: {{ 100 - income_pct }}%; background: linear-gradient(90deg, #dc3545, var(--danger)); border-radius: 0 var(--radius-full) var(--radius-full) 0;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Dépenses par Catégorie</h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if expenses_by_category %}
+                    {% for cat in expenses_by_category %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-size: 0.875rem; font-weight: 500;">{{ cat.category }}</span>
+                            <span style="font-size: 0.875rem; font-weight: 600;">{{ cat.total | format_da }}</span>
+                        </div>
+                        <div style="height: 8px; background: var(--bg); border-radius: var(--radius-full); overflow: hidden;">
+                            <div style="height: 100%; width: {{ (cat.total / total_expenses * 100) if total_expenses else 0 }}%; background: linear-gradient(90deg, var(--danger), #f38ba0); border-radius: var(--radius-full);"></div>
+                        </div>
+                        <small class="text-muted">{{ cat.count }} transaction(s) · {{ "%.1f"|format((cat.total / total_expenses * 100) if total_expenses else 0) }}%</small>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state small">
+                        <i class="fas fa-receipt"></i>
+                        <p>Aucune dépense</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit & Loss Table -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Compte de Résultat Mensuel (P&L)</h5>
+            <a href="{{ url_for('export_pl', start_date=start_date, end_date=end_date) }}" class="btn btn-sm btn-success">
+                <i class="fas fa-download me-1"></i> Exporter ODS
+            </a>
+        </div>
+        <div class="card-body-custom" style="padding: 0;">
+            {% if monthly_pl %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Mois</th>
+                            <th class="text-end">Revenus</th>
+                            <th class="text-end d-none d-md-table-cell">Dépenses</th>
+                            <th class="text-end">Bénéfice Net</th>
+                            <th class="text-end d-none d-md-table-cell">Marge</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for month in monthly_pl %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ month.month_name }}</td>
+                            <td class="text-end text-success" style="font-variant-numeric: tabular-nums;">{{ month.income | format_da }}</td>
+                            <td class="text-end text-danger" style="font-variant-numeric: tabular-nums;">{{ month.expenses | format_da }}</td>
+                            <td class="text-end" style="font-weight: 700; font-variant-numeric: tabular-nums; {% if month.profit >= 0 %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                                {{ month.profit | format_da }}
+                            </td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums;">
+                                {% if month.income > 0 %}
+                                <span class="badge-slot {% if month.margin >= 0 %}{% else %}style="background: var(--danger-soft); color: var(--danger);"{% endif %}">
+                                    {{ "%.1f"|format(month.margin) }}%
+                                </span>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--bg); font-weight: 700;">
+                            <td>TOTAL</td>
+                            <td class="text-end text-success">{{ total_income | format_da }}</td>
+                            <td class="text-end text-danger">{{ total_expenses | format_da }}</td>
+                            <td class="text-end {% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ net_profit | format_da }}
+                            </td>
+                            <td class="text-end">{{ "%.1f"|format(profit_margin) }}%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-chart-bar"></i>
+                <p>Aucune donnée pour cette période</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

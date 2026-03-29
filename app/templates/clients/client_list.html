@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Liste des Clients{% endblock %}
+{% block page_title %}Clients{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search -->
+    <div class="card-custom mb-4">
+        <div class="card-body-custom">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label-elegant">Rechercher un client</label>
+                    <input type="text" name="q" class="form-input-elegant"
+                           placeholder="Nom, téléphone, email..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Rechercher
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('clients.client_list') }}" class="btn btn-outline-secondary w-100">
+                        Réinitialiser
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('export_clients', q=search) }}" class="btn btn-success w-100">
+                        <i class="fas fa-download me-1"></i> Exporter ODS
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clients Grid -->
+    {% if clients %}
+    <div class="row g-4">
+        {% for c in clients %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('client_detail', client_id=c.id) }}" class="text-decoration-none">
+                <div class="card-custom client-card h-100">
+                    <div class="card-body-custom">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="client-avatar me-3">
+                                <i class="fas fa-user-circle fa-3x" style="color: var(--primary);"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1" style="color: var(--text); font-weight: 600;">{{ c.name }}</h5>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone me-1"></i>{{ c.phone }}
+                                </small>
+                                {% if c.email %}
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-envelope me-1"></i>{{ c.email }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="stat-mini">
+                                    <span class="stat-mini-value">{{ c.event_count }}</span>
+                                    <span class="stat-mini-label">Événements</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-mini">
+                                    <span class="stat-mini-value" style="font-size: 0.8125rem;">{{ c.total_owed | format_da }}</span>
+                                    <span class="stat-mini-label">Total</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-mini">
+                                    {% set remaining = c.total_owed - c.total_paid %}
+                                    <span class="stat-mini-value {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size: 0.8125rem;">
+                                        {{ remaining | format_da }}
+                                    </span>
+                                    <span class="stat-mini-label">Reste</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-custom">
+        <div class="card-body-custom">
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>Aucun client trouvé</p>
+                <a href="{{ url_for('event_form') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Créer un événement
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

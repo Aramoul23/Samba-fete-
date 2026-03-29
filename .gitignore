@@ -8,3 +8,4 @@ app.log.*
 .venv/
 *.Zone.Identifier
 flask_output.log
+.env

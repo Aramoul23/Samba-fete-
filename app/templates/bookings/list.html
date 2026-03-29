@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Liste des Événements{% endblock %}
+{% block page_title %}Événements{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filters -->
+    <div class="card-custom mb-4">
+        <div class="card-body-custom">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label-elegant">Rechercher</label>
+                    <input type="text" name="q" class="form-input-elegant" placeholder="Titre, client..."
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label-elegant">Statut</label>
+                    <select name="status" class="form-input-elegant">
+                        <option value="">Tous</option>
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Filtrer
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('bookings.event_list') }}" class="btn btn-outline-secondary w-100">
+                        Réinitialiser
+                    </a>
+                </div>
+                <div class="col-md-1">
+                    <div class="dropdown">
+                        <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('export_events', status=status_filter, q=search) }}">
+                                <i class="fas fa-file-excel me-2"></i>Exporter en ODS
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Liste des Événements</h5>
+            <a href="{{ url_for('bookings.event_form') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>Nouvel Événement
+            </a>
+        </div>
+        <div class="card-body-custom" style="padding: 0;">
+            {% if events %}
+            <div class="table-responsive">
+                <table class="table-elegant">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Événement</th>
+                            <th class="d-none d-md-table-cell">Client</th>
+                            <th class="d-none d-lg-table-cell">Lieu</th>
+                            <th class="text-end d-none d-md-table-cell">Total</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Reste</th>
+                            <th>Statut</th>
+                            <th class="text-center d-none d-md-table-cell">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in events %}
+                        {% set reste = e.total_amount - (e.total_paid or 0) %}
+                        <tr class="clickable-row" onclick="window.location='{{ url_for('event_detail', event_id=e.id) }}'">
+                            <td>
+                                <strong>{{ e.event_date|date_only }}</strong>
+                            </td>
+                            <td style="font-weight: 500;">{{ e.title }}</td>
+                            <td class="d-none d-md-table-cell">{{ e.client_name }}</td>
+                            <td class="d-none d-lg-table-cell">{{ e.venue_name }}</td>
+                            <td class="text-end d-none d-md-table-cell" style="font-variant-numeric: tabular-nums; font-weight: 600;">{{ e.total_amount | format_da }}</td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 600; color: var(--success);">{{ (e.total_paid or 0) | format_da }}</td>
+                            <td class="text-end" style="font-variant-numeric: tabular-nums; font-weight: 700; color: {% if reste > 0 %}var(--danger){% else %}var(--success){% endif %};">
+                                {{ reste | format_da }}
+                            </td>
+                            <td>
+                                <span class="badge-status status-{{ e.status | replace(' ', '-') }}">
+                                    {{ e.status }}
+                                </span>
+                            </td>
+                            <td class="text-center d-none d-md-table-cell" onclick="event.stopPropagation()">
+                                {% if reste > 0 %}
+                                <a href="{{ url_for('event_detail', event_id=e.id) }}#paymentSection" class="btn btn-success btn-sm">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                                </a>
+                                {% else %}
+                                <span class="badge-status status-confirmé" style="font-size: 0.65rem;">Soldé ✓</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <p>Aucun événement trouvé</p>
+                <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Créer un événement
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

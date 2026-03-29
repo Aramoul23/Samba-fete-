@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}Calendrier - {{ month_name }} {{ year }}{% endblock %}
+{% block page_title %}Calendrier{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Calendar Header -->
+    <div class="calendar-header-bar mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="calendar-nav">
+                {% set prev_month = month - 1 if month > 1 else 12 %}
+                {% set prev_year = year if month > 1 else year - 1 %}
+                {% set next_month = month + 1 if month < 12 else 1 %}
+                {% set next_year = year if month < 12 else year + 1 %}
+                <a href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline-gold btn-sm">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <span class="calendar-month-label">{{ month_name }} {{ year }}</span>
+                <a href="{{ url_for('calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline-gold btn-sm">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+
+            <!-- Venue Filter -->
+            <div class="d-flex align-items-center gap-3" style="flex: 1; min-width: 0;">
+                <select class="form-input-elegant" style="width: 100%; max-width: 200px;" onchange="filterVenue(this.value)">
+                    <option value="" {% if not venue_filter %}selected{% endif %}>Tous les lieux</option>
+                    {% for v in venues %}
+                    <option value="{{ v.id }}" {% if venue_filter == v.id %}selected{% endif %}>{{ v.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Legend -->
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-dot free"></span> Disponible</span>
+                <span class="legend-item"><span class="legend-dot pending"></span> En attente</span>
+                <span class="legend-item"><span class="legend-dot booked"></span> Confirmé</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid">
+        <!-- Day headers -->
+        <div class="calendar-day-header">Lun</div>
+        <div class="calendar-day-header">Mar</div>
+        <div class="calendar-day-header">Mer</div>
+        <div class="calendar-day-header">Jeu</div>
+        <div class="calendar-day-header">Ven</div>
+        <div class="calendar-day-header">Sam</div>
+        <div class="calendar-day-header">Dim</div>
+
+        {% for week in weeks %}
+            {% for day in week %}
+                {% if day == 0 %}
+                    <div class="calendar-day empty-day"></div>
+                {% else %}
+                    {% set date_str = "%04d-%02d-%02d" | format(year, month, day) %}
+                    {% set day_events = booked_dict.get(date_str, []) %}
+                    {% set slot_count = day_events | length %}
+                    {% set is_today = (date_str == today_str) %}
+                    {% set is_past = (date_str < today_str) %}
+                    {# Determine status - check ALL events, not just last #}
+                    {% set has_confirmed = day_events | selectattr('status', 'equalto', 'confirmé') | list | length > 0 %}
+                    {% set has_pending = day_events | selectattr('status', 'equalto', 'en attente') | list | length > 0 %}
+
+                    <div class="calendar-day {% if has_confirmed %}booked-day{% elif has_pending %}pending-day{% elif is_past %}past-day{% else %}free-day{% endif %} {% if is_today %}today{% endif %}"
+                         data-date="{{ date_str }}"
+                         data-has-events="{% if slot_count > 0 %}true{% else %}false{% endif %}"
+                         data-status="{% if has_confirmed %}booked{% elif has_pending %}pending{% else %}free{% endif %}"
+                         onclick="showDayDetail('{{ date_str }}', {% if slot_count > 0 %}true{% else %}false{% endif %}, '{% if has_confirmed %}booked{% elif has_pending %}pending{% else %}free{% endif %}')">
+                        <div class="day-number">{{ day }}</div>
+                        {% if slot_count > 0 %}
+                            <div class="day-events">
+                                {% for ev in day_events[:3] %}
+                                    <div class="day-event-dot {% if ev.status == 'confirmé' %}dot-confirmed{% elif ev.status == 'en attente' %}dot-pending{% endif %}" title="{{ ev.title }} ({{ ev.time_slot }})">
+                                        <span class="event-mini-title">{{ ev.title[:12] }}</span>
+                                    </div>
+                                {% endfor %}
+                                {% if slot_count > 3 %}
+                                    <div class="day-event-more">+{{ slot_count - 3 }} autre(s)</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+    <!-- Day Detail Modal -->
+    <div class="modal fade" id="dayDetailModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content modal-gold">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dayDetailTitle">Détails du jour</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="dayDetailBody">
+                </div>
+                <div class="modal-footer" id="dayDetailFooter">
+                    <a href="#" id="dayAddEventBtn" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Ajouter un événement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booked Date Error Popup (RED - Confirmed) -->
+    <div class="modal fade" id="bookedErrorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border: 3px solid var(--danger);">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--danger), #dc3545); color: white;">
+                    <h4 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        DATE DÉJÀ RÉSERVÉE
+                    </h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-5">
+                    <i class="fas fa-ban fa-5x mb-4" style="color: var(--danger);"></i>
+                    <h2 class="fw-bold" style="color: var(--danger);">Cette date est déjà réservée!</h2>
+                    <p class="lead text-muted mt-3" id="bookedDateText"></p>
+                    <div id="bookedEventsList" class="mt-4"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Compris
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Date Popup (YELLOW - En attente) -->
+    <div class="modal fade" id="pendingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border: 3px solid var(--warning);">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--warning), #f0c040); color: #2d3436;">
+                    <h4 class="modal-title">
+                        <i class="fas fa-clock me-2"></i>
+                        DATE EN ATTENTE
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-5">
+                    <i class="fas fa-hourglass-half fa-5x mb-4" style="color: var(--warning);"></i>
+                    <h2 class="fw-bold" style="color: #8a6d1b;">Cette date est en attente de confirmation (48h)</h2>
+                    <p class="lead text-muted mt-3" id="pendingDateText"></p>
+                    <div id="pendingEventsList" class="mt-4"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Compris
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const calendarEvents = {{ booked_dict | tojson }};
+
+function showDayDetail(dateStr, hasEvents, status) {
+    if (hasEvents) {
+        if (status === 'booked') {
+            showBookedError(dateStr);
+        } else if (status === 'pending') {
+            showPendingModal(dateStr);
+        }
+        return;
+    }
+
+    const title = document.getElementById('dayDetailTitle');
+    const body = document.getElementById('dayDetailBody');
+    const addBtn = document.getElementById('dayAddEventBtn');
+
+    const d = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    title.textContent = d.toLocaleDateString('fr-FR', options);
+
+    body.innerHTML = `
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-3x mb-3" style="color: var(--success);"></i>
+            <p class="fw-bold" style="color: var(--success); font-size: 1.125rem;">Ce jour est disponible</p>
+            <p class="text-muted">Vous pouvez ajouter un événement à cette date</p>
+        </div>`;
+
+    addBtn.href = `/evenement/nouveau?date=${dateStr}`;
+    new bootstrap.Modal(document.getElementById('dayDetailModal')).show();
+}
+
+function showBookedError(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = d.toLocaleDateString('fr-FR', options);
+
+    document.getElementById('bookedDateText').textContent = formattedDate;
+
+    const events = calendarEvents[dateStr] || [];
+    let eventsHtml = '<div class="list-group">';
+    events.forEach(ev => {
+        const evId = ev.id || '';
+        eventsHtml += `
+            <div class="list-group-item list-group-item-danger">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>${ev.title}</strong><br>
+                        <small>${ev.time_slot}</small>
+                    </div>
+                    <span class="badge-status status-confirmé">${ev.status}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/evenement/${evId}" class="btn btn-outline-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>Voir Détails
+                    </a>
+                    <a href="/evenement/${evId}#paymentSection" class="btn btn-success btn-sm flex-fill">
+                        <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                    </a>
+                </div>
+            </div>`;
+    });
+    eventsHtml += '</div>';
+    document.getElementById('bookedEventsList').innerHTML = eventsHtml;
+
+    new bootstrap.Modal(document.getElementById('bookedErrorModal')).show();
+}
+
+function showPendingModal(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = d.toLocaleDateString('fr-FR', options);
+
+    document.getElementById('pendingDateText').textContent = formattedDate;
+
+    const events = calendarEvents[dateStr] || [];
+    let eventsHtml = '<div class="list-group">';
+    events.forEach(ev => {
+        const evId = ev.id || '';
+        eventsHtml += `
+            <div class="list-group-item list-group-item-warning">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>${ev.title}</strong><br>
+                        <small>${ev.time_slot}</small>
+                    </div>
+                    <span class="badge-status status-en-attente">${ev.status}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/evenement/${evId}" class="btn btn-outline-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>Voir Détails
+                    </a>
+                    <a href="/evenement/${evId}#paymentSection" class="btn btn-success btn-sm flex-fill">
+                        <i class="fas fa-hand-holding-usd me-1"></i>Encaisser
+                    </a>
+                </div>
+            </div>`;
+    });
+    eventsHtml += '</div>';
+    document.getElementById('pendingEventsList').innerHTML = eventsHtml;
+
+    new bootstrap.Modal(document.getElementById('pendingModal')).show();
+}
+
+function filterVenue(venueId) {
+    if (venueId) {
+        window.location.href = '/calendrier?venue=' + venueId;
+    } else {
+        window.location.href = '/calendrier';
+    }
+}
+</script>
+{% endblock %}

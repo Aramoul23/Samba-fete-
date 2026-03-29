@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% block page_title %}Paramètres{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <form method="POST">
+        <div class="row g-4">
+            <!-- Global Settings -->
+            <div class="col-lg-6">
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Paramètres Généraux</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Nom du Hall</label>
+                                <input type="text" name="hall_name" class="form-input-elegant" value="{{ hall_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Devise</label>
+                                <input type="text" name="currency" class="form-input-elegant" value="{{ currency }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Dépôt Minimum (DA)</label>
+                                <input type="number" name="deposit_min" class="form-input-elegant"
+                                       value="{{ deposit_min }}" step="1000" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Venues -->
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-building me-2"></i>Lieux Existants</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        {% for v in venues %}
+                        <div class="venue-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0" style="font-size: 0.9375rem; font-weight: 600;">{{ v.name }}</h6>
+                                <form method="POST" action="{{ url_for('delete_venue', venue_id=v.id) }}"
+                                      onsubmit="return confirm('Supprimer ce lieu ?')" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <input type="hidden" name="venue_id" value="{{ v.id }}">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label-elegant">Capacité Hommes</label>
+                                    <input type="number" name="capacity_men_{{ v.id }}" class="form-input-elegant"
+                                           value="{{ v.capacity_men }}" min="0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-elegant">Capacité Femmes</label>
+                                    <input type="number" name="capacity_women_{{ v.id }}" class="form-input-elegant"
+                                           value="{{ v.capacity_women }}" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Venue -->
+            <div class="col-lg-6">
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Nouveau Lieu</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label-elegant">Nom du Lieu</label>
+                                <input type="text" name="new_venue_name" class="form-input-elegant"
+                                       placeholder="Ex: Salle VIP">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-elegant">Capacité Hommes</label>
+                                <input type="number" name="new_venue_cap_m" class="form-input-elegant" min="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-elegant">Capacité Femmes</label>
+                                <input type="number" name="new_venue_cap_w" class="form-input-elegant" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Rules Info -->
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Règles de Gestion</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <ul class="rules-list">
+                            <li><i class="fas fa-check text-success"></i> Pas de remboursement en cas d'annulation</li>
+                            <li><i class="fas fa-check text-success"></i> Changement de date autorisé</li>
+                            <li><i class="fas fa-check text-success"></i> Paiement complet avant l'événement</li>
+                            <li><i class="fas fa-check text-success"></i> Dépôt minimum configurable</li>
+                            <li><i class="fas fa-check text-success"></i> Créneaux: Après-midi / Soirée / Nuit</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Enregistrer les Paramètres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
