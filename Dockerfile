@@ -12,4 +12,4 @@ COPY . .
 RUN chmod +x start.sh
 
 ENV PORT=5000
-CMD ["sh", "-c", "gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --preload --log-level info --access-logfile -"]
+CMD ["sh", "-c", "gunicorn run:app --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --preload --log-level info"]
