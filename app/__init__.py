@@ -147,10 +147,6 @@ def create_app(config_name=None):
     return app
 
 
-# WSGI entry point — allows `gunicorn app:app` (Railway/Render default)
-app = create_app()
-
-
 def _seed_default_data():
     """Seed default venues, settings, and generate random admin password."""
     from app.models import User, Venue, Setting, db
@@ -187,3 +183,6 @@ def _seed_default_data():
 
         # Log the password ONCE (first run only)
         logger.warning("DEFAULT ADMIN CREATED — Username: admin | Password: %s — CHANGE IMMEDIATELY", admin_pw)
+
+# WSGI entry point — allows `gunicorn app:app` (Railway/Render default)
+app = create_app()
