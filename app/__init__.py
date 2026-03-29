@@ -12,16 +12,19 @@ from flask import Flask
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
+from flask_migrate import Migrate
 
 from app.config import config_by_name
 from app.db import close_db_connection
-from models import get_user_by_id, init_db
 
 logger = logging.getLogger(__name__)
 
 # ── Extensions (initialized here, bound to app in create_app) ────────
+from app.models import db as sqlalchemy_db
+
 limiter = Limiter(key_func=get_remote_address, default_limits=[], storage_uri="memory://")
 login_manager = LoginManager()
+migrate = Migrate()
 
 
 def create_app(config_name=None):
@@ -54,6 +57,8 @@ def create_app(config_name=None):
 
     # ── Extensions ───────────────────────────────────────────────────
     limiter.init_app(app)
+    sqlalchemy_db.init_app(app)
+    migrate.init_app(app, sqlalchemy_db)
 
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -62,7 +67,8 @@ def create_app(config_name=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return get_user_by_id(user_id)
+        from app.models import User
+        return db.session.get(User, int(user_id))
 
     # ── Database teardown ────────────────────────────────────────────
     app.teardown_appcontext(close_db_connection)
@@ -161,47 +167,42 @@ def create_app(config_name=None):
         )
 
     # ── Database init ────────────────────────────────────────────────
-    init_db()
-    _ensure_default_data()
+    with app.app_context():
+        from app.models import User, Venue, Setting
+        sqlalchemy_db.create_all()
+        _seed_default_data_sqlalchemy()
 
     return app
 
 
-def _ensure_default_data():
-    """Seed default venues and settings if missing."""
-    from models import get_db, get_setting, set_setting
+def _seed_default_data_sqlalchemy():
+    """Seed default venues and settings using SQLAlchemy."""
+    from app.models import User, Venue, Setting, db
 
-    logger.info("Initializing default data...")
-    db = get_db()
+    # Default venues
+    if Venue.query.count() == 0:
+        for name, cap_m, cap_w in [
+            ("Grande Salle", 200, 200),
+            ("Salle VIP", 80, 80),
+            ("Salle de Conférence", 50, 50),
+        ]:
+            db.session.add(Venue(name=name, capacity_men=cap_m, capacity_women=cap_w))
+        db.session.commit()
 
-    DEFAULT_VENUES = [
-        {"name": "Grande Salle", "capacity_men": 200, "capacity_women": 200},
-        {"name": "Salle VIP", "capacity_men": 80, "capacity_women": 80},
-        {"name": "Salle de Conférence", "capacity_men": 50, "capacity_women": 50},
-    ]
+    # Default settings
+    for key, default in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
+        if not Setting.query.get(key):
+            db.session.add(Setting(key=key, value=default))
+    db.session.commit()
 
-    try:
-        venue_count = db.execute("SELECT COUNT(*) as c FROM venues").fetchone()["c"]
-        if venue_count == 0:
-            for v in DEFAULT_VENUES:
-                db.execute(
-                    "INSERT INTO venues (name, capacity_men, capacity_women, is_active) VALUES (?, ?, ?, 1)",
-                    (v["name"], v["capacity_men"], v["capacity_women"]),
-                )
-            db.commit()
-
-        settings = db.execute(
-            "SELECT key FROM settings WHERE key IN ('hall_name', 'currency', 'deposit_min')"
-        ).fetchall()
-        existing_keys = {s["key"] for s in settings}
-
-        if "hall_name" not in existing_keys:
-            set_setting("hall_name", "Samba Fête")
-        if "currency" not in existing_keys:
-            set_setting("currency", "DA")
-        if "deposit_min" not in existing_keys:
-            set_setting("deposit_min", "20000")
-
-        logger.info("Default data check complete.")
-    finally:
-        db.close()
+    # Default admin user
+    if User.query.count() == 0:
+        admin_pw = os.environ.get("ADMIN_PASSWORD", "Ramsys2020$")
+        admin = User(username="admin", role="admin")
+        admin.set_password(admin_pw)
+        db.session.add(admin)
+        db.session.commit()
+        logger.warning(
+            "Default admin user created (password: %s) — change it or set ADMIN_PASSWORD",
+            admin_pw,
+        )

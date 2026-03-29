@@ -139,7 +139,7 @@ class TestAccessControl:
         resp = manager_client.get("/parametres/utilisateurs", follow_redirects=True)
         assert resp.status_code == 200
         # Should have been redirected away with flash message
-        assert b"administrateur" in resp.data.lower() or b"/login" in resp.headers.get("Location", "").lower()
+        assert b'administrateur' in resp.data.lower() or '/login' in (resp.headers.get('Location', '') or '').lower()
 
     def test_admin_can_access_user_management(self, admin_client):
         """Admin should access user management."""

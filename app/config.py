@@ -16,9 +16,24 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = FLASK_ENV == "production"
 
-    # Database
+    # Database — SQLAlchemy
     DATABASE_URL = os.environ.get("DATABASE_URL", "")
     SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "")
+
+    # SQLAlchemy connection
+    if DATABASE_URL.startswith("postgresql://"):
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        _db_path = SQLITE_DB_PATH or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "samba_fete.db"
+        )
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{_db_path}"
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
 
 class DevelopmentConfig(Config):

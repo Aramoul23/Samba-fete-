@@ -13,12 +13,8 @@ import pytest
 os.environ["FLASK_ENV"] = "testing"
 os.environ["FLASK_DEBUG"] = "0"
 os.environ["SECRET_KEY"] = "test-secret-key-not-for-production"
-os.environ["ADMIN_PASSWORD"] = "Admin123!"  # Default admin password for tests
+os.environ["ADMIN_PASSWORD"] = "Admin123!"
 os.environ.pop("DATABASE_URL", None)  # Force SQLite
-
-
-# ── Import app modules (AFTER env is set) ────────────────────────────
-from models import init_db, get_db, create_user, generate_password_hash
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -28,13 +24,10 @@ from models import init_db, get_db, create_user, generate_password_hash
 @pytest.fixture(scope="session")
 def tmp_db_path():
     """Create a temporary SQLite file for the test session."""
-    import tempfile
-    # Use a temp DIRECTORY so we can freely delete/recreate the file
     tmpdir = tempfile.mkdtemp(prefix="samba_test_")
     db_path = os.path.join(tmpdir, "test.db")
     os.environ["SQLITE_DB_PATH"] = db_path
     yield db_path
-    # Cleanup
     import shutil
     shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -43,6 +36,7 @@ def tmp_db_path():
 def app(tmp_db_path):
     """Create a test Flask app with CSRF and rate limiting disabled."""
     from app import create_app
+    from app.models import db as sqlalchemy_db
 
     test_app = create_app("testing")
     test_app.config.update(
@@ -50,91 +44,47 @@ def app(tmp_db_path):
         WTF_CSRF_ENABLED=False,
         SECRET_KEY="test-secret-key-not-for-production",
         SERVER_NAME="localhost",
+        SQLALCHEMY_DATABASE_URI=f"sqlite:///{tmp_db_path}",
     )
 
     # Disable rate limiting for tests
     from app import limiter
     limiter.enabled = False
 
-    # Disable CSRF for tests
-    test_app.before_request_funcs.pop(None, None)  # Remove csrf_protect
-
-    # Re-add non-CSRF before_request handlers
-    @test_app.before_request
-    def _no_csrf():
-        pass
+    # Disable CSRF for tests by removing csrf_protect before_request
+    with test_app.app_context():
+        # Remove all before_request handlers (including CSRF)
+        test_app.before_request_funcs[None] = []
 
     yield test_app
 
 
-@pytest.fixture(scope="session")
-def _app_ctx(app):
-    """Push an app context for the entire test session."""
-    ctx = app.app_context()
-    ctx.push()
-    yield
-    ctx.pop()
-
-
 @pytest.fixture()
-def client(app, _reset_db):
-    """Flask test client — fresh session per test with fresh app context."""
-    with app.test_client() as test_client:
-        with app.app_context():
-            yield test_client
-
-
-# ══════════════════════════════════════════════════════════════════════
-# Database Reset
-# ══════════════════════════════════════════════════════════════════════
-
-@pytest.fixture()
-def _reset_db(tmp_db_path):
+def _reset_db(app, tmp_db_path):
     """Reset the database to a clean state before each test."""
+    from app.models import db as sqlalchemy_db
     import gc
     gc.collect()
 
-    # Delete and recreate the DB file
-    try:
-        if os.path.exists(tmp_db_path):
-            os.unlink(tmp_db_path)
-    except Exception:
-        pass
+    with app.app_context():
+        # Drop all tables and recreate
+        sqlalchemy_db.drop_all()
+        sqlalchemy_db.create_all()
 
-    # Re-init the schema (init_db() already seeds venues, settings, admin user)
-    init_db()
-
-    # Verify the DB is writable
-    db = get_db()
-    try:
-        db.execute("SELECT 1").fetchone()
-    finally:
-        db.close()
+        # Seed default data
+        from app.models import User, Venue, Setting
+        for name, cap_m, cap_w in [
+            ("Grande Salle", 200, 200),
+            ("Salle VIP", 80, 80),
+        ]:
+            sqlalchemy_db.session.add(Venue(name=name, capacity_men=cap_m, capacity_women=cap_w))
+        for key, val in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
+            sqlalchemy_db.session.add(Setting(key=key, value=val))
+        sqlalchemy_db.session.commit()
 
     yield
 
-    # Cleanup after test
     gc.collect()
-
-
-def _seed_default_data():
-    """Seed venues and settings (same as _ensure_default_data in factory)."""
-    db = get_db()
-    try:
-        for v in [
-            {"name": "Grande Salle", "capacity_men": 200, "capacity_women": 200},
-            {"name": "Salle VIP", "capacity_men": 80, "capacity_women": 80},
-        ]:
-            db.execute(
-                "INSERT INTO venues (name, capacity_men, capacity_women, is_active) "
-                "VALUES (?, ?, ?, 1)",
-                (v["name"], v["capacity_men"], v["capacity_women"]),
-            )
-        for key, val in [("hall_name", "Samba Fête"), ("currency", "DA"), ("deposit_min", "20000")]:
-            db.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (key, val))
-        db.commit()
-    finally:
-        db.close()
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -142,41 +92,43 @@ def _seed_default_data():
 # ══════════════════════════════════════════════════════════════════════
 
 @pytest.fixture()
-def admin_user(_reset_db):
-    """Return the default admin user created by init_db()."""
-    db = get_db()
-    try:
-        user = db.execute("SELECT * FROM users WHERE username='admin'").fetchone()
+def admin_user(_reset_db, app):
+    """Create an admin user."""
+    from app.models import db, User
+    with app.app_context():
+        user = User(username="admin", role="admin")
+        user.set_password("Admin123!")
+        db.session.add(user)
+        db.session.commit()
         return {
-            "id": user["id"],
+            "id": user.id,
             "username": "admin",
             "password": "Admin123!",
             "role": "admin",
         }
-    finally:
-        db.close()
 
 
 @pytest.fixture()
-def manager_user(_reset_db):
+def manager_user(_reset_db, app):
     """Create a manager (non-admin) user."""
-    create_user("manager", "Manager123!", "manager")
-    db = get_db()
-    try:
-        user = db.execute("SELECT * FROM users WHERE username='manager'").fetchone()
+    from app.models import db, User
+    with app.app_context():
+        user = User(username="manager", role="manager")
+        user.set_password("Manager123!")
+        db.session.add(user)
+        db.session.commit()
         return {
-            "id": user["id"],
+            "id": user.id,
             "username": "manager",
             "password": "Manager123!",
             "role": "manager",
         }
-    finally:
-        db.close()
 
 
 @pytest.fixture()
-def admin_client(client, admin_user):
+def admin_client(app, admin_user):
     """Test client logged in as admin."""
+    client = app.test_client()
     client.post("/login", data={
         "username": admin_user["username"],
         "password": admin_user["password"],
@@ -185,8 +137,15 @@ def admin_client(client, admin_user):
 
 
 @pytest.fixture()
-def manager_client(client, manager_user):
+def client(app, _reset_db):
+    """Unauthenticated test client."""
+    return app.test_client()
+
+
+@pytest.fixture()
+def manager_client(app, manager_user):
     """Test client logged in as manager."""
+    client = app.test_client()
     client.post("/login", data={
         "username": manager_user["username"],
         "password": manager_user["password"],
@@ -199,27 +158,22 @@ def manager_client(client, manager_user):
 # ══════════════════════════════════════════════════════════════════════
 
 @pytest.fixture()
-def sample_client(_reset_db):
-    """Create a sample client in the DB."""
-    db = get_db()
-    try:
-        cur = db.execute(
-            "INSERT INTO clients (name, phone, email) VALUES (?, ?, ?)",
-            ("Ahmed Benali", "0555123456", "ahmed@test.com"),
-        )
-        db.commit()
-        return cur.lastrowid
-    finally:
-        db.close()
+def sample_client(_reset_db, app):
+    """Create a sample client."""
+    from app.models import db, Client
+    with app.app_context():
+        client = Client(name="Ahmed Benali", phone="0555123456", email="ahmed@test.com")
+        db.session.add(client)
+        db.session.commit()
+        return client.id
 
 
 @pytest.fixture()
-def sample_booking(admin_client, sample_client):
+def sample_booking(app, admin_client, sample_client):
     """Create a sample booking via the API."""
     import datetime
     future_date = (datetime.date.today() + datetime.timedelta(days=30)).isoformat()
 
-    # Get CSRF token from session
     with admin_client.session_transaction() as sess:
         sess["csrf_token"] = "test-csrf-token"
 
@@ -245,17 +199,22 @@ def sample_booking(admin_client, sample_client):
         "notes": "Test booking",
     }, follow_redirects=True)
 
-    # Return the event ID
-    db = get_db()
-    try:
-        event = db.execute("SELECT * FROM events WHERE title='Mariage Ahmed'").fetchone()
-        return dict(event) if event else None
-    finally:
-        db.close()
+    from app.models import Event
+    with app.app_context():
+        event = Event.query.filter_by(title="Mariage Ahmed").first()
+        if event:
+            return {
+                "id": event.id,
+                "title": event.title,
+                "event_date": event.event_date,
+                "total_amount": event.total_amount,
+                "status": event.status,
+            }
+        return None
 
 
 @pytest.fixture()
-def sample_payment(admin_client, sample_booking):
+def sample_payment(app, admin_client, sample_booking):
     """Create a sample payment for a booking."""
     if not sample_booking:
         pytest.skip("No booking to attach payment to")
@@ -272,32 +231,9 @@ def sample_payment(admin_client, sample_booking):
         "notes": "Test payment",
     })
 
-    db = get_db()
-    try:
-        payment = db.execute(
-            "SELECT * FROM payments WHERE event_id=? ORDER BY id DESC LIMIT 1",
-            (event_id,),
-        ).fetchone()
-        return dict(payment) if payment else None
-    finally:
-        db.close()
-
-
-# ══════════════════════════════════════════════════════════════════════
-# Helpers
-# ══════════════════════════════════════════════════════════════════════
-
-def login(client, username, password):
-    """Helper to log in a user."""
-    return client.post("/login", data={
-        "username": username,
-        "password": password,
-    })
-
-
-def post_with_csrf(client, url, data=None, **kwargs):
-    """POST with CSRF token injected from session."""
-    data = data or {}
-    with client.session_transaction() as sess:
-        data["csrf_token"] = sess.get("csrf_token", "test-csrf-token")
-    return client.post(url, data=data, **kwargs)
+    from app.models import Payment
+    with app.app_context():
+        payment = Payment.query.filter_by(event_id=event_id).order_by(Payment.id.desc()).first()
+        if payment:
+            return {"id": payment.id, "event_id": payment.event_id, "amount": payment.amount}
+        return None

@@ -1,7 +1,26 @@
-"""Samba Fête — Auth routes.
+"""Samba Fête — Auth routes (SQLAlchemy ORM).
 
 Login, logout, user management (admin only).
-Blueprint prefix: /auth  (but login/logout also mapped at root for compat).
+This is the REFERENCE BLUEPRINT for the ORM migration.
+
+CONVERSION PATTERNS (before → after):
+─────────────────────────────────────────────────────────────────────
+# BEFORE (raw SQL):
+    user = get_user_by_username(username)            # models.py helper
+    create_user(username, password, role)             # models.py helper
+    update_user(id, username=..., role=...)           # models.py helper
+    delete_user(user_id)                              # models.py helper
+    users = get_all_users()                           # models.py helper
+
+# AFTER (SQLAlchemy ORM):
+    user = User.get_by_username(username)             # Model classmethod
+    user = User(username=..., role=...)               # Direct instantiation
+    user.set_password(password)                       # Instance method
+    db.session.add(user); db.session.commit()         # Session management
+    user.username = username; db.session.commit()     # Direct attribute set
+    db.session.delete(user); db.session.commit()      # Delete via session
+    users = User.get_all_ordered()                    # Model classmethod
+─────────────────────────────────────────────────────────────────────
 """
 import logging
 from urllib.parse import urlparse
@@ -17,14 +36,7 @@ from flask import (
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.auth.decorators import admin_required
-from app.db import get_db_connection
-from models import (
-    create_user,
-    delete_user,
-    get_all_users,
-    get_user_by_username,
-    update_user,
-)
+from app.models import db, User
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +55,10 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
-        user = get_user_by_username(username)
+        # BEFORE: user = get_user_by_username(username)
+        # AFTER:
+        user = User.get_by_username(username)
+
         if user and user.check_password(password):
             if not user.is_active:
                 flash("Ce compte est désactivé", "danger")
@@ -54,7 +69,7 @@ def login():
             if next_page:
                 parsed = urlparse(next_page)
                 if parsed.netloc and parsed.netloc != request.host:
-                    next_page = None  # reject external redirect
+                    next_page = None
             flash(f"Bienvenue, {user.username}!", "success")
             return redirect(next_page or url_for("finance.dashboard"))
         else:
@@ -73,16 +88,12 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-# ─── Register (placeholder for future) ──────────────────────────────
-
 @bp.route("/register", methods=["GET", "POST"])
 def register():
-    """Inscription — à implémenter (admin-created accounts for now)."""
+    """Inscription — à implémenter."""
     flash("L'inscription est réservée aux administrateurs. Contactez votre admin.", "info")
     return redirect(url_for("auth.login"))
 
-
-# ─── Password Reset (placeholder for future) ────────────────────────
 
 @bp.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
@@ -98,7 +109,9 @@ def reset_password():
 @admin_required
 def users():
     """Affiche la gestion des utilisateurs."""
-    users_list = get_all_users()
+    # BEFORE: users_list = get_all_users()
+    # AFTER:
+    users_list = User.get_all_ordered()
     return render_template("auth/users.html", users=users_list, current_user=current_user)
 
 
@@ -119,12 +132,20 @@ def add_user():
         flash("Rôle invalide", "danger")
         return redirect(url_for("auth.users"))
 
-    existing = get_user_by_username(username)
+    # BEFORE: existing = get_user_by_username(username)
+    # AFTER:
+    existing = User.get_by_username(username)
     if existing:
         flash(f"Le nom d'utilisateur '{username}' existe déjà", "danger")
         return redirect(url_for("auth.users"))
 
-    create_user(username, password, role)
+    # BEFORE: create_user(username, password, role)
+    # AFTER:
+    user = User(username=username, role=role)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
     flash(f"Utilisateur '{username}' créé avec succès", "success")
     return redirect(url_for("auth.users"))
 
@@ -147,18 +168,21 @@ def edit_user(user_id):
         flash("Rôle invalide", "danger")
         return redirect(url_for("auth.users"))
 
-    existing = get_user_by_username(username)
+    existing = User.get_by_username(username)
     if existing and existing.id != user_id:
         flash(f"Le nom d'utilisateur '{username}' est déjà utilisé", "danger")
         return redirect(url_for("auth.users"))
 
-    update_user(
-        user_id,
-        username=username,
-        password=password if password else None,
-        role=role,
-        is_active=is_active,
-    )
+    # BEFORE: update_user(user_id, username=username, password=..., role=..., is_active=...)
+    # AFTER:
+    user = User.query.get_or_404(user_id)
+    user.username = username
+    user.role = role
+    user.is_active = 1 if is_active else 0
+    if password:
+        user.set_password(password)
+    db.session.commit()
+
     flash("Utilisateur mis à jour", "success")
     return redirect(url_for("auth.users"))
 
@@ -172,6 +196,11 @@ def delete_user_route(user_id):
         flash("Vous ne pouvez pas supprimer votre propre compte", "danger")
         return redirect(url_for("auth.users"))
 
-    delete_user(user_id)
+    # BEFORE: delete_user(user_id)
+    # AFTER:
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+
     flash("Utilisateur supprimé", "success")
     return redirect(url_for("auth.users"))
