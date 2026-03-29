@@ -4,6 +4,7 @@ Tests: create/edit/delete bookings, service lines, calendar, payments.
 """
 import datetime
 import pytest
+from app.models import db, Event, Client, Payment, EventLine, Venue
 
 
 def _future_date(days=30):
@@ -52,17 +53,9 @@ class TestCreateBooking:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-        # Should show event detail page
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT * FROM events WHERE title='Mariage Test'"
-            ).fetchone()
-            assert event is not None
-            assert event["total_amount"] == 300000
-        finally:
-            db.close()
+        event = Event.query.filter_by(title="Mariage Test").first()
+        assert event is not None
+        assert event.total_amount == 300000
 
     def test_create_booking_missing_title(self, admin_client, sample_client):
         """Missing title should show error."""
@@ -137,24 +130,14 @@ class TestCreateBooking:
             "price_cafe": "100000",
         }, follow_redirects=True)
 
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT id FROM events WHERE title='Service Test'"
-            ).fetchone()
-            assert event is not None
+        event = Event.query.filter_by(title="Service Test").first()
+        assert event is not None
 
-            lines = db.execute(
-                "SELECT * FROM event_lines WHERE event_id=?",
-                (event["id"],),
-            ).fetchall()
-            descriptions = [line["description"] for line in lines]
-            assert "Location de la salle" in descriptions
-            assert "Service individuel" in descriptions
-            assert "Service café" in descriptions
-        finally:
-            db.close()
+        lines = EventLine.query.filter_by(event_id=event.id).all()
+        descriptions = [line.description for line in lines]
+        assert "Location de la salle" in descriptions
+        assert "Service individuel" in descriptions
+        assert "Service café" in descriptions
 
     def test_create_booking_auto_creates_deposit_payment(self, admin_client, sample_client):
         """If deposit_required > 0, a payment should be auto-created."""
@@ -174,20 +157,11 @@ class TestCreateBooking:
             "price_location": "200000",
         }, follow_redirects=True)
 
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT id FROM events WHERE title='Deposit Test'"
-            ).fetchone()
-            payment = db.execute(
-                "SELECT * FROM payments WHERE event_id=?",
-                (event["id"],),
-            ).fetchone()
-            assert payment is not None
-            assert payment["amount"] == 50000
-        finally:
-            db.close()
+        event = Event.query.filter_by(title="Deposit Test").first()
+        assert event is not None
+        payment = Payment.query.filter_by(event_id=event.id).first()
+        assert payment is not None
+        assert payment.amount == 50000
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -233,25 +207,15 @@ class TestViewEditBooking:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT * FROM events WHERE id=?", (event_id,)
-            ).fetchone()
-            assert event["title"] == "Mariage Ahmed — Updated"
-            assert event["total_amount"] == 600000
-        finally:
-            db.close()
+        event = db.session.get(Event, event_id)
+        assert event is not None
+        assert event.title == "Mariage Ahmed — Updated"
+        assert event.total_amount == 600000
 
     def test_view_nonexistent_booking(self, admin_client, _db):
         """Viewing a nonexistent booking should return 404."""
-        pytest.skip("get_or_404 returns 404 — correct behavior")
-        """Viewing a nonexistent booking should redirect with error."""
-        resp = admin_client.get("/evenement/99999", follow_redirects=True)
-        assert resp.status_code == 200
-        assert b"trouvable" in resp.data.lower() or b"introuvable" in resp.data.lower()
+        resp = admin_client.get("/evenement/99999")
+        assert resp.status_code == 404
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -276,16 +240,8 @@ class TestDeleteBooking:
             follow_redirects=True,
         )
         assert resp.status_code == 200
-
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT * FROM events WHERE id=?", (event_id,)
-            ).fetchone()
-            assert event is None
-        finally:
-            db.close()
+        event = db.session.get(Event, event_id)
+        assert event is None
 
     def test_manager_cannot_delete_booking(self, manager_client, sample_booking):
         """Non-admin should not be able to delete bookings."""
@@ -317,14 +273,11 @@ class TestCalendar:
         resp = admin_client.get("/calendrier")
         assert resp.status_code == 200
 
-    def test_calendar_shows_current_month(self, admin_client):
-        """Calendar should show the current month name."""
-        import datetime
-        from app.bookings.helpers import MONTH_NAMES_FR
-        month_name = MONTH_NAMES_FR[datetime.date.today().month]
+    def test_calendar_shows_fullcalendar(self, admin_client):
+        """Calendar page should include FullCalendar div."""
         resp = admin_client.get("/calendrier")
         assert resp.status_code == 200
-        assert month_name.encode() in resp.data
+        assert b'fullcalendar' in resp.data
 
     def test_calendar_with_venue_filter(self, admin_client, sample_booking):
         """Calendar should accept a venue filter."""
@@ -377,16 +330,8 @@ class TestStatusTransitions:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT status FROM events WHERE id=?", (event_id,)
-            ).fetchone()
-            assert event["status"] == "confirmé"
-        finally:
-            db.close()
+        event = db.session.get(Event, event_id)
+        assert event.status == "confirmé"
 
     def test_cancel_event(self, admin_client, sample_booking):
         """Cancelling a confirmed event should work."""
@@ -412,12 +357,5 @@ class TestStatusTransitions:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-        from models import get_db
-        db = get_db()
-        try:
-            event = db.execute(
-                "SELECT status FROM events WHERE id=?", (event_id,)
-            ).fetchone()
-            assert event["status"] == "annulé"
-        finally:
-            db.close()
+        event = db.session.get(Event, event_id)
+        assert event.status == "annulé"

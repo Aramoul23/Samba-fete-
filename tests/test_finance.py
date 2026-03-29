@@ -4,6 +4,7 @@ Tests: payments, dashboard stats, expenses, PDF generation.
 """
 import datetime
 import pytest
+from app.models import db, Event, Client, Payment, Expense
 
 
 def _has_weasyprint():
@@ -48,19 +49,13 @@ class TestPayments:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-
-        from models import get_db
-        db = get_db()
-        try:
-            total = db.execute(
-                "SELECT COALESCE(SUM(amount),0) as s FROM payments "
-                "WHERE event_id=? AND is_refunded=0",
-                (event_id,),
-            ).fetchone()["s"]
-            # Should have deposit (auto-created) + this payment
-            assert total >= 50000
-        finally:
-            db.close()
+        total = db.session.query(
+            db.func.coalesce(db.func.sum(Payment.amount), 0)
+        ).filter(
+            Payment.event_id == event_id,
+            Payment.is_refunded == False,  # noqa: E712
+        ).scalar()
+        assert total >= 50000
 
     def test_payment_exceeding_balance_rejected(self, admin_client, sample_booking):
         """Payment exceeding remaining balance should be rejected."""
@@ -71,7 +66,6 @@ class TestPayments:
         with admin_client.session_transaction() as sess:
             token = _csrf(sess)
 
-        # Try to pay more than the total
         resp = admin_client.post(f"/evenement/{event_id}/paiement", data={
             "csrf_token": token,
             "amount": "9999999",
@@ -150,20 +144,9 @@ class TestPayments:
                 "payment_type": "acompte",
             })
 
-        from models import get_db
-        db = get_db()
-        try:
-            payments = db.execute(
-                "SELECT DISTINCT method FROM payments WHERE event_id=?",
-                (event_id,),
-            ).fetchall()
-            recorded_methods = {p["method"] for p in payments}
-            for method in methods:
-                # At least some methods should be recorded
-                pass
-            assert len(recorded_methods) >= 1
-        finally:
-            db.close()
+        payments = Payment.query.filter_by(event_id=event_id).all()
+        recorded_methods = {p.method for p in payments}
+        assert len(recorded_methods) >= 1
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -182,14 +165,12 @@ class TestDashboard:
         """Dashboard should show event count."""
         resp = admin_client.get("/")
         assert resp.status_code == 200
-        # Should contain some stat indicators
         assert b"Samba" in resp.data or b"F" in resp.data
 
     def test_dashboard_chart_data(self, admin_client):
         """Dashboard should include chart data."""
         resp = admin_client.get("/")
         assert resp.status_code == 200
-        # Chart data should be in the response
         assert b"chart" in resp.data.lower() or b"revenu" in resp.data.lower()
 
 
@@ -251,17 +232,9 @@ class TestExpenses:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-
-        from models import get_db
-        db = get_db()
-        try:
-            exp = db.execute(
-                "SELECT * FROM expenses WHERE description='Test expense'"
-            ).fetchone()
-            assert exp is not None
-            assert exp["amount"] == 15000
-        finally:
-            db.close()
+        exp = Expense.query.filter_by(description="Test expense").first()
+        assert exp is not None
+        assert exp.amount == 15000
 
     def test_add_expense_zero_amount_rejected(self, admin_client):
         """Zero amount expense should be rejected."""
@@ -277,32 +250,21 @@ class TestExpenses:
         }, follow_redirects=True)
 
         assert resp.status_code == 200
-        # Should not have created the expense
-        from models import get_db
-        db = get_db()
-        try:
-            exp = db.execute(
-                "SELECT * FROM expenses WHERE description='Bad expense'"
-            ).fetchone()
-            assert exp is None
-        finally:
-            db.close()
+        exp = Expense.query.filter_by(description="Bad expense").first()
+        assert exp is None
 
     def test_delete_expense(self, admin_client):
         """Deleting an expense should remove it."""
         # First create one
-        from models import get_db
-        db = get_db()
-        try:
-            cur = db.execute(
-                "INSERT INTO expenses (category, description, amount, expense_date) "
-                "VALUES (?, ?, ?, ?)",
-                ("Serveurs", "To Delete", 10000, datetime.date.today().isoformat()),
-            )
-            db.commit()
-            exp_id = cur.lastrowid
-        finally:
-            db.close()
+        exp = Expense(
+            category="Serveurs",
+            description="To Delete",
+            amount=10000,
+            expense_date=datetime.date.today().isoformat(),
+        )
+        db.session.add(exp)
+        db.session.commit()
+        exp_id = exp.id
 
         with admin_client.session_transaction() as sess:
             token = _csrf(sess)
@@ -313,15 +275,8 @@ class TestExpenses:
             follow_redirects=True,
         )
         assert resp.status_code == 200
-
-        db = get_db()
-        try:
-            exp = db.execute(
-                "SELECT * FROM expenses WHERE id=?", (exp_id,)
-            ).fetchone()
-            assert exp is None
-        finally:
-            db.close()
+        deleted = db.session.get(Expense, exp_id)
+        assert deleted is None
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -341,7 +296,6 @@ class TestPDFGeneration:
         resp = admin_client.get(f"/evenement/{event_id}/contrat")
         assert resp.status_code == 200
         assert "application/pdf" in resp.content_type
-        # PDF files start with %PDF
         assert resp.data[:4] == b"%PDF"
 
     @pytest.mark.skipif(not _has_weasyprint(), reason="weasyprint not installed")
@@ -359,11 +313,8 @@ class TestPDFGeneration:
 
     def test_contract_nonexistent_event(self, admin_client, _db):
         """Contract for nonexistent event should return 404."""
-        pytest.skip("get_or_404 returns 404 — correct behavior")
-        """Contract for nonexistent event should redirect."""
-        resp = admin_client.get("/evenement/99999/contrat", follow_redirects=True)
-        assert resp.status_code == 200
-        assert b"trouvable" in resp.data.lower() or b"introuvable" in resp.data.lower()
+        resp = admin_client.get("/evenement/99999/contrat")
+        assert resp.status_code in (404, 302)
 
 
 # ══════════════════════════════════════════════════════════════════════

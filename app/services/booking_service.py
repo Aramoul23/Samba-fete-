@@ -149,8 +149,7 @@ class BookingService:
         db.session.add(payment)
 
         # Auto-confirm when fully paid
-        new_total = event.total_paid + amount
-        if new_total >= event.total_amount and event.status == "en attente":
+        if event.remaining <= 0 and event.status == "en attente":
             event.status = "confirmé"
             logger.info("Event %d auto-confirmed (fully paid)", event_id)
 

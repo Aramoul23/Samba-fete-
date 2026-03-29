@@ -277,13 +277,13 @@ class Setting(db.Model):
     @classmethod
     def get(cls, key, default=""):
         """Get a setting value."""
-        row = cls.query.get(key)
+        row = db.session.get(cls, key)
         return row.value if row else default
 
     @classmethod
     def set(cls, key, value):
         """Set or update a setting value."""
-        row = cls.query.get(key)
+        row = db.session.get(cls, key)
         if row:
             row.value = value
         else:

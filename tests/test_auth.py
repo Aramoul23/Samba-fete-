@@ -171,9 +171,9 @@ class TestAccessControl:
             follow_redirects=True,
         )
         assert resp.status_code == 200
-        # Should not have deleted self
-        from models import get_user_by_username
-        assert get_user_by_username("admin") is not None
+        from app.models import User
+        user = User.query.filter_by(username="admin").first()
+        assert user is not None
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -185,20 +185,15 @@ class TestPassword:
 
     def test_password_is_hashed(self, admin_user):
         """Password should be stored as a hash, not plaintext."""
-        from models import get_db
-        db = get_db()
-        try:
-            row = db.execute(
-                "SELECT password_hash FROM users WHERE username='admin'"
-            ).fetchone()
-            assert row["password_hash"] != "Admin123!"
-            assert row["password_hash"].startswith(("pbkdf2:", "scrypt:"))
-        finally:
-            db.close()
+        from app.models import User
+        user = User.query.filter_by(username="admin").first()
+        assert user is not None
+        assert user.password_hash != "Admin123!"
+        assert user.password_hash.startswith(("pbkdf2:", "scrypt:"))
 
     def test_wrong_password_fails_check(self, admin_user):
         """Wrong password should not pass check_password."""
-        from models import get_user_by_username
-        user = get_user_by_username("admin")
+        from app.models import User
+        user = User.query.filter_by(username="admin").first()
         assert user.check_password("Admin123!") is True
         assert user.check_password("wrong") is False
