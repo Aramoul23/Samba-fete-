@@ -23,9 +23,11 @@ from sqlalchemy import or_, func
 
 from app.models import db, Event, Client, EventLine, Payment, Expense, Venue
 from app.bookings.helpers import (
+    ALL_STATUSES,
     EVENT_STATUSES,
     EVENT_TYPES,
     MONTH_NAMES_FR,
+    STATUS_TRANSITIONS,
     TIME_SLOTS,
 )
 
@@ -150,7 +152,7 @@ def event_list():
 
     return render_template(
         "bookings/list.html", events=events,
-        statuses=EVENT_STATUSES, status_filter=status_filter, search=search,
+        statuses=ALL_STATUSES, status_filter=status_filter, search=search,
     )
 
 
@@ -249,10 +251,19 @@ def event_form(event_id=None):
         return redirect(url_for("bookings.event_detail", event_id=event_id))
 
     template = "bookings/create.html" if not event_id else "bookings/edit.html"
+
+    # For edit: show current status + allowed transitions
+    edit_statuses = EVENT_STATUSES
+    if event:
+        current = event.status
+        allowed_next = STATUS_TRANSITIONS.get(current, [])
+        edit_statuses = [current] + [s for s in allowed_next if s != current]
+
     return render_template(
         template, event=event, client=client, event_lines=event_lines,
         custom_lines=custom_lines, venues=venues, time_slots=TIME_SLOTS,
-        event_types=EVENT_TYPES, statuses=EVENT_STATUSES, event_id=event_id,
+        event_types=EVENT_TYPES, statuses=edit_statuses, event_id=event_id,
+        all_statuses=ALL_STATUSES,
     )
 
 
@@ -284,12 +295,14 @@ def event_detail(event_id):
         if (datetime.now() - created) > timedelta(hours=48):
             needs_confirmation = True
 
+    allowed_next = STATUS_TRANSITIONS.get(event.status, [])
+
     return render_template(
         "bookings/view.html", event=event,
         event_lines=event.service_lines.all(), payments=event.payments.order_by(Payment.payment_date.desc()).all(),
         total_paid=total_paid, deposit=deposit, total_refunded=total_refunded,
         total_revenue=total_revenue, total_costs=total_costs, profit=profit,
-        needs_confirmation=needs_confirmation, statuses=EVENT_STATUSES,
+        needs_confirmation=needs_confirmation, statuses=allowed_next,
         event_expenses=event.expenses.order_by(Expense.expense_date.desc()).all(),
         total_expenses=float(total_expenses), adjusted_profit=adjusted_profit,
         today_str=date.today().isoformat(),
@@ -378,17 +391,11 @@ def update_event_status(event_id):
         event = Event.query.get_or_404(event_id)
         new_status = request.form.get("status", "")
 
-        if new_status not in EVENT_STATUSES:
+        if new_status not in ALL_STATUSES:
             flash("Statut invalide", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        allowed = {
-            "confirmé": ["annulé", "changé de date"],
-            "en attente": ["confirmé", "annulé"],
-            "annulé": [], "terminé": [],
-            "changé de date": ["confirmé", "annulé"],
-        }
-        if event.status in allowed and new_status not in allowed.get(event.status, []):
+        if event.status in STATUS_TRANSITIONS and new_status not in STATUS_TRANSITIONS.get(event.status, []):
             flash(f"⚠️ Transition non autorisée: '{event.status}' → '{new_status}'", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 

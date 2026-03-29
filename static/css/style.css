@@ -85,6 +85,48 @@ a { color: var(--primary); text-decoration: none; transition: all var(--duration
 a:hover { color: var(--primary-light); }
 ::selection { background: var(--primary-soft); color: var(--primary); }
 
+/* ─── Bootstrap 5.3 CSS Variable Overrides ─────────── */
+body {
+    --bs-body-bg: var(--bg);
+    --bs-body-color: var(--text);
+    --bs-link-color: var(--primary);
+    --bs-link-hover-color: var(--primary-light);
+    --bs-border-color: var(--border-light);
+    --bs-card-bg: var(--bg-elevated);
+    --bs-card-color: var(--text);
+    --bs-card-border-color: var(--border-light);
+    --bs-card-cap-bg: var(--bg-subtle);
+    --bs-card-cap-color: var(--text);
+    --bs-table-bg: var(--bg-elevated);
+    --bs-table-color: var(--text);
+    --bs-table-border-color: var(--border-light);
+    --bs-table-hover-bg: rgba(233,195,73,0.04);
+    --bs-table-hover-color: var(--text);
+    --bs-table-striped-bg: rgba(233,195,73,0.02);
+    --bs-table-striped-color: var(--text);
+    --bs-form-control-bg: var(--bg-subtle);
+    --bs-form-control-border-color: var(--border);
+    --bs-form-control-color: var(--text);
+    --bs-form-select-bg: var(--bg-subtle);
+    --bs-form-select-border-color: var(--border);
+    --bs-form-select-color: var(--text);
+    --bs-input-group-text-bg: var(--bg-elevated);
+    --bs-input-group-text-color: var(--text-secondary);
+    --bs-input-group-text-border-color: var(--border);
+    --bs-dropdown-bg: var(--bg-elevated);
+    --bs-dropdown-color: var(--text);
+    --bs-dropdown-border-color: var(--border-light);
+    --bs-dropdown-item-color: var(--text);
+    --bs-dropdown-item-hover-bg: var(--sidebar-hover);
+    --bs-dropdown-item-hover-color: var(--primary);
+    --bs-modal-bg: var(--bg);
+    --bs-modal-color: var(--text);
+    --bs-modal-border-color: var(--border-light);
+    --bs-badge-bg: var(--bg-elevated);
+    --bs-badge-color: var(--text-secondary);
+    --bs-badge-border-color: var(--border);
+}
+
 /* ─── Sidebar ──────────────────────────────────────── */
 .sidebar {
     position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;

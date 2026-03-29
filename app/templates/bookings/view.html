@@ -41,7 +41,7 @@
                         {{ event.status }}
                     </span>
                 </div>
-                {% if event.status in ['confirmé', 'en attente'] %}
+                {% if statuses %}
                 <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" class="d-flex gap-2 align-items-end">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="flex-grow-1">

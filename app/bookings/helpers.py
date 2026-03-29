@@ -10,7 +10,15 @@ logger = logging.getLogger(__name__)
 # ─── Shared Constants ────────────────────────────────────────────────
 TIME_SLOTS = ["Déjeuner", "Après-midi", "Dîner"]
 EVENT_TYPES = ["Mariage", "Fiançailles", "Anniversaire", "Conférence", "Autre"]
-EVENT_STATUSES = ["en attente", "confirmé", "changé de date", "terminé", "annulé"]
+EVENT_STATUSES = ["en attente", "confirmé"]
+ALL_STATUSES = ["en attente", "confirmé", "changé de date", "terminé", "annulé"]
+STATUS_TRANSITIONS = {
+    "en attente": ["confirmé", "annulé"],
+    "confirmé": ["annulé", "changé de date"],
+    "changé de date": ["confirmé", "annulé"],
+    "terminé": [],
+    "annulé": [],
+}
 PAYMENT_METHODS = ["espèces", "chèque", "virement", "carte"]
 MONTH_NAMES_FR = [
     "",

@@ -101,6 +101,15 @@ def dashboard():
 @bp.route("/finances")
 @login_required
 def financials():
+    try:
+        return _financials_impl()
+    except Exception:
+        import traceback
+        logger.error("Error in /finances:\n%s", traceback.format_exc())
+        raise
+
+
+def _financials_impl():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
     export_csv = request.args.get("export", type=int)
