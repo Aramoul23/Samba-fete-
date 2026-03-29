@@ -21,8 +21,10 @@ class Config:
     SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "")
 
     # SQLAlchemy connection
-    if DATABASE_URL.startswith("postgresql://"):
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    # Render provides postgres:// but SQLAlchemy 2.x needs postgresql://
+    _db_url = DATABASE_URL.replace("postgres://", "postgresql://", 1) if DATABASE_URL else ""
+    if _db_url.startswith("postgresql://"):
+        SQLALCHEMY_DATABASE_URI = _db_url
     else:
         _db_path = SQLITE_DB_PATH or os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "..", "samba_fete.db"
