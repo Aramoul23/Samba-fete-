@@ -13,6 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 
 from app.config import config_by_name
 from app.db import close_db_connection
@@ -25,6 +26,7 @@ from app.models import db as sqlalchemy_db
 limiter = Limiter(key_func=get_remote_address, default_limits=[], storage_uri="memory://")
 login_manager = LoginManager()
 migrate = Migrate()
+csrf = CSRFProtect()
 
 
 def create_app(config_name=None):
@@ -48,17 +50,25 @@ def create_app(config_name=None):
     )
     app.config.from_object(config_class)
 
-    # ── Secret key fallback ──────────────────────────────────────────
-    if not os.environ.get("SECRET_KEY"):
-        app.config["SECRET_KEY"] = secrets.token_hex(32)
+    # ── Secret key validation ────────────────────────────────────────
+    _secret = os.environ.get("SECRET_KEY")
+    if not _secret:
+        if app.config.get("FLASK_ENV") == "production":
+            raise RuntimeError(
+                "FATAL: SECRET_KEY must be set in production. "
+                "Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        _secret = secrets.token_hex(32)
         logger.warning(
             "SECRET_KEY not set — using random key (sessions will not persist across restarts)"
         )
+    app.config["SECRET_KEY"] = _secret
 
     # ── Extensions ───────────────────────────────────────────────────
     limiter.init_app(app)
     sqlalchemy_db.init_app(app)
     migrate.init_app(app, sqlalchemy_db)
+    csrf.init_app(app)
 
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -104,32 +114,6 @@ def create_app(config_name=None):
     def inject_year():
         return {"current_year": datetime.now().year}
 
-    # ── CSRF Protection ──────────────────────────────────────────────
-    from flask import flash, redirect, request as req, session
-
-    def generate_csrf_token():
-        if "csrf_token" not in session:
-            session["csrf_token"] = secrets.token_hex(32)
-        return session["csrf_token"]
-
-    @app.context_processor
-    def inject_csrf_token():
-        return {"csrf_token": generate_csrf_token}
-
-    @app.before_request
-    def csrf_protect():
-        if req.method == "POST":
-            if req.endpoint and req.endpoint.startswith("auth."):
-                return  # auth routes handle their own CSRF
-            token = req.form.get("csrf_token") or req.headers.get("X-CSRF-Token")
-            session_token = session.get("csrf_token")
-            if not token or not session_token or token != session_token:
-                logger.warning(
-                    "CSRF token mismatch from %s on %s", req.remote_addr, req.endpoint
-                )
-                flash("Session expirée ou invalide. Veuillez réessayer.", "danger")
-                return redirect(req.url)
-
     # ── Blueprints ───────────────────────────────────────────────────
     from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp)
@@ -158,6 +142,8 @@ def create_app(config_name=None):
         import traceback
         error_trace = traceback.format_exc()
         logger.error("500 Error: %s\n%s", str(e), error_trace)
+        if app.config.get("FLASK_ENV") == "production":
+            return "Internal Server Error", 500
         return (
             f'<html><body style="font-family:monospace;padding:40px;background:#1a1a2e;color:#eee">'
             f'<h1 style="color:#e74c3c">500 Error</h1>'
@@ -168,16 +154,16 @@ def create_app(config_name=None):
 
     # ── Database init ────────────────────────────────────────────────
     with app.app_context():
-        from app.models import User, Venue, Setting
         sqlalchemy_db.create_all()
-        _seed_default_data_sqlalchemy()
+        _seed_default_data()
 
     return app
 
 
-def _seed_default_data_sqlalchemy():
-    """Seed default venues and settings using SQLAlchemy."""
+def _seed_default_data():
+    """Seed default venues, settings, and generate random admin password."""
     from app.models import User, Venue, Setting, db
+    import string
 
     # Default venues
     if Venue.query.count() == 0:
@@ -195,14 +181,18 @@ def _seed_default_data_sqlalchemy():
             db.session.add(Setting(key=key, value=default))
     db.session.commit()
 
-    # Default admin user
+    # Default admin user with RANDOM password
     if User.query.count() == 0:
-        admin_pw = os.environ.get("ADMIN_PASSWORD", "Ramsys2020$")
+        admin_pw = os.environ.get("ADMIN_PASSWORD")
+        if not admin_pw:
+            # Generate a secure random password
+            alphabet = string.ascii_letters + string.digits + "!@#$%"
+            admin_pw = ''.join(secrets.choice(alphabet) for _ in range(16))
+
         admin = User(username="admin", role="admin")
         admin.set_password(admin_pw)
         db.session.add(admin)
         db.session.commit()
-        logger.warning(
-            "Default admin user created (password: %s) — change it or set ADMIN_PASSWORD",
-            admin_pw,
-        )
+
+        # Log the password ONCE (first run only)
+        logger.warning("DEFAULT ADMIN CREATED — Username: admin | Password: %s — CHANGE IMMEDIATELY", admin_pw)

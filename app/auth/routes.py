@@ -1,29 +1,33 @@
-"""Samba Fête — Auth routes (SQLAlchemy ORM)."""
+"""Samba Fête — Auth routes (with WTForms validation + CSRF)."""
 import logging
 from urllib.parse import urlparse
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from flask_limiter import RateLimitExceeded
 
 from app.auth.decorators import admin_required
 from app.models import db, User
+from app.forms import LoginForm, UserForm, UserEditForm
+from app import limiter
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__, template_folder="../templates")
 
 
 @bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
+    form = LoginForm()
     if current_user.is_authenticated:
         return redirect(url_for("finance.dashboard"))
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        user = User.get_by_username(username)
-        if user and user.check_password(password):
+
+    if form.validate_on_submit():
+        user = User.get_by_username(form.username.data.strip())
+        if user and user.check_password(form.password.data):
             if not user.is_active:
                 flash("Ce compte est désactivé", "danger")
-                return render_template("auth/login.html")
+                return render_template("auth/login.html", form=form)
             login_user(user, remember=True)
             logger.info("Successful login: %s", user.username)
             next_page = request.args.get("next")
@@ -35,7 +39,8 @@ def login():
             return redirect(next_page or url_for("finance.dashboard"))
         else:
             flash("Nom d'utilisateur ou mot de passe incorrect", "danger")
-    return render_template("auth/login.html")
+
+    return render_template("auth/login.html", form=form)
 
 
 @bp.route("/logout")
@@ -70,29 +75,26 @@ def users():
 @login_required
 @admin_required
 def add_user():
-    username = request.form.get("username", "").strip()
-    password = request.form.get("password", "").strip()
-    role = request.form.get("role", "manager")
+    form = UserForm()
+    if form.validate_on_submit():
+        username = form.username.data.strip()
+        if User.get_by_username(username):
+            flash(f"'{username}' existe déjà", "danger")
+            return redirect(url_for("auth.users"))
 
-    if not username or not password:
-        flash("Nom d'utilisateur et mot de passe requis", "danger")
-        return redirect(url_for("auth.users"))
-    if role not in ("admin", "manager"):
-        flash("Rôle invalide", "danger")
-        return redirect(url_for("auth.users"))
-    if User.get_by_username(username):
-        flash(f"'{username}' existe déjà", "danger")
-        return redirect(url_for("auth.users"))
-
-    try:
-        user = User(username=username, role=role)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        flash(f"Utilisateur '{username}' créé", "success")
-    except Exception:
-        db.session.rollback()
-        flash("Erreur lors de la création.", "danger")
+        try:
+            user = User(username=username, role=form.role.data)
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash(f"Utilisateur '{username}' créé", "success")
+        except Exception:
+            db.session.rollback()
+            flash("Erreur lors de la création.", "danger")
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{error}", "danger")
     return redirect(url_for("auth.users"))
 
 
@@ -100,35 +102,30 @@ def add_user():
 @login_required
 @admin_required
 def edit_user(user_id):
-    username = request.form.get("username", "").strip()
-    password = request.form.get("password", "").strip()
-    role = request.form.get("role", "manager")
-    is_active = request.form.get("is_active", "1") == "1"
+    form = UserEditForm()
+    if form.validate_on_submit():
+        username = form.username.data.strip()
+        existing = User.get_by_username(username)
+        if existing and existing.id != user_id:
+            flash(f"'{username}' est déjà utilisé", "danger")
+            return redirect(url_for("auth.users"))
 
-    if not username:
-        flash("Le nom d'utilisateur est requis", "danger")
-        return redirect(url_for("auth.users"))
-    if role not in ("admin", "manager"):
-        flash("Rôle invalide", "danger")
-        return redirect(url_for("auth.users"))
-
-    existing = User.get_by_username(username)
-    if existing and existing.id != user_id:
-        flash(f"'{username}' est déjà utilisé", "danger")
-        return redirect(url_for("auth.users"))
-
-    try:
-        user = User.query.get_or_404(user_id)
-        user.username = username
-        user.role = role
-        user.is_active = 1 if is_active else 0
-        if password:
-            user.set_password(password)
-        db.session.commit()
-        flash("Utilisateur mis à jour", "success")
-    except Exception:
-        db.session.rollback()
-        flash("Erreur lors de la mise à jour.", "danger")
+        try:
+            user = User.query.get_or_404(user_id)
+            user.username = username
+            user.role = form.role.data
+            user.is_active = 1 if form.is_active.data else 0
+            if form.password.data:
+                user.set_password(form.password.data)
+            db.session.commit()
+            flash("Utilisateur mis à jour", "success")
+        except Exception:
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour.", "danger")
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{error}", "danger")
     return redirect(url_for("auth.users"))
 
 
