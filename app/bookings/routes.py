@@ -577,7 +577,7 @@ def api_calendar_events():
     first = f"{year}-{month:02d}-01"
     last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
 
-    events = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id).outerjoin(Venue, Event.venue_id2 == Venue.id).filter(
+    events = Event.query.join(Client).filter(
         Event.event_date >= first, Event.event_date < last, Event.status != "annulé"
     ).order_by(Event.event_date).all()
 
