@@ -9,8 +9,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
+RUN chmod +x start.sh
 
 ENV PORT=5000
-
-# Use shell form so $PORT gets expanded
-CMD ["python", "-c", "import os; os.execvp('gunicorn', ['gunicorn', 'run:app', '--bind', '0.0.0.0:' + os.environ.get('PORT', '5000'), '--workers', '2', '--timeout', '120'])"]
+CMD ["./start.sh"]
