@@ -428,45 +428,6 @@
         </div>
     </form>
 
-    <!-- Pending Date Warning Modal -->
-    <div class="modal fade" id="pendingDateModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background: var(--bg-elevated); border: 1px solid var(--border-light);">
-                <div class="modal-header" style="background: var(--warning-soft); border-bottom: 1px solid var(--border-light);">
-                    <h5 class="modal-title text-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>⚠️ Attention - Date en Attente
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="padding: 24px;">
-                    <p style="color: var(--text); font-size: 1rem;">
-                        La date sélectionnée (<strong id="pendingDateText" style="color: var(--warning);"></strong>) est actuellement en attente de confirmation pour :
-                    </p>
-                    <div style="background: var(--bg-subtle); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin: 16px 0;">
-                        <p style="margin: 0; color: var(--text); font-weight: 600;">
-                            <i class="fas fa-calendar-alt me-2" style="color: var(--warning);"></i>
-                            <span id="pendingEventTitle" style="color: var(--primary);"></span>
-                        </p>
-                        <p style="margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.875rem;">
-                            Statut actuel: <span class="badge-status status-en-attente">En attente</span>
-                        </p>
-                    </div>
-                    <p style="color: var(--text-secondary); font-size: 0.9375rem;">
-                        Cette date pourrait être annulée ou confirmée. Voulez-vous continuer malgré tout ?
-                    </p>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-light); padding: 16px 24px;">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-arrow-left me-2"></i>Choisir une autre date
-                    </button>
-                    <button type="button" class="btn btn-warning" id="confirmPendingDate">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Continuer quand même
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {% if event %}
     <!-- Delete form must be OUTSIDE the main event form (no nested forms in HTML) -->
     <form method="POST" id="deleteForm" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:none;"></form>
@@ -546,8 +507,8 @@ function loadCalendarEvents(year, month, fp) {
                     calendarEvents[ev.event_date] = ev.status;
                     calendarEventTitles[ev.event_date] = ev.title;
                     
-                    // Disable confirmed and terminated dates
-                    if (ev.status === 'confirmé' || ev.status === 'terminé') {
+                    // Disable all taken dates (confirmed, pending, terminated)
+                    if (ev.status === 'confirmé' || ev.status === 'terminé' || ev.status === 'en attente') {
                         disableDates.push(new Date(ev.event_date));
                     }
                 }
@@ -564,14 +525,7 @@ function loadCalendarEvents(year, month, fp) {
         });
 }
 
-// Track pending date selection for modal
-let pendingDateSelection = null;
-let pendingModal = null;
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modal
-    pendingModal = new bootstrap.Modal(document.getElementById('pendingDateModal'));
-    
     const datepicker = flatpickr("#eventDatePicker", {
         locale: "fr",
         dateFormat: "Y-m-d",
@@ -623,37 +577,13 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         onChange: function(selectedDates, dateStr) {
             const status = calendarEvents[dateStr];
-            const title = calendarEventTitles[dateStr] || 'Événement';
             
-            if (status === 'confirmé' || status === 'terminé') {
-                // This shouldn't happen since dates are disabled, but just in case
-                alert('⛔ Cette date est déjà réservés! impossible de choisir cette date.');
+            if (status === 'confirmé' || status === 'terminé' || status === 'en attente') {
+                // This shouldn't happen since all taken dates are disabled
+                alert('⛔ Cette date est déjà réservée! impossible de choisir cette date.');
                 this.clear();
-            } else if (status === 'en attente') {
-                // Show warning modal for pending dates
-                pendingDateSelection = { dateStr, title };
-                document.getElementById('pendingDateText').textContent = dateStr;
-                document.getElementById('pendingEventTitle').textContent = title;
-                this.flatpickrInstance = this;
-                pendingModal.show();
-                // Don't clear - let user decide in modal
             }
         }
-    });
-    
-    // Handle modal confirm button
-    document.getElementById('confirmPendingDate').addEventListener('click', function() {
-        if (pendingDateSelection) {
-            pendingModal.hide();
-            // Date stays selected - user chose to proceed
-            pendingDateSelection = null;
-        }
-    });
-    
-    // Handle modal cancel - clear the date
-    document.getElementById('pendingDateModal').addEventListener('hidden.bs.modal', function() {
-        // Optional: Clear date if user chose not to proceed
-        // document.getElementById('eventDatePicker').value = '';
     });
 });
 

@@ -200,6 +200,17 @@ def event_form(event_id=None):
         if not client_phone: errors.append("Le téléphone est requis")
         if not event_date_val: errors.append("La date est requise")
         if not venue_id: errors.append("Le lieu est requis")
+
+        # One-event-per-day enforcement (regardless of venue or status)
+        if event_date_val:
+            date_conflict = Event.query.filter(
+                Event.event_date == event_date_val,
+                Event.id != (event_id or 0),
+            ).first()
+            if date_conflict:
+                flash("Cette date est déjà réservée", "danger")
+                return redirect(request.referrer or url_for("bookings.event_list"))
+
         errors.extend(validate_event_date(event_date_val, event_id or 0))
 
         if errors:
@@ -402,6 +413,14 @@ def update_event_status(event_id):
         if new_status == "changé de date":
             new_date = request.form.get("new_date", "").strip()
             if new_date:
+                # One-event-per-day enforcement
+                date_conflict = Event.query.filter(
+                    Event.event_date == new_date,
+                    Event.id != event_id,
+                ).first()
+                if date_conflict:
+                    flash("Cette date est déjà réservée", "danger")
+                    return redirect(url_for("bookings.event_detail", event_id=event_id))
                 event.event_date = new_date
                 flash(f"Date changée à {new_date}.", "success")
 
