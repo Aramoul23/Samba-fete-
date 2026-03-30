@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function loadCalendarEvents(fp) {
             const d = fp.currentYear ? new Date(fp.currentYear, fp.currentMonth) : new Date();
-            fetch(`/api/calendar-events?year=${d.getFullYear()}&month=${d.getMonth() + 1}`)
+            fetch(`/api/calendar-events?year=${d.getFullYear()}&month=${d.getMonth() + 1}&include_cancelled=true`)
                 .then(r => r.json())
                 .then(events => {
                     calendarEvents = {};

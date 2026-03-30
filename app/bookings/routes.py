@@ -574,12 +574,16 @@ def quick_payment():
 def api_calendar_events():
     year = request.args.get("year", date.today().year, type=int)
     month = request.args.get("month", date.today().month, type=int)
+    include_cancelled = request.args.get("include_cancelled", "").lower() == "true"
     first = f"{year}-{month:02d}-01"
     last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
 
-    events = Event.query.join(Client).filter(
-        Event.event_date >= first, Event.event_date < last, Event.status != "annulé"
-    ).order_by(Event.event_date).all()
+    q = Event.query.join(Client).filter(
+        Event.event_date >= first, Event.event_date < last
+    )
+    if not include_cancelled:
+        q = q.filter(Event.status != "annulé")
+    events = q.order_by(Event.event_date).all()
 
     colors = {
         "confirmé": "#06d6a0",
