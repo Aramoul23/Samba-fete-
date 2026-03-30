@@ -22,18 +22,6 @@ function initCalendar(containerId, eventsUrl) {
                 window.location.href = info.event.url;
             }
         },
-        eventContent: function(arg) {
-            const status = arg.event.extendedProps.status;
-            const colors = {
-                'confirmé': '#06d6a0',
-                'en attente': '#ffd166',
-                'annulé': '#ef476f',
-                'changé de date': '#118ab2',
-                'terminé': '#8d99ae'
-            };
-            arg.event.setProp('backgroundColor', colors[status] || '#6C63FF');
-            arg.event.setProp('borderColor', colors[status] || '#6C63FF');
-        },
         height: 'auto',
         dayMaxEvents: 3,
         navLinks: true,

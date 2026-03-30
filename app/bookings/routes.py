@@ -581,11 +581,25 @@ def api_calendar_events():
         Event.event_date >= first, Event.event_date < last, Event.status != "annulé"
     ).order_by(Event.event_date).all()
 
+    colors = {
+        "confirmé": "#06d6a0",
+        "en attente": "#ffd166",
+        "annulé": "#ef476f",
+        "changé de date": "#118ab2",
+        "terminé": "#8d99ae",
+    }
     return jsonify([{
-        "id": e.id, "title": e.title, "event_date": e.event_date.isoformat() if e.event_date else None,
-        "time_slot": e.time_slot, "status": e.status,
-        "client_name": e.client.name, "venue_name": e.venue.name,
-        "venue2_name": e.venue2.name if e.venue2 else "",
+        "id": e.id, "title": f"{e.title} — {e.time_slot or ''}",
+        "start": e.event_date.isoformat() if e.event_date else None,
+        "url": url_for("bookings.event_detail", event_id=e.id),
+        "backgroundColor": colors.get(e.status, "#6C63FF"),
+        "borderColor": colors.get(e.status, "#6C63FF"),
+        "extendedProps": {
+            "status": e.status,
+            "client_name": e.client.name,
+            "venue_name": e.venue.name,
+            "venue2_name": e.venue2.name if e.venue2 else "",
+        },
     } for e in events])
 
 
