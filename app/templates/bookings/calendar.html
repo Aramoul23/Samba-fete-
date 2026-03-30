@@ -38,14 +38,8 @@
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge me-2" style="background:#06d6a0">&nbsp;</span> Confirmé
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge me-2" style="background:#ffd166">&nbsp;</span> En attente
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge me-2" style="background:#118ab2">&nbsp;</span> Changé de date
-                </div>
                 <div class="d-flex align-items-center">
-                    <span class="badge me-2" style="background:#ef476f">&nbsp;</span> Annulé
+                    <span class="badge me-2" style="background:#ffd166">&nbsp;</span> En attente
                 </div>
             </div>
         </div>
@@ -59,4 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initCalendar('fullcalendar', '/api/calendar-events');
 });
 </script>
+<style>
+.fc-daygrid-day { cursor: pointer; }
+.fc-daygrid-day:hover { background: rgba(102, 126, 234, 0.08); }
+.fc-daygrid-day-events { pointer-events: auto; }
+</style>
 {% endblock %}

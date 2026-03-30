@@ -22,6 +22,9 @@ function initCalendar(containerId, eventsUrl) {
                 window.location.href = info.event.url;
             }
         },
+        dateClick: function(info) {
+            window.location.href = '/evenement/nouveau?date=' + info.dateStr;
+        },
         height: 'auto',
         dayMaxEvents: 3,
         navLinks: true,
