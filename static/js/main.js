@@ -166,7 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(events => {
                     calendarEvents = {};
                     events.forEach(ev => {
-                        if (ev.event_date) calendarEvents[ev.event_date] = ev.status;
+                        const d = ev.event_date || ev.start;
+                        if (d) calendarEvents[d] = ev.status;
                     });
                     fp.redraw();
                 })
