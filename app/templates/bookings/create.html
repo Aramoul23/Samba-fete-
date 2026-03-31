@@ -309,6 +309,10 @@ function renderMiniCalendar() {
                     if (status === 'confirmé' || status === 'terminé') {
                         info.el.style.backgroundColor = '#ef476f';
                         info.el.style.color = '#ffffff';
+                        info.el.classList.add('fc-day-taken');
+                        const dayNum = info.el.querySelector('.fc-daygrid-day-number');
+                        if (dayNum) { dayNum.style.color = '#ffffff'; dayNum.textContent = '🔒 ' + dayNum.textContent; }
+                        return;
                     } else if (status === 'en attente') {
                         info.el.style.backgroundColor = '#ffd166';
                         info.el.style.color = '#333333';

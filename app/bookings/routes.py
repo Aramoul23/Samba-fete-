@@ -43,20 +43,22 @@ def _is_admin():
 
 
 def validate_event_date(event_date, event_id=0):
-    """Check for double-bookings. Returns list of error strings."""
+    """Check for double-bookings. Returns list of error strings.
+
+    Only hard-blocks confirmed ('confirmé') and completed ('terminé') events.
+    Pending ('en attente') events are allowed through — client-side shows a warning.
+    """
     if not event_date:
         return []
     conflict = Event.query.filter(
         Event.event_date == event_date,
-        Event.status.in_(["confirmé", "en attente"]),
+        Event.status.in_(["confirmé", "terminé"]),
         Event.id != (event_id or 0),
     ).first()
     if not conflict:
         return []
     venue_label = f" ({conflict.venue.name})" if conflict.venue else ""
-    if conflict.status == "confirmé":
-        return [f"⛔ Date réservée! '{conflict.title}' le {event_date}{venue_label} — 🔒 verrouillée"]
-    return [f"⚠️ '{conflict.title}' en attente pour le {event_date}{venue_label}"]
+    return [f"⛔ Date réservée! L'événement '{conflict.title}' ({conflict.status}) utilise déjà le {event_date}{venue_label} — impossible de réserver"]
 
 
 def insert_service_lines(event_id, form_data):
@@ -255,16 +257,6 @@ def event_form(event_id=None):
         if not client_phone: errors.append("Le téléphone est requis")
         if not event_date_val: errors.append("La date est requise")
         if not venue_id: errors.append("Le lieu est requis")
-
-        # One-event-per-day enforcement (regardless of venue or status)
-        if event_date_val:
-            date_conflict = Event.query.filter(
-                Event.event_date == event_date_val,
-                Event.id != (event_id or 0),
-            ).first()
-            if date_conflict:
-                flash(f"Cette date est déjà réservée ({date_conflict.title})", "danger")
-                return _render_event_form(event_id, event, client, event_lines, custom_lines, venues)
 
         errors.extend(validate_event_date(event_date_val, event_id or 0))
 
