@@ -323,6 +323,29 @@ class TestCalendar:
         elif status == "en attente":
             assert ev["backgroundColor"] == "#ffd166"
 
+    def test_calendar_api_fullcalendar_start_end(self, admin_client, sample_booking):
+        """API should accept FullCalendar's start/end date parameters."""
+        if not sample_booking:
+            pytest.skip("No booking")
+
+        from app.models import Event
+        event = Event.query.get(sample_booking["id"])
+        if not event or not event.event_date:
+            pytest.skip("No event date")
+
+        date_str = str(event.event_date)[:10]
+
+        # FullCalendar sends start/end as ISO date strings spanning the visible range
+        # Use a range that definitely includes the event date
+        start = (datetime.date.fromisoformat(date_str) - datetime.timedelta(days=1)).isoformat()
+        end = (datetime.date.fromisoformat(date_str) + datetime.timedelta(days=1)).isoformat()
+
+        resp = admin_client.get(f"/api/calendar-events?start={start}&end={end}")
+        assert resp.status_code == 200
+        data = resp.json
+        assert isinstance(data, list)
+        assert len(data) > 0
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Event List

@@ -591,11 +591,21 @@ def quick_payment():
 @bp.route("/api/calendar-events")
 @login_required
 def api_calendar_events():
-    year = request.args.get("year", date.today().year, type=int)
-    month = request.args.get("month", date.today().month, type=int)
     include_cancelled = request.args.get("include_cancelled", "").lower() == "true"
-    first = f"{year}-{month:02d}-01"
-    last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
+
+    # Support both FullCalendar's start/end and manual year/month params
+    start_param = request.args.get("start", "")
+    end_param = request.args.get("end", "")
+
+    if start_param and end_param:
+        # FullCalendar sends start/end as ISO dates
+        first = start_param[:10]
+        last = end_param[:10]
+    else:
+        year = request.args.get("year", date.today().year, type=int)
+        month = request.args.get("month", date.today().month, type=int)
+        first = f"{year}-{month:02d}-01"
+        last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
 
     q = Event.query.join(Client).filter(
         Event.event_date >= first, Event.event_date < last
