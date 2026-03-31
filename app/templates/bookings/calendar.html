@@ -32,7 +32,7 @@
                         {% set url = date_url_map_dict.get(date_str) %}
                         {% if status == 'confirmé' or status == 'terminé' %}
                         <td style="padding:8px 4px;">
-                            <span class="cal-day cal-booked">🔒 {{ day }}</span>
+                            <a href="{{ url or '#' }}" class="cal-day cal-booked">🔒 {{ day }}</a>
                         </td>
                         {% elif status == 'en attente' %}
                         <td style="padding:8px 4px;">
