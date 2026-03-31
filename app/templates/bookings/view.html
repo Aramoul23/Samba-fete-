@@ -3,128 +3,140 @@
 {% block page_title %}{{ event.title }}{% endblock %}
 
 {% block content %}
-<!-- ═══ Event Header Banner ═══ -->
-<div class="event-header-bar mb-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-                <h4 class="event-title mb-0">{{ event.title }}</h4>
-                <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
-                    {{ event.status }}
-                </span>
+<!-- ═══ Section 1: Header Card ═══ -->
+<div class="event-detail-header">
+    <a href="{{ url_for('bookings.event_list') }}" class="back-btn" title="Retour">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <h4 class="event-detail-title">{{ event.title }}</h4>
+    <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
+        {{ event.status }}
+    </span>
+</div>
+
+<!-- ═══ Section 2: Event Info Card ═══ -->
+<div class="card-custom no-hover mb-4">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-info-circle"></i> Informations</h5>
+    </div>
+    <div class="card-body-custom">
+        <div class="event-info-grid">
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                <div>
+                    <div class="label">Date</div>
+                    <div class="value">{{ event.event_date }}</div>
+                </div>
             </div>
-            <div class="event-meta">
-                <span><i class="fas fa-user"></i>{{ event.client.name }}</span>
-                <span><i class="fas fa-calendar"></i>{{ event.event_date }}</span>
-                <span><i class="fas fa-map-marker-alt"></i>{{ event.venue.name }}</span>
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-clock"></i></span>
+                <div>
+                    <div class="label">Créneau</div>
+                    <div class="value">{{ event.time_slot }}</div>
+                </div>
             </div>
-        </div>
-        <div class="d-flex gap-2 flex-wrap event-actions">
-            <button class="btn btn-outline-primary btn-sm"
-                    onclick="previewPDF('{{ url_for("bookings.generate_contract", event_id=event.id) }}', 'Contrat — {{ event.title }}')">
-                <i class="fas fa-file-pdf"></i> Contrat
-            </button>
-            {% if payments | length > 0 %}
-            <button class="btn btn-outline-success btn-sm"
-                    onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=payments[0].id) }}', 'Reçu — {{ event.client.name }}')">
-                <i class="fas fa-receipt"></i> Reçu
-            </button>
-            {% endif %}
-            <a href="{{ url_for('bookings.event_form', event_id=event.id) }}" class="btn btn-outline-gold btn-sm">
-                <i class="fas fa-edit"></i> Modifier
-            </a>
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+                <div>
+                    <div class="label">Lieu</div>
+                    <div class="value">{{ event.venue.name }}</div>
+                </div>
+            </div>
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-champagne-glasses"></i></span>
+                <div>
+                    <div class="label">Type</div>
+                    <div class="value">{{ event.event_type }}</div>
+                </div>
+            </div>
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-user"></i></span>
+                <div>
+                    <div class="label">Client</div>
+                    <div class="value">{{ event.client.name }}</div>
+                </div>
+            </div>
+            <div class="event-info-item">
+                <span class="icon"><i class="fas fa-phone"></i></span>
+                <div>
+                    <div class="label">Téléphone</div>
+                    <div class="value">{{ event.client.phone }}</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ═══ Status + Payment Summary Row ═══ -->
+<!-- ═══ Section 3: Financial Summary Card ═══ -->
+<div class="card-custom no-hover mb-4">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-wallet"></i> Résumé financier</h5>
+    </div>
+    <div class="card-body-custom">
+        {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
+        <div class="finance-summary">
+            <div class="finance-item">
+                <div class="amount" style="color: var(--primary);">{{ event.total_amount | format_da }}</div>
+                <div class="label">Montant total</div>
+            </div>
+            <div class="finance-divider"></div>
+            <div class="finance-item">
+                <div class="amount" style="color: var(--success);">{{ total_paid | format_da }}</div>
+                <div class="label">Total payé</div>
+            </div>
+            <div class="finance-divider"></div>
+            <div class="finance-item">
+                <div class="amount" style="color: {% if event.remaining > 0 %}var(--warning){% else %}var(--success){% endif %};">
+                    {{ event.remaining | format_da }}
+                </div>
+                <div class="label">Reste à payer</div>
+            </div>
+        </div>
+        {% if event.total_amount > 0 %}
+        <div class="finance-progress-row">
+            <div class="payment-progress">
+                <div class="bg-gold" style="width: {{ pct }}%; height: 100%; transition: width 0.5s var(--ease-out);"></div>
+            </div>
+            <div class="progress-label">
+                <span>{{ pct | int }}% payé</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ═══ Section 4: Actions Row ═══ -->
+<div class="event-actions-row mb-4">
+    {% if event.status != 'annulé' and event.remaining > 0 %}
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal">
+        <i class="fas fa-hand-holding-dollar me-1"></i> Encaisser un paiement
+    </button>
+    {% endif %}
+    <button class="btn btn-outline-gold" data-bs-toggle="modal" data-bs-target="#expenseModal">
+        <i class="fas fa-receipt me-1"></i> Ajouter une dépense
+    </button>
+    <button class="btn btn-outline-primary btn-sm"
+            onclick="previewPDF('{{ url_for("bookings.generate_contract", event_id=event.id) }}', 'Contrat — {{ event.title }}')">
+        <i class="fas fa-file-pdf me-1"></i> Contrat
+    </button>
+    {% if payments | length > 0 %}
+    <button class="btn btn-outline-success btn-sm"
+            onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=payments[0].id) }}', 'Reçu — {{ event.client.name }}')">
+        <i class="fas fa-receipt me-1"></i> Reçu
+    </button>
+    {% endif %}
+</div>
+
+<!-- ═══ Section 5: Payment History & Service Lines ═══ -->
 <div class="row g-3 mb-4">
-    <!-- Status Card -->
-    <div class="col-lg-8">
-        <div class="card-custom no-hover">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-exchange-alt"></i> Statut de l'événement</h5>
-            </div>
-            <div class="card-body-custom">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <span class="badge-status status-{{ event.status | replace(' ', '-') }} fs-6">
-                        {{ event.status }}
-                    </span>
-                </div>
-                {% if statuses %}
-                <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" class="d-flex gap-2 align-items-end flex-wrap">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="flex-grow-1" style="min-width: 160px;">
-                        <label class="form-label-elegant">Nouveau statut</label>
-                        <select name="status" class="form-input-elegant" style="padding: 9px 14px; font-size: 0.875rem;">
-                            {% for s in statuses %}
-                            {% if s != event.status %}
-                            <option value="{{ s }}">{{ s }}</option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="new-date-field" style="display:none; min-width: 160px;">
-                        <label class="form-label-elegant">Nouvelle date</label>
-                        <input type="date" name="new_date" class="form-input-elegant" style="padding: 9px 14px; font-size: 0.875rem;">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm" style="min-height: 42px;">
-                        <i class="fas fa-check"></i> Changer
-                    </button>
-                </form>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Summary Card -->
-    <div class="col-lg-4">
-        <div class="card-custom no-hover h-100">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-wallet"></i> Résumé financier</h5>
-            </div>
-            <div class="card-body-custom text-center">
-                {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
-                <div class="detail-label mb-1">Montant total</div>
-                <div class="h3 mb-3" style="color: var(--primary); font-weight: 700;">{{ event.total_amount | format_da }}</div>
-
-                <div class="payment-progress mb-2">
-                    <div class="bg-gold" style="width: {{ pct }}%; height: 100%; transition: width 0.5s var(--ease-out);"></div>
-                </div>
-                <div class="progress-label mb-3">
-                    <span>{{ pct | int }}% payé</span>
-                    <span>{{ event.remaining | format_da }} reste</span>
-                </div>
-
-                <div class="d-flex gap-2 text-center">
-                    <div class="flex-fill p-2" style="background: var(--success-soft); border-radius: var(--radius-sm);">
-                        <div class="small fw-bold" style="color: var(--success);">{{ total_paid | format_da }}</div>
-                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">Payé</div>
-                    </div>
-                    <div class="flex-fill p-2" style="background: var(--warning-soft); border-radius: var(--radius-sm);">
-                        <div class="small fw-bold" style="color: var(--warning);">{{ event.remaining | format_da }}</div>
-                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">Reste</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ═══ Payments & Services Row ═══ -->
-<div class="row g-3">
-    <!-- Payments -->
+    <!-- Payment History -->
     <div class="col-lg-6">
         <div class="card-custom no-hover">
             <div class="card-header-custom">
-                <h5><i class="fas fa-credit-card"></i> Paiements</h5>
-                {% if event.status != 'annulé' and event.remaining > 0 %}
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#paymentModal">
-                    <i class="fas fa-plus"></i> Encaisser
-                </button>
-                {% endif %}
+                <h5><i class="fas fa-credit-card"></i> Historique des paiements</h5>
             </div>
             <div class="card-body-custom p-0">
+                {% if payments | length > 0 %}
                 <div class="table-responsive">
                     <table class="table-elegant">
                         <thead>
@@ -158,19 +170,16 @@
                                     {% endif %}
                                 </td>
                             </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4">
-                                    <div class="empty-state small py-4">
-                                        <i class="fas fa-coins"></i>
-                                        <p class="mb-0">Aucun paiement enregistré</p>
-                                    </div>
-                                </td>
-                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                {% else %}
+                <div class="empty-state small py-5">
+                    <i class="fas fa-coins"></i>
+                    <p class="mb-0">Aucun paiement enregistré</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -211,6 +220,90 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Section 6: Expenses History ═══ -->
+{% if event_expenses | length > 0 %}
+<div class="card-custom no-hover mb-4">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-money-bill-wave"></i> Dépenses de l'événement</h5>
+        <span class="badge-amount" style="color: var(--danger);">{{ total_expenses | format_da }}</span>
+    </div>
+    <div class="card-body-custom p-0">
+        <div class="table-responsive">
+            <table class="table-elegant">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-calendar-day me-1"></i> Date</th>
+                        <th><i class="fas fa-tag me-1"></i> Catégorie</th>
+                        <th class="text-end"><i class="fas fa-coins me-1"></i> Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in event_expenses %}
+                    <tr>
+                        <td>{{ exp.expense_date }}</td>
+                        <td><span class="badge-slot">{{ exp.category }}</span></td>
+                        <td class="text-end">
+                            <span class="badge-amount" style="color: var(--danger);">{{ exp.amount | format_da }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ Section 7: Quick Actions / Danger Zone ═══ -->
+<div class="card-custom no-hover mb-4">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-sliders"></i> Actions</h5>
+    </div>
+    <div class="card-body-custom">
+        <div class="quick-actions-grid">
+            <div class="quick-action-group">
+                <label class="form-label-elegant">Modifier</label>
+                <a href="{{ url_for('bookings.event_form', event_id=event.id) }}" class="btn btn-outline-gold btn-sm">
+                    <i class="fas fa-edit me-1"></i> Modifier l'événement
+                </a>
+            </div>
+            {% if statuses %}
+            <div class="quick-action-group">
+                <label class="form-label-elegant">Changer le statut</label>
+                <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" class="status-change-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="status" class="form-input-elegant" id="statusSelect" style="padding: 9px 14px; font-size: 0.875rem;">
+                        {% for s in statuses %}
+                        {% if s != event.status %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    <div class="new-date-field" style="display:none; margin-top: 8px;">
+                        <input type="date" name="new_date" class="form-input-elegant" style="padding: 9px 14px; font-size: 0.875rem;" placeholder="Nouvelle date">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">
+                        <i class="fas fa-check me-1"></i> Appliquer
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+            {% if current_user.is_admin %}
+            <div class="quick-action-group">
+                <label class="form-label-elegant">Zone dangereuse</label>
+                <form method="POST" action="{{ url_for('bookings.delete_event', event_id=event.id) }}"
+                      onsubmit="return confirm('Supprimer cet événement ? Cette action est irréversible.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash me-1"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -268,11 +361,71 @@
     </div>
 </div>
 {% endif %}
+
+<!-- ═══ Expense Modal ═══ -->
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('bookings.add_event_expense', event_id=event.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Ajouter une dépense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="expense-category-list">
+                        <div class="expense-cat-row">
+                            <label class="expense-cat-check">
+                                <input type="checkbox" name="cat_serveurs">
+                                <span>Serveurs</span>
+                            </label>
+                            <input type="number" name="amount_serveurs" class="form-input-elegant" placeholder="15 000" min="0" step="100">
+                        </div>
+                        <div class="expense-cat-row">
+                            <label class="expense-cat-check">
+                                <input type="checkbox" name="cat_nettoyeurs">
+                                <span>Nettoyeurs</span>
+                            </label>
+                            <input type="number" name="amount_nettoyeurs" class="form-input-elegant" placeholder="8 000" min="0" step="100">
+                        </div>
+                        <div class="expense-cat-row">
+                            <label class="expense-cat-check">
+                                <input type="checkbox" name="cat_securite">
+                                <span>Sécurité</span>
+                            </label>
+                            <input type="number" name="amount_securite" class="form-input-elegant" placeholder="10 000" min="0" step="100">
+                        </div>
+                        <div class="expense-cat-row">
+                            <label class="expense-cat-check">
+                                <input type="checkbox" name="cat_autre">
+                                <span>Autre</span>
+                            </label>
+                            <div class="d-flex gap-2">
+                                <input type="text" name="autre_name" class="form-input-elegant" placeholder="Description" style="flex: 1;">
+                                <input type="number" name="amount_autre" class="form-input-elegant" placeholder="Montant" min="0" step="100" style="width: 120px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label-elegant">Date de la dépense</label>
+                        <input type="date" name="expense_date" class="form-input-elegant" value="{{ today_str }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.querySelector('select[name="status"]')?.addEventListener('change', function() {
+document.querySelector('#statusSelect')?.addEventListener('change', function() {
     const dateField = document.querySelector('.new-date-field');
     if (dateField) dateField.style.display = this.value === 'changé de date' ? 'block' : 'none';
 });
