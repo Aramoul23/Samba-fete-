@@ -32,8 +32,12 @@ function initCalendar(containerId, eventsUrl) {
             }
         }],
         eventContent: function() {
-            // Hide default event rendering — day cell coloring handles the visual
+            // Hide event pills entirely — day cell coloring is the visual
             return { html: '' };
+        },
+        eventDidMount: function(info) {
+            // Hide the event element so only the day cell color shows
+            info.el.style.display = 'none';
         },
         dayCellDidMount: function(info) {
             const dateStr = info.date.toISOString().slice(0, 10);
