@@ -304,18 +304,16 @@ function renderMiniCalendar() {
             const status = dateStatusMap[info.dateStr];
             if (!status) return;
             const cell = info.el;
+            const dayEl = cell.querySelector('.fc-daygrid-day-number');
             if (status === 'confirmé' || status === 'terminé') {
-                cell.style.setProperty('background-color', '#ef476f', 'important');
-                cell.style.setProperty('color', '#ffffff', 'important');
-                const dayEl = cell.querySelector('.fc-daygrid-day-number');
-                if (dayEl) { dayEl.textContent = '🔒 ' + dayEl.textContent.trim(); dayEl.style.color = '#ffffff'; }
+                cell.classList.add('status-booked');
+                if (dayEl) { dayEl.textContent = '🔒 ' + dayEl.textContent.trim(); }
             } else if (status === 'en attente') {
-                cell.style.setProperty('background-color', '#ffd166', 'important');
-                cell.style.setProperty('color', '#333333', 'important');
+                cell.classList.add('status-pending');
             } else if (status === 'changé de date') {
-                cell.style.setProperty('background-color', '#118ab2', 'important');
-                cell.style.setProperty('color', '#ffffff', 'important');
+                cell.classList.add('status-changed');
             }
+        },
         },
         dateClick: function(info) {
             const status = dateStatusMap[info.dateStr];
