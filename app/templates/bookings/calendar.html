@@ -53,7 +53,8 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    initCalendar('fullcalendar', '/api/calendar-events');
+    const serverDateStatusMap = {{ date_status_map | safe }};
+    initCalendar('fullcalendar', '/api/calendar-events', serverDateStatusMap);
 });
 </script>
 <style>

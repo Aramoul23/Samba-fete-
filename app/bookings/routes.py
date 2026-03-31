@@ -4,6 +4,7 @@ All event/booking CRUD, calendar, payments, status transitions,
 contracts, receipts, and the quick-payment page.
 """
 import calendar as _calendar
+import json
 import logging
 from datetime import date, datetime, timedelta
 from urllib.parse import urlparse
@@ -120,9 +121,13 @@ def calendar_view():
     if venue_filter:
         q = q.filter(or_(Event.venue_id == venue_filter, Event.venue_id2 == venue_filter))
 
+    events = q.all()
     booked_dict = {}
-    for ev in q.all():
+    date_status_map = {}
+    for ev in events:
         booked_dict.setdefault(ev.event_date, []).append(ev)
+        if ev.event_date and ev.status:
+            date_status_map[str(ev.event_date)[:10]] = ev.status
 
     return render_template(
         "bookings/calendar.html",
@@ -133,6 +138,7 @@ def calendar_view():
         venues=Venue.query.filter_by(is_active=1).all(),
         time_slots=TIME_SLOTS, venue_filter=venue_filter or "",
         pending_needs_attention=check_pending_events(),
+        date_status_map=json.dumps(date_status_map),
     )
 
 

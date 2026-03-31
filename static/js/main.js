@@ -3,12 +3,14 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 // ── FullCalendar Integration ────────────────────────────────────────
-function initCalendar(containerId, eventsUrl) {
+function initCalendar(containerId, eventsUrl, serverMap) {
     const container = document.getElementById(containerId);
     if (!container || typeof FullCalendar === 'undefined') return;
 
     const dateStatusMap = {};
     const dateUrlMap = {};
+
+    Object.assign(dateStatusMap, serverMap || {});
 
     const calendar = new FullCalendar.Calendar(container, {
         initialView: 'dayGridMonth',
