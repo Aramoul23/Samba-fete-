@@ -290,27 +290,27 @@ def delete_expense(expense_id):
 
 
 # ─── Exports ─────────────────────────────────────────────────────────
-@admin_required
 @bp.route("/export/events.ods")
 @login_required
+@admin_required
 def export_events():
     events = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id).order_by(Event.event_date.desc()).all()
     ods = export_events_ods([_event_dict(e) for e in events], datetime.now().strftime("%Y-%m-%d %H:%M"))
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=evenements_{date.today().isoformat()}.ods"; return resp
 
-@admin_required
 @bp.route("/export/clients.ods")
 @login_required
+@admin_required
 def export_clients():
     clients = Client.query.order_by(Client.created_at.desc()).all()
     ods = export_clients_ods([_client_dict(c) for c in clients], datetime.now().strftime("%Y-%m-%d %H:%M"))
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=clients_{date.today().isoformat()}.ods"; return resp
 
-@admin_required
 @bp.route("/export/payments.ods")
 @login_required
+@admin_required
 def export_payments():
     sd, ed = request.args.get("start_date", ""), request.args.get("end_date", "")
     q = Payment.query.join(Event).join(Client)
@@ -320,9 +320,9 @@ def export_payments():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=paiements_{date.today().isoformat()}.ods"; return resp
 
-@admin_required
 @bp.route("/export/finances.ods")
 @login_required
+@admin_required
 def export_finances():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
@@ -332,9 +332,9 @@ def export_finances():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=finances_{sd}_{ed}.ods"; return resp
 
-@admin_required
 @bp.route("/export/expenses.ods")
 @login_required
+@admin_required
 def export_expenses():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
@@ -343,9 +343,9 @@ def export_expenses():
     resp = make_response(ods); resp.headers["Content-Type"] = "application/vnd.oasis.opendocument.spreadsheet"
     resp.headers["Content-Disposition"] = f"attachment; filename=depenses_{sd}_{ed}.ods"; return resp
 
-@admin_required
 @bp.route("/export/pl.ods")
 @login_required
+@admin_required
 def export_pl():
     sd = request.args.get("start_date", (date.today() - timedelta(days=365)).isoformat())
     ed = request.args.get("end_date", date.today().isoformat())
