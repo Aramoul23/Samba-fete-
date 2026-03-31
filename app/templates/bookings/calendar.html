@@ -54,7 +54,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const serverDateStatusMap = {{ date_status_map | safe }};
-    initCalendar('fullcalendar', '/api/calendar-events', serverDateStatusMap);
+    const serverDateUrlMap = {{ date_url_map | safe }};
+    initCalendar('fullcalendar', '/api/calendar-events', serverDateStatusMap, serverDateUrlMap);
 });
 </script>
 <style>

@@ -114,8 +114,16 @@ def calendar_view():
     last = f"{year + 1}-01-01" if month == 12 else f"{year}-{month + 1:02d}-01"
     venue_filter = request.args.get("venue", type=int)
 
+    # Load events for ±2 months so FullCalendar nav doesn't need page reload
+    from datetime import datetime as dt
+    center = dt(year, month, 1)
+    range_start = (center - timedelta(days=62)).replace(day=1).strftime("%Y-%m-%d")
+    range_end_month = month + 3 if month <= 9 else (month + 3) % 12 or 12
+    range_end_year = year if month <= 9 else year + 1
+    range_end = f"{range_end_year}-{range_end_month:02d}-01"
+
     q = Event.query.filter(
-        Event.event_date >= first, Event.event_date < last,
+        Event.event_date >= range_start, Event.event_date < range_end,
         Event.status != "annulé",
     ).order_by(Event.event_date)
     if venue_filter:
@@ -124,10 +132,13 @@ def calendar_view():
     events = q.all()
     booked_dict = {}
     date_status_map = {}
+    date_url_map = {}
     for ev in events:
         booked_dict.setdefault(ev.event_date, []).append(ev)
+        d = str(ev.event_date)[:10]
         if ev.event_date and ev.status:
-            date_status_map[str(ev.event_date)[:10]] = ev.status
+            date_status_map[d] = ev.status
+            date_url_map[d] = url_for("bookings.event_detail", event_id=ev.id)
 
     return render_template(
         "bookings/calendar.html",
@@ -139,6 +150,7 @@ def calendar_view():
         time_slots=TIME_SLOTS, venue_filter=venue_filter or "",
         pending_needs_attention=check_pending_events(),
         date_status_map=json.dumps(date_status_map),
+        date_url_map=json.dumps(date_url_map),
     )
 
 
