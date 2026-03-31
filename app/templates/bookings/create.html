@@ -303,16 +303,24 @@ function renderMiniCalendar() {
         firstDay: 1,
         events: miniEvents,
         eventDisplay: 'none',
-        dayCellDidMount: function(info) {
-            const dateStr = info.dateStr;
-            const status = dateStatusMap[dateStr];
+        eventDidMount: function(info) {
+            const cell = info.el.closest('.fc-daygrid-day');
+            if (!cell) return;
+            info.el.style.display = 'none';
+            if (cell.dataset.status) return;
+
+            const status = info.event.extendedProps.status;
             if (!status) return;
-            const cell = info.el;
-            const dayNum = cell.querySelector('.fc-daygrid-day-number');
+            cell.dataset.status = status;
+
+            const dateAttr = cell.getAttribute('data-date') || '';
+            const dayNum = parseInt(dateAttr.split('-')[2], 10);
+            const dayEl = cell.querySelector('.fc-daygrid-day-number');
+
             if (status === 'confirmé' || status === 'terminé') {
                 cell.style.setProperty('background-color', '#ef476f', 'important');
                 cell.style.setProperty('color', '#ffffff', 'important');
-                if (dayNum) { const num = dayNum.textContent.replace(/\D/g,''); dayNum.textContent = '🔒 ' + num; dayNum.style.color = '#fff'; }
+                if (dayEl && !isNaN(dayNum)) { dayEl.textContent = '🔒 ' + dayNum; dayEl.style.color = '#ffffff'; }
             } else if (status === 'en attente') {
                 cell.style.setProperty('background-color', '#ffd166', 'important');
                 cell.style.setProperty('color', '#333333', 'important');

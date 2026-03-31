@@ -16,16 +16,29 @@ function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
         eventDidMount: function(info) {
             const cell = info.el.closest('.fc-daygrid-day');
             if (!cell) return;
+
+            // Hide the raw event block
+            info.el.style.display = 'none';
+
+            // Skip if this cell was already colored by another event
+            if (cell.dataset.status) return;
+
             const status = info.event.extendedProps.status;
+            if (!status) return;
+
+            cell.dataset.status = status;
+
+            // Extract day number from data-date attribute (e.g. "2026-03-09" → "9")
+            const dateAttr = cell.getAttribute('data-date') || '';
+            const dayNum = parseInt(dateAttr.split('-')[2], 10);
+            const dayEl = cell.querySelector('.fc-daygrid-day-number');
+
             if (status === 'confirmé' || status === 'terminé') {
                 cell.style.setProperty('background-color', '#ef476f', 'important');
                 cell.style.setProperty('color', '#ffffff', 'important');
-                const dayNum = cell.querySelector('.fc-daygrid-day-number');
-                if (dayNum && !dayNum.dataset.locked) {
-                    const num = dayNum.textContent.replace(/\D/g, '');
-                    dayNum.textContent = '🔒 ' + num;
-                    dayNum.dataset.locked = '1';
-                    dayNum.style.color = '#fff';
+                if (dayEl && !isNaN(dayNum)) {
+                    dayEl.textContent = '🔒 ' + dayNum;
+                    dayEl.style.color = '#ffffff';
                 }
             } else if (status === 'en attente') {
                 cell.style.setProperty('background-color', '#ffd166', 'important');
@@ -34,7 +47,6 @@ function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
                 cell.style.setProperty('background-color', '#118ab2', 'important');
                 cell.style.setProperty('color', '#ffffff', 'important');
             }
-            info.el.style.display = 'none';
         },
         dateClick: function(info) {
             if (dateStatusMap && dateStatusMap[info.dateStr]) {

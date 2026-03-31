@@ -362,6 +362,31 @@ body {
     pointer-events: none !important;
     cursor: not-allowed !important;
 }
+
+/* Status coloring via data attribute — CSS backup for JS inline styles */
+.fc-daygrid-day[data-status="confirmé"],
+.fc-daygrid-day[data-status="terminé"] {
+    background-color: #ef476f !important;
+    color: #ffffff !important;
+}
+.fc-daygrid-day[data-status="confirmé"] .fc-daygrid-day-number,
+.fc-daygrid-day[data-status="terminé"] .fc-daygrid-day-number {
+    color: #ffffff !important;
+}
+.fc-daygrid-day[data-status="en attente"] {
+    background-color: #ffd166 !important;
+    color: #333333 !important;
+}
+.fc-daygrid-day[data-status="en attente"] .fc-daygrid-day-number {
+    color: #333333 !important;
+}
+.fc-daygrid-day[data-status="changé de date"] {
+    background-color: #118ab2 !important;
+    color: #ffffff !important;
+}
+.fc-daygrid-day[data-status="changé de date"] .fc-daygrid-day-number {
+    color: #ffffff !important;
+}
 .calendar-header-bar { margin-bottom: 24px; }
 .calendar-nav { display: flex; align-items: center; gap: 12px; }
 .calendar-month-label { font-size: 1.375rem; font-weight: 700; color: var(--text); min-width: 200px; text-align: center; font-family: 'Noto Serif', serif; }
