@@ -85,6 +85,10 @@ def dashboard():
         ev.paid = ev.total_paid
         upcoming_with_revenue.append(ev)
 
+    today_events = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id).filter(
+        Event.event_date == today.isoformat()
+    ).order_by(Event.time_slot).all()
+
     return render_template(
         "finance/index.html",
         events_this_month=events_this_month, revenue_month=revenue_month,
@@ -99,6 +103,7 @@ def dashboard():
         chart_labels=chart_labels, chart_revenues=chart_revenues,
         chart_expenses=chart_expenses, chart_profits=chart_profits,
         upcoming_with_revenue=upcoming_with_revenue,
+        today_events=today_events,
     )
 
 

@@ -124,6 +124,64 @@
         </div>
     </div>
 
+    <!-- Today's Events Widget -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom no-hover">
+                <div class="card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Aujourd'hui — {{ today|date_only }}</h5>
+                    <span class="badge-slot">{{ today_events|length }} événement{{ 's' if today_events|length != 1 else '' }}</span>
+                </div>
+                <div class="card-body-custom" style="padding: 0;">
+                    {% if today_events %}
+                    <div class="table-responsive">
+                        <table class="table-elegant">
+                            <thead>
+                                <tr>
+                                    <th>Créneau</th>
+                                    <th>Événement</th>
+                                    <th class="d-none d-md-table-cell">Client</th>
+                                    <th class="d-none d-lg-table-cell">Lieu</th>
+                                    <th>Statut</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ev in today_events %}
+                                <tr class="clickable-row" onclick="window.location='{{ url_for('bookings.event_detail', event_id=ev.id) }}'">
+                                    <td><span class="badge-slot">{{ ev.time_slot }}</span></td>
+                                    <td style="font-weight: 600;">{{ ev.title }}</td>
+                                    <td class="d-none d-md-table-cell">{{ ev.client.name }}</td>
+                                    <td class="d-none d-lg-table-cell">{{ ev.venue.name if ev.venue else '—' }}</td>
+                                    <td>
+                                        <span class="badge-status status-{{ ev.status | replace(' ', '-') }}">
+                                            {{ ev.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('bookings.event_detail', event_id=ev.id) }}" class="btn btn-sm btn-outline-gold" onclick="event.stopPropagation();">
+                                            <i class="fas fa-eye me-1"></i>Voir
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-xmark"></i>
+                        <p>Aucun événement aujourd'hui</p>
+                        <a href="{{ url_for('bookings.event_form') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Créer un événement
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content Row -->
     <div class="row g-4">
         <!-- Upcoming Events -->
