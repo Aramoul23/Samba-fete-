@@ -20,8 +20,17 @@ function initCalendar(containerId, eventsUrl) {
         },
         events: function(fetchInfo, successCallback, failureCallback) {
             fetch(eventsUrl + '?start=' + fetchInfo.startStr + '&end=' + fetchInfo.endStr)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) {
+                        console.warn('Calendar events returned', r.status, '- rendering without colors');
+                        successCallback([]);
+                        return null;
+                    }
+                    return r.json();
+                })
                 .then(events => {
+                    if (events === null) return; // already handled above
+
                     Object.keys(dateStatusMap).forEach(k => delete dateStatusMap[k]);
                     Object.keys(dateUrlMap).forEach(k => delete dateUrlMap[k]);
 
@@ -36,7 +45,7 @@ function initCalendar(containerId, eventsUrl) {
                 })
                 .catch(err => {
                     console.error('Calendar fetch failed:', err);
-                    failureCallback(err);
+                    successCallback([]);
                 });
         },
         dayCellDidMount: function(info) {
