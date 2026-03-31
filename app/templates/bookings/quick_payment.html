@@ -210,6 +210,7 @@
 
                     <!-- Payment Form -->
                     <form method="POST" action="{{ url_for('bookings.add_payment', event_id=selected_event.id) }}" id="quickPaymentForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="next" value="{{ url_for('bookings.quick_payment', client_id=selected_client.id, event_id=selected_event.id, q=search) }}">
                         <div class="row g-3">
                             <div class="col-md-4">
