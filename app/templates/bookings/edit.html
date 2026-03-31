@@ -301,15 +301,22 @@ function renderMiniCalendar() {
             dayCellDidMount: function(info) {
                 const moreLink = info.el.querySelector('.fc-daygrid-more-link');
                 if (moreLink) moreLink.remove();
-                const dateStr = info.date.toISOString().slice(0, 10);
+                const dateStr = info.dateStr;
                 const status = dateStatusMap[dateStr];
                 if (status) {
                     if (status === 'confirmé' || status === 'terminé') {
                         info.el.style.backgroundColor = '#ef476f';
                         info.el.style.color = '#ffffff';
+                        info.el.style.pointerEvents = 'none';
+                        info.el.style.cursor = 'not-allowed';
                         info.el.classList.add('fc-day-taken');
+                        info.el.setAttribute('data-taken', '1');
                         const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-                        if (dayNum) { dayNum.style.color = '#ffffff'; dayNum.textContent = '🔒 ' + dayNum.textContent; }
+                        if (dayNum) {
+                            dayNum.style.color = '#ffffff';
+                            dayNum.style.pointerEvents = 'none';
+                            dayNum.textContent = '🔒 ' + dayNum.textContent;
+                        }
                         return;
                     } else if (status === 'en attente') {
                         info.el.style.backgroundColor = '#ffd166';
@@ -324,6 +331,12 @@ function renderMiniCalendar() {
             },
             dateClick: function(info) {
                 const dateStr = info.dateStr;
+                // Layer 1: Check if the cell is marked as taken
+                if (info.dayEl.classList.contains('fc-day-taken') || info.dayEl.getAttribute('data-taken') === '1') {
+                    showToast('❌ Cette date est déjà réservée et confirmée.', 'danger');
+                    return;
+                }
+                // Layer 2: Check the status map
                 const status = dateStatusMap[dateStr];
                 if (status === 'confirmé' || status === 'terminé') {
                     showToast('❌ Cette date est déjà réservée et confirmée.', 'danger');

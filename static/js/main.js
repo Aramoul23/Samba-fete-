@@ -55,7 +55,7 @@ function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
             const moreLink = info.el.querySelector('.fc-daygrid-more-link');
             if (moreLink) moreLink.remove();
 
-            const dateStr = info.date.toISOString().slice(0, 10);
+            const dateStr = info.dateStr;
             const status = dateStatusMap[dateStr];
 
             if (status) {

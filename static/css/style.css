@@ -324,10 +324,10 @@ body {
 .fc-day-taken {
     opacity: 0.5;
     cursor: not-allowed !important;
-    pointer-events: none;
+    pointer-events: none !important;
 }
 .fc-day-taken .fc-daygrid-day-number {
-    pointer-events: auto;
+    pointer-events: none !important;
     cursor: not-allowed !important;
 }
 .calendar-header-bar { margin-bottom: 24px; }
