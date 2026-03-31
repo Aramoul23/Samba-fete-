@@ -18,7 +18,6 @@ function initCalendar(containerId, eventsUrl) {
             center: 'title',
             right: 'dayGridMonth,listMonth'
         },
-        events: eventsUrl,
         eventSources: [{
             url: eventsUrl,
             success: function(events) {
@@ -32,12 +31,8 @@ function initCalendar(containerId, eventsUrl) {
             }
         }],
         eventContent: function() {
-            // Suppress event rendering on the grid
-            return false;
-        },
-        eventDidMount: function(info) {
-            // Remove the event element entirely from the DOM
-            info.el.remove();
+            // FullCalendar 6: return empty html to suppress ALL event rendering
+            return { html: '' };
         },
         dayCellDidMount: function(info) {
             // Remove "+more" link if FullCalendar creates one

@@ -54,9 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <style>
+/* Hide ALL event rendering in day grid — keep only colored backgrounds */
 .fc-daygrid-day { cursor: pointer; }
 .fc-daygrid-day:hover { background: rgba(102, 126, 234, 0.08); }
 .fc-daygrid-day-events,
+.fc-daygrid-event-harness,
 .fc-daygrid-event,
 .fc-h-event,
 .fc-event,
@@ -64,9 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
 .fc-event-main,
 .fc-event-main-frame {
     display: none !important;
+    visibility: hidden !important;
     height: 0 !important;
+    min-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
 }
 </style>
 {% endblock %}
