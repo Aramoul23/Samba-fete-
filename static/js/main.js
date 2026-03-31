@@ -34,14 +34,14 @@ function initCalendar(containerId, eventsUrl) {
             // FullCalendar 6: return empty html to suppress ALL event rendering
             return { html: '' };
         },
+        eventDidMount: function(info) {
+            // Remove event element from DOM — only day-cell background coloring should be visible
+            info.el.remove();
+        },
         dayCellDidMount: function(info) {
             // Remove "+more" link if FullCalendar creates one
             const moreLink = info.el.querySelector('.fc-daygrid-more-link');
             if (moreLink) moreLink.remove();
-
-            // Also remove any event elements that slipped through
-            const events = info.el.querySelectorAll('.fc-daygrid-event, .fc-event, .fc-h-event');
-            events.forEach(el => el.remove());
 
             const dateStr = info.date.toISOString().slice(0, 10);
             const status = dateStatusMap[dateStr];
