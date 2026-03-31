@@ -31,6 +31,10 @@ function initCalendar(containerId, eventsUrl) {
                 });
             }
         }],
+        eventContent: function() {
+            // Show only a small colored dot, no title text
+            return { html: '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin:1px auto"></span>' };
+        },
         dayCellDidMount: function(info) {
             const dateStr = info.date.toISOString().slice(0, 10);
             const status = dateStatusMap[dateStr];
