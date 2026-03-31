@@ -34,9 +34,7 @@ function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
                 .then(events => {
                     if (events === null) return; // already handled above
 
-                    Object.keys(dateStatusMap).forEach(k => delete dateStatusMap[k]);
-                    Object.keys(dateUrlMap).forEach(k => delete dateUrlMap[k]);
-
+                    // Merge API data into the server map — don't wipe it
                     events.forEach(function(ev) {
                         if (ev.start && ev.extendedProps && ev.extendedProps.status) {
                             dateStatusMap[ev.start] = ev.extendedProps.status;
@@ -59,21 +57,36 @@ function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
             const status = dateStatusMap[dateStr];
 
             if (status) {
-                info.el.style.cursor = 'pointer';
-                info.el.addEventListener('click', function() {
-                    const url = dateUrlMap[dateStr];
-                    if (url) window.location.href = url;
-                });
-
                 if (status === 'confirmé' || status === 'terminé') {
                     info.el.style.backgroundColor = '#ef476f';
                     info.el.style.color = '#ffffff';
+                    info.el.style.pointerEvents = 'none';
+                    info.el.style.cursor = 'not-allowed';
+                    info.el.classList.add('fc-day-taken');
+                    const dayNum = info.el.querySelector('.fc-daygrid-day-number');
+                    if (dayNum) { dayNum.style.color = '#ffffff'; dayNum.textContent = '🔒 ' + dayNum.textContent; }
                 } else if (status === 'en attente') {
                     info.el.style.backgroundColor = '#ffd166';
                     info.el.style.color = '#333333';
+                    info.el.style.cursor = 'pointer';
+                    info.el.addEventListener('click', function() {
+                        const url = dateUrlMap[dateStr];
+                        if (url) window.location.href = url;
+                    });
                 } else if (status === 'changé de date') {
                     info.el.style.backgroundColor = '#118ab2';
                     info.el.style.color = '#ffffff';
+                    info.el.style.cursor = 'pointer';
+                    info.el.addEventListener('click', function() {
+                        const url = dateUrlMap[dateStr];
+                        if (url) window.location.href = url;
+                    });
+                } else {
+                    info.el.style.cursor = 'pointer';
+                    info.el.addEventListener('click', function() {
+                        const url = dateUrlMap[dateStr];
+                        if (url) window.location.href = url;
+                    });
                 }
 
                 const dayNumber = info.el.querySelector('.fc-daygrid-day-number');
@@ -81,6 +94,12 @@ function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
             }
         },
         dateClick: function(info) {
+            const status = dateStatusMap[info.dateStr];
+            // Block confirmed/terminé dates — don't navigate
+            if (status === 'confirmé' || status === 'terminé') {
+                alert('Cette date est déjà réservée.');
+                return;
+            }
             const url = dateUrlMap[info.dateStr];
             if (url) {
                 window.location.href = url;
