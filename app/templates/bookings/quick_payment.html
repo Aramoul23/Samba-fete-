@@ -5,6 +5,62 @@
 {% block content %}
 <div class="container-fluid">
 
+    <!-- Calendar View -->
+    <div class="card-custom mb-4">
+        <div class="card-header-custom">
+            <h5 class="mb-0">
+                <span class="badge bg-primary me-2" style="font-size: 0.75rem;">📅</span>
+                Paiement par Date
+            </h5>
+        </div>
+        <div class="card-body-custom">
+            <!-- Month nav -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <a href="{{ url_for('bookings.quick_payment', year=prev_year, month=prev_month) }}" class="btn btn-outline-primary btn-sm">◀</a>
+                <h5 style="margin:0;color:var(--text-primary);font-weight:600;">{{ month_name }} {{ year }}</h5>
+                <a href="{{ url_for('bookings.quick_payment', year=next_year, month=next_month) }}" class="btn btn-outline-primary btn-sm">▶</a>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;text-align:center;">
+                <tr>
+                    {% for d in ['Lu','Ma','Me','Je','Ve','Sa','Di'] %}
+                    <th style="padding:8px 4px;font-size:0.75rem;color:var(--text-muted);font-weight:600;">{{ d }}</th>
+                    {% endfor %}
+                </tr>
+                {% for week in weeks %}
+                <tr>
+                    {% for day in week %}
+                    {% if day == 0 %}
+                    <td></td>
+                    {% else %}
+                    {% set date_str = '%04d-%02d-%02d'|format(year, month, day) %}
+                    {% set status = qp_date_status_map.get(date_str) %}
+                    {% set url = qp_date_url_map.get(date_str) %}
+                    {% if status == 'confirmé' or status == 'terminé' %}
+                    <td style="padding:6px 2px;">
+                        <a href="{{ url or '#' }}" class="cal-day cal-booked" style="width:36px;height:36px;line-height:36px;font-size:0.8rem;">🔒 {{ day }}</a>
+                    </td>
+                    {% elif status == 'en attente' %}
+                    <td style="padding:6px 2px;">
+                        <a href="{{ url or '#' }}" class="cal-day cal-pending" style="width:36px;height:36px;line-height:36px;font-size:0.8rem;">{{ day }}</a>
+                    </td>
+                    {% elif status == 'changé de date' %}
+                    <td style="padding:6px 2px;">
+                        <a href="{{ url or '#' }}" class="cal-day cal-changed" style="width:36px;height:36px;line-height:36px;font-size:0.8rem;">{{ day }}</a>
+                    </td>
+                    {% else %}
+                    <td style="padding:6px 2px;">
+                        <span class="cal-day cal-free" style="width:36px;height:36px;line-height:36px;font-size:0.8rem;">{{ day }}</span>
+                    </td>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
     <!-- Step 1: Search Client -->
     <div class="card-custom mb-4">
         <div class="card-header-custom">

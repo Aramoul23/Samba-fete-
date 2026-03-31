@@ -610,6 +610,34 @@ def quick_payment():
                 Payment.event_id == selected_event_id, Payment.is_refunded == 1).scalar(),
         }
 
+    # ─── Calendar date maps ────────────────────────────────────────
+    from datetime import datetime as dt
+    cal_year = request.args.get("year", date.today().year, type=int)
+    cal_month = request.args.get("month", date.today().month, type=int)
+    center = dt(cal_year, cal_month, 1)
+    range_start = (center - timedelta(days=62)).replace(day=1).strftime("%Y-%m-%d")
+    range_end_month = cal_month + 3 if cal_month <= 9 else (cal_month + 3) % 12 or 12
+    range_end_year = cal_year if cal_month <= 9 else cal_year + 1
+    range_end = f"{range_end_year}-{range_end_month:02d}-01"
+    cal_events = Event.query.filter(
+        Event.event_date >= range_start,
+        Event.event_date < range_end,
+        Event.status != "annulé",
+    ).all()
+    qp_date_status_map = {}
+    qp_date_url_map = {}
+    for ev in cal_events:
+        d = str(ev.event_date)[:10]
+        if ev.event_date and ev.status:
+            qp_date_status_map[d] = ev.status
+            qp_date_url_map[d] = url_for("bookings.quick_payment", client_id=ev.client_id, event_id=ev.id)
+
+    prev_month = cal_month - 1 if cal_month > 1 else 12
+    prev_year = cal_year if cal_month > 1 else cal_year - 1
+    next_month = cal_month + 1 if cal_month < 12 else 1
+    next_year = cal_year if cal_month < 12 else cal_year + 1
+    weeks = _calendar.Calendar(firstweekday=0).monthdayscalendar(cal_year, cal_month)
+
     return render_template(
         "bookings/quick_payment.html",
         search=search, clients=clients,
@@ -617,6 +645,11 @@ def quick_payment():
         client_events=client_events, selected_event_id=selected_event_id,
         selected_event=selected_event, event_payments=event_payments,
         event_financials=event_financials, today_str=date.today().isoformat(),
+        year=cal_year, month=cal_month, month_name=MONTH_NAMES_FR[cal_month],
+        weeks=weeks,
+        qp_date_status_map=qp_date_status_map, qp_date_url_map=qp_date_url_map,
+        prev_month=prev_month, prev_year=prev_year,
+        next_month=next_month, next_year=next_year,
     )
 
 
