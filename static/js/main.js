@@ -60,6 +60,10 @@ function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
 
             if (status) {
                 info.el.style.cursor = 'pointer';
+                info.el.addEventListener('click', function() {
+                    const url = dateUrlMap[dateStr];
+                    if (url) window.location.href = url;
+                });
 
                 if (status === 'confirmé' || status === 'terminé') {
                     info.el.style.backgroundColor = '#ef476f';
