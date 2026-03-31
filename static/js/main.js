@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(() => { calendarEvents = {}; });
         }
 
-        flatpickr('input[type="date"], input[name="event_date"], input[name="expense_date"]', {
+        flatpickr('input[type="date"], input[name="expense_date"]', {
             dateFormat: 'Y-m-d',
             locale: 'fr',
             allowInput: true,

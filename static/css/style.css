@@ -760,6 +760,20 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     /* Filter forms — compact */
     .form-input-elegant { padding: 9px 12px; font-size: 0.85rem; }
     .form-label-elegant { font-size: 0.65rem; margin-bottom: 4px; }
+
+    /* Mini calendar on very small screens */
+    #mini-calendar .fc-daygrid-day {
+        min-height: 28px;
+    }
+    #mini-calendar .fc-daygrid-day-number {
+        font-size: 0.6rem;
+        padding: 1px;
+    }
+    #calendar-modal > div {
+        width: 98% !important;
+        max-width: 100% !important;
+        border-radius: 8px !important;
+    }
 }
 
 /* ─── Print ────────────────────────────────────────── */
@@ -1041,6 +1055,15 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     }
     #mini-calendar .fc-daygrid-day {
         min-height: 32px;
+    }
+
+    /* ── Calendar picker modal ── */
+    #calendar-modal > div {
+        width: 95% !important;
+        border-radius: 12px !important;
+    }
+    #mini-calendar {
+        padding: 8px !important;
     }
 }
 

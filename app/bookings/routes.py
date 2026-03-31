@@ -104,6 +104,43 @@ def check_pending_events():
     ).all()
 
 
+def _build_mini_date_maps():
+    """Build date_status_map and date_url_map for the mini calendar picker."""
+    from datetime import datetime as dt
+    today = date.today()
+    range_start = (dt(today.year, today.month, 1) - timedelta(days=62)).replace(day=1)
+    range_end_month = (today.month + 3) % 12 or 12
+    range_end_year = today.year + (1 if today.month + 3 > 12 else 0)
+    cal_events = Event.query.filter(
+        Event.event_date >= range_start.strftime("%Y-%m-%d"),
+        Event.event_date < f"{range_end_year}-{range_end_month:02d}-01",
+        Event.status != "annulé",
+    ).all()
+    dsm, dum = {}, {}
+    for ev in cal_events:
+        d = str(ev.event_date)[:10]
+        if ev.event_date and ev.status:
+            dsm[d] = ev.status
+            dum[d] = url_for("bookings.event_detail", event_id=ev.id)
+    return dsm, dum
+
+
+def _render_event_form(event_id, event, client, event_lines, custom_lines, venues):
+    """Render the create/edit event form with all required template variables."""
+    edit_statuses = EVENT_STATUSES
+    if event:
+        allowed_next = STATUS_TRANSITIONS.get(event.status, [])
+        edit_statuses = [event.status] + [s for s in allowed_next if s != event.status]
+    dsm, dum = _build_mini_date_maps()
+    return render_template(
+        "bookings/create.html" if not event_id else "bookings/edit.html",
+        event=event, client=client, event_lines=event_lines, custom_lines=custom_lines,
+        venues=venues, time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
+        statuses=edit_statuses, event_id=event_id, all_statuses=ALL_STATUSES,
+        date_status_map=json.dumps(dsm), date_url_map=json.dumps(dum),
+    )
+
+
 # ─── Calendar ────────────────────────────────────────────────────────
 @bp.route("/calendrier")
 @login_required
@@ -226,19 +263,14 @@ def event_form(event_id=None):
                 Event.id != (event_id or 0),
             ).first()
             if date_conflict:
-                flash("Cette date est déjà réservée", "danger")
-                return redirect(request.referrer or url_for("bookings.event_list"))
+                flash(f"Cette date est déjà réservée ({date_conflict.title})", "danger")
+                return _render_event_form(event_id, event, client, event_lines, custom_lines, venues)
 
         errors.extend(validate_event_date(event_date_val, event_id or 0))
 
         if errors:
             for e in errors: flash(e, "danger")
-            return render_template(
-                "bookings/create.html" if not event_id else "bookings/edit.html",
-                event=event, client=client, event_lines=event_lines, custom_lines=custom_lines,
-                venues=venues, time_slots=TIME_SLOTS, event_types=EVENT_TYPES,
-                statuses=EVENT_STATUSES, event_id=event_id,
-            )
+            return _render_event_form(event_id, event, client, event_lines, custom_lines, venues)
 
         # Upsert client
         if client:
@@ -279,43 +311,7 @@ def event_form(event_id=None):
         flash("Événement créé avec succès!", "success")
         return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-    template = "bookings/create.html" if not event_id else "bookings/edit.html"
-
-    # For edit: show current status + allowed transitions
-    edit_statuses = EVENT_STATUSES
-    if event:
-        current = event.status
-        allowed_next = STATUS_TRANSITIONS.get(current, [])
-        edit_statuses = [current] + [s for s in allowed_next if s != current]
-
-    # Build date maps for mini calendar
-    from datetime import datetime as dt
-    _now = date.today()
-    range_start_dt = (dt(_now.year, _now.month, 1) - timedelta(days=62)).replace(day=1)
-    range_end_month = (_now.month + 3) % 12 or 12
-    range_end_year = _now.year + (1 if _now.month + 3 > 12 else 0)
-    range_start_str = range_start_dt.strftime("%Y-%m-%d")
-    range_end_str = f"{range_end_year}-{range_end_month:02d}-01"
-    cal_events = Event.query.filter(
-        Event.event_date >= range_start_str, Event.event_date < range_end_str,
-        Event.status != "annulé",
-    ).all()
-    mini_date_status_map = {}
-    mini_date_url_map = {}
-    for ev in cal_events:
-        d = str(ev.event_date)[:10]
-        if ev.event_date and ev.status:
-            mini_date_status_map[d] = ev.status
-            mini_date_url_map[d] = url_for("bookings.event_detail", event_id=ev.id)
-
-    return render_template(
-        template, event=event, client=client, event_lines=event_lines,
-        custom_lines=custom_lines, venues=venues, time_slots=TIME_SLOTS,
-        event_types=EVENT_TYPES, statuses=edit_statuses, event_id=event_id,
-        all_statuses=ALL_STATUSES,
-        date_status_map=json.dumps(mini_date_status_map),
-        date_url_map=json.dumps(mini_date_url_map),
-    )
+    return _render_event_form(event_id, event, client, event_lines, custom_lines, venues)
 
 
 # ─── Event Detail ────────────────────────────────────────────────────
@@ -453,13 +449,9 @@ def update_event_status(event_id):
         if new_status == "changé de date":
             new_date = request.form.get("new_date", "").strip()
             if new_date:
-                # One-event-per-day enforcement
-                date_conflict = Event.query.filter(
-                    Event.event_date == new_date,
-                    Event.id != event_id,
-                ).first()
-                if date_conflict:
-                    flash("Cette date est déjà réservée", "danger")
+                date_errors = validate_event_date(new_date, event_id)
+                if date_errors:
+                    for e in date_errors: flash(e, "danger")
                     return redirect(url_for("bookings.event_detail", event_id=event_id))
                 event.event_date = new_date
                 flash(f"Date changée à {new_date}.", "success")
