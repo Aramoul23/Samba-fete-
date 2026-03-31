@@ -32,13 +32,21 @@ function initCalendar(containerId, eventsUrl) {
             }
         }],
         eventContent: function() {
-            // Return false to fully suppress event rendering on the grid
+            // Suppress event rendering on the grid
             return false;
+        },
+        eventDidMount: function(info) {
+            // Remove the event element entirely from the DOM
+            info.el.remove();
         },
         dayCellDidMount: function(info) {
             // Remove "+more" link if FullCalendar creates one
             const moreLink = info.el.querySelector('.fc-daygrid-more-link');
             if (moreLink) moreLink.remove();
+
+            // Also remove any event elements that slipped through
+            const events = info.el.querySelectorAll('.fc-daygrid-event, .fc-event, .fc-h-event');
+            events.forEach(el => el.remove());
 
             const dateStr = info.date.toISOString().slice(0, 10);
             const status = dateStatusMap[dateStr];
