@@ -306,12 +306,12 @@ function renderMiniCalendar() {
             const cell = info.el;
             const dayEl = cell.querySelector('.fc-daygrid-day-number');
             if (status === 'confirmé' || status === 'terminé') {
-                cell.classList.add('status-booked');
-                if (dayEl) { dayEl.textContent = '🔒 ' + dayEl.textContent.trim(); }
+                cell.style.cssText = 'background-color:#ef476f !important;color:#ffffff !important;';
+                if (dayEl) { dayEl.textContent = '🔒 ' + dayEl.textContent.trim(); dayEl.style.cssText = 'color:#ffffff !important;'; }
             } else if (status === 'en attente') {
-                cell.classList.add('status-pending');
+                cell.style.cssText = 'background-color:#ffd166 !important;color:#333333 !important;';
             } else if (status === 'changé de date') {
-                cell.classList.add('status-changed');
+                cell.style.cssText = 'background-color:#118ab2 !important;color:#ffffff !important;';
             }
         },
         },
