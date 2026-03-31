@@ -29,7 +29,10 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label-elegant">Date <span style="color: var(--danger);">*</span></label>
-                            <input type="text" name="event_date" class="form-input-elegant" required placeholder="Choisir une date">
+                            <input type="text" name="event_date" id="event_date" class="form-input-elegant" required placeholder="Choisir une date">
+                        </div>
+                        <div class="col-12">
+                            <div id="mini-calendar" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);"></div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label-elegant">Créneau</label>
@@ -234,6 +237,70 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     // Initial calculation
     calcTotal();
+
+    // --- Flatpickr on date input ---
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr('#event_date', {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'j F Y',
+            locale: 'fr',
+            disableMobile: true
+        });
+    }
+
+    // --- Mini FullCalendar for date selection with availability ---
+    const dateStatusMap = {{ date_status_map | safe }};
+    const dateUrlMap = {{ date_url_map | safe }};
+
+    const calEl = document.getElementById('mini-calendar');
+    if (calEl && typeof FullCalendar !== 'undefined') {
+        const cal = new FullCalendar.Calendar(calEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+            titleFormat: { year: 'numeric', month: 'long' },
+            height: 'auto',
+            locale: 'fr',
+            firstDay: 1,
+            events: '/api/calendar-events',
+            eventDisplay: 'none',
+            dayCellDidMount: function(info) {
+                const moreLink = info.el.querySelector('.fc-daygrid-more-link');
+                if (moreLink) moreLink.remove();
+                const dateStr = info.date.toISOString().slice(0, 10);
+                const status = dateStatusMap[dateStr];
+                if (status) {
+                    if (status === 'confirmé' || status === 'terminé') {
+                        info.el.style.backgroundColor = '#ef476f';
+                        info.el.style.color = '#ffffff';
+                    } else if (status === 'en attente') {
+                        info.el.style.backgroundColor = '#ffd166';
+                        info.el.style.color = '#333333';
+                    } else if (status === 'changé de date') {
+                        info.el.style.backgroundColor = '#118ab2';
+                        info.el.style.color = '#ffffff';
+                    }
+                    const dayNum = info.el.querySelector('.fc-daygrid-day-number');
+                    if (dayNum) dayNum.style.color = info.el.style.color;
+                }
+            },
+            dateClick: function(info) {
+                const input = document.getElementById('event_date');
+                if (input) {
+                    input.value = info.dateStr;
+                    // Remove red border if set
+                    input.style.borderColor = '';
+                    // Highlight selected cell
+                    document.querySelectorAll('.fc-daygrid-day').forEach(el => {
+                        el.classList.remove('selected-date');
+                    });
+                    info.dayEl.style.outline = '2px solid var(--primary)';
+                    info.dayEl.style.outlineOffset = '-2px';
+                }
+            }
+        });
+        cal.render();
+    }
 });
 </script>
 {% endblock %}

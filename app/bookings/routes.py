@@ -288,11 +288,32 @@ def event_form(event_id=None):
         allowed_next = STATUS_TRANSITIONS.get(current, [])
         edit_statuses = [current] + [s for s in allowed_next if s != current]
 
+    # Build date maps for mini calendar
+    from datetime import datetime as dt
+    _now = date.today()
+    range_start_dt = (dt(_now.year, _now.month, 1) - timedelta(days=62)).replace(day=1)
+    range_end_month = (_now.month + 3) % 12 or 12
+    range_end_year = _now.year + (1 if _now.month + 3 > 12 else 0)
+    range_end_str = f"{range_end_year}-{range_end_month:02d}-01"
+    cal_events = Event.query.filter(
+        Event.event_date >= range_start_dt, Event.event_date < range_end_str,
+        Event.status != "annulé",
+    ).all()
+    mini_date_status_map = {}
+    mini_date_url_map = {}
+    for ev in cal_events:
+        d = str(ev.event_date)[:10]
+        if ev.event_date and ev.status:
+            mini_date_status_map[d] = ev.status
+            mini_date_url_map[d] = url_for("bookings.event_detail", event_id=ev.id)
+
     return render_template(
         template, event=event, client=client, event_lines=event_lines,
         custom_lines=custom_lines, venues=venues, time_slots=TIME_SLOTS,
         event_types=EVENT_TYPES, statuses=edit_statuses, event_id=event_id,
         all_statuses=ALL_STATUSES,
+        date_status_map=json.dumps(mini_date_status_map),
+        date_url_map=json.dumps(mini_date_url_map),
     )
 
 
