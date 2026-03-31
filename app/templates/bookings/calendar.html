@@ -53,9 +53,10 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const serverDateStatusMap = {{ date_status_map | safe }};
-    const serverDateUrlMap = {{ date_url_map | safe }};
-    initCalendar('fullcalendar', '/api/calendar-events', serverDateStatusMap, serverDateUrlMap);
+    const dateStatusMap = {{ date_status_map | safe }};
+    const dateUrlMap = {{ date_url_map | safe }};
+    console.log('Calendar dateStatusMap:', dateStatusMap);
+    initCalendar('fullcalendar', '/api/calendar-events', dateStatusMap, dateUrlMap);
 });
 </script>
 <style>
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .fc-daygrid-day { cursor: default; }
 .fc-daygrid-day:hover { filter: brightness(1.08); }
 
-/* Safety net: hide any residual event elements */
+/* Hide FullCalendar event elements — we only color cells */
 .fc-daygrid-day-events,
 .fc-daygrid-event-harness,
 .fc-daygrid-event,

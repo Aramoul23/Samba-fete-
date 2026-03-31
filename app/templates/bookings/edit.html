@@ -282,84 +282,57 @@ document.getElementById('calendar-modal').addEventListener('click', function(e) 
     if (e.target === this) closeCalendarPicker();
 });
 
-// --- Render the mini FullCalendar with colored dates ---
+// --- Mini Calendar ---
+const dateStatusMap = {{ date_status_map | safe }};
+const dateUrlMap = {{ date_url_map | safe }};
+
 function renderMiniCalendar() {
-    const dateStatusMap = {{ date_status_map | safe }};
-    const dateUrlMap = {{ date_url_map | safe }};
+    console.log('Mini calendar dateStatusMap:', dateStatusMap);
+    console.log('Mini calendar dateUrlMap:', dateUrlMap);
 
     const calEl = document.getElementById('mini-calendar');
-    if (calEl && typeof FullCalendar !== 'undefined') {
-        const cal = new FullCalendar.Calendar(calEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-            titleFormat: { year: 'numeric', month: 'long' },
-            height: 'auto',
-            locale: 'fr',
-            firstDay: 1,
-            eventDisplay: 'none',
-            dayCellDidMount: function(info) {
-                const moreLink = info.el.querySelector('.fc-daygrid-more-link');
-                if (moreLink) moreLink.remove();
-                const dateStr = info.dateStr;
-                const status = dateStatusMap[dateStr];
-                if (status) {
-                    if (status === 'confirmé' || status === 'terminé') {
-                        info.el.style.backgroundColor = '#ef476f';
-                        info.el.style.color = '#ffffff';
-                        info.el.style.pointerEvents = 'none';
-                        info.el.style.cursor = 'not-allowed';
-                        info.el.classList.add('fc-day-taken');
-                        info.el.setAttribute('data-taken', '1');
-                        const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-                        if (dayNum) {
-                            dayNum.style.color = '#ffffff';
-                            dayNum.style.pointerEvents = 'none';
-                            dayNum.textContent = '🔒 ' + dayNum.textContent;
-                        }
-                        return;
-                    } else if (status === 'en attente') {
-                        info.el.style.backgroundColor = '#ffd166';
-                        info.el.style.color = '#333333';
-                    } else if (status === 'changé de date') {
-                        info.el.style.backgroundColor = '#118ab2';
-                        info.el.style.color = '#ffffff';
-                    }
-                    const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-                    if (dayNum) dayNum.style.color = info.el.style.color;
-                }
-            },
-            dateClick: function(info) {
-                const dateStr = info.dateStr;
-                // Layer 1: Check if the cell is marked as taken
-                if (info.dayEl.classList.contains('fc-day-taken') || info.dayEl.getAttribute('data-taken') === '1') {
-                    showToast('❌ Cette date est déjà réservée et confirmée.', 'danger');
-                    return;
-                }
-                // Layer 2: Check the status map
-                const status = dateStatusMap[dateStr];
-                if (status === 'confirmé' || status === 'terminé') {
-                    showToast('❌ Cette date est déjà réservée et confirmée.', 'danger');
-                    return;
-                }
-                if (status === 'en attente') {
-                    showToast('⏳ Cette date est déjà en attente de confirmation.', 'warning');
-                    return;
-                }
-                const input = document.getElementById('event_date');
-                if (input) {
-                    input.value = dateStr;
-                    input.style.borderColor = '';
-                    document.querySelectorAll('#mini-calendar .fc-daygrid-day').forEach(el => {
-                        el.classList.remove('selected-date');
-                    });
-                    info.dayEl.style.outline = '2px solid var(--primary)';
-                    info.dayEl.style.outlineOffset = '-2px';
-                    setTimeout(function() { closeCalendarPicker(); }, 300);
-                }
+    if (!calEl || typeof FullCalendar === 'undefined') return;
+
+    const cal = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+        height: 'auto',
+        locale: 'fr',
+        firstDay: 1,
+        dayCellDidMount: function(info) {
+            const dateStr = info.dateStr;
+            const status = dateStatusMap[dateStr];
+            if (!status) return;
+
+            if (status === 'confirmé' || status === 'terminé') {
+                info.el.style.backgroundColor = '#ef476f';
+                info.el.style.color = '#fff';
+                info.el.style.pointerEvents = 'none';
+                const dayNum = info.el.querySelector('.fc-daygrid-day-number');
+                if (dayNum) { dayNum.textContent = '🔒 ' + dayNum.textContent; dayNum.style.color = '#fff'; }
+            } else if (status === 'en attente') {
+                info.el.style.backgroundColor = '#ffd166';
+                info.el.style.color = '#333';
+            } else if (status === 'changé de date') {
+                info.el.style.backgroundColor = '#118ab2';
+                info.el.style.color = '#fff';
             }
-        });
-        cal.render();
-    }
+        },
+        dateClick: function(info) {
+            const status = dateStatusMap[info.dateStr];
+            if (status === 'confirmé' || status === 'terminé') {
+                showToast('Cette date est déjà réservée.', 'danger');
+                return;
+            }
+            if (status === 'en attente') {
+                showToast('Cette date est déjà en attente de confirmation.', 'warning');
+                return;
+            }
+            document.getElementById('event_date').value = info.dateStr;
+            closeCalendarPicker();
+        }
+    });
+    cal.render();
 }
 </script>
 {% endblock %}

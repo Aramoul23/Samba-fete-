@@ -3,118 +3,53 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 // ── FullCalendar Integration ────────────────────────────────────────
-function initCalendar(containerId, eventsUrl, serverMap, serverUrlMap) {
+function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
     const container = document.getElementById(containerId);
     if (!container || typeof FullCalendar === 'undefined') return;
 
-    const dateStatusMap = {};
-    const dateUrlMap = {};
+    console.log('initCalendar dateStatusMap:', dateStatusMap);
+    console.log('initCalendar dateUrlMap:', dateUrlMap);
 
-    Object.assign(dateStatusMap, serverMap || {});
-    Object.assign(dateUrlMap, serverUrlMap || {});
-
-    const calendar = new FullCalendar.Calendar(container, {
+    const cal = new FullCalendar.Calendar(container, {
         initialView: 'dayGridMonth',
         locale: 'fr',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,listMonth'
-        },
-        events: function(fetchInfo, successCallback, failureCallback) {
-            fetch(eventsUrl + '?start=' + fetchInfo.startStr + '&end=' + fetchInfo.endStr)
-                .then(r => {
-                    if (!r.ok) {
-                        console.warn('Calendar events returned', r.status, '- rendering without colors');
-                        successCallback([]);
-                        return null;
-                    }
-                    return r.json();
-                })
-                .then(events => {
-                    if (events === null) return; // already handled above
-
-                    // Merge API data into the server map — don't wipe it
-                    events.forEach(function(ev) {
-                        if (ev.start && ev.extendedProps && ev.extendedProps.status) {
-                            dateStatusMap[ev.start] = ev.extendedProps.status;
-                            dateUrlMap[ev.start] = ev.url;
-                        }
-                    });
-
-                    successCallback([]);
-                })
-                .catch(err => {
-                    console.error('Calendar fetch failed:', err);
-                    successCallback([]);
-                });
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+        events: eventsUrl,
+        eventDisplay: 'block',
         dayCellDidMount: function(info) {
-            const moreLink = info.el.querySelector('.fc-daygrid-more-link');
-            if (moreLink) moreLink.remove();
-
             const dateStr = info.dateStr;
             const status = dateStatusMap[dateStr];
+            if (!status) return;
 
-            if (status) {
-                if (status === 'confirmé' || status === 'terminé') {
-                    info.el.style.backgroundColor = '#ef476f';
-                    info.el.style.color = '#ffffff';
-                    info.el.style.pointerEvents = 'none';
-                    info.el.style.cursor = 'not-allowed';
-                    info.el.classList.add('fc-day-taken');
-                    const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-                    if (dayNum) { dayNum.style.color = '#ffffff'; dayNum.textContent = '🔒 ' + dayNum.textContent; }
-                } else if (status === 'en attente') {
-                    info.el.style.backgroundColor = '#ffd166';
-                    info.el.style.color = '#333333';
-                    info.el.style.cursor = 'pointer';
-                    info.el.addEventListener('click', function() {
-                        const url = dateUrlMap[dateStr];
-                        if (url) window.location.href = url;
-                    });
-                } else if (status === 'changé de date') {
-                    info.el.style.backgroundColor = '#118ab2';
-                    info.el.style.color = '#ffffff';
-                    info.el.style.cursor = 'pointer';
-                    info.el.addEventListener('click', function() {
-                        const url = dateUrlMap[dateStr];
-                        if (url) window.location.href = url;
-                    });
-                } else {
-                    info.el.style.cursor = 'pointer';
-                    info.el.addEventListener('click', function() {
-                        const url = dateUrlMap[dateStr];
-                        if (url) window.location.href = url;
-                    });
-                }
-
-                const dayNumber = info.el.querySelector('.fc-daygrid-day-number');
-                if (dayNumber) dayNumber.style.color = info.el.style.color;
+            if (status === 'confirmé' || status === 'terminé') {
+                info.el.style.backgroundColor = '#ef476f';
+                info.el.style.color = '#fff';
+                const dayNum = info.el.querySelector('.fc-daygrid-day-number');
+                if (dayNum) { dayNum.textContent = '🔒 ' + dayNum.textContent; dayNum.style.color = '#fff'; }
+            } else if (status === 'en attente') {
+                info.el.style.backgroundColor = '#ffd166';
+                info.el.style.color = '#333';
+            } else if (status === 'changé de date') {
+                info.el.style.backgroundColor = '#118ab2';
+                info.el.style.color = '#fff';
             }
         },
         dateClick: function(info) {
             const status = dateStatusMap[info.dateStr];
-            // Block confirmed/terminé dates — don't navigate
             if (status === 'confirmé' || status === 'terminé') {
                 alert('Cette date est déjà réservée.');
                 return;
             }
-            const url = dateUrlMap[info.dateStr];
-            if (url) {
-                window.location.href = url;
+            if (dateUrlMap[info.dateStr]) {
+                window.location.href = dateUrlMap[info.dateStr];
             } else {
                 window.location.href = '/evenement/nouveau?date=' + info.dateStr;
             }
         },
         height: 'auto',
-        dayMaxEvents: false,
-        navLinks: true,
-        nowIndicator: true,
     });
-
-    calendar.render();
-    return calendar;
+    cal.render();
+    return cal;
 }
 
 // ── Live Search ─────────────────────────────────────────────────────
