@@ -7,8 +7,8 @@ function initCalendar(containerId, eventsUrl) {
     const container = document.getElementById(containerId);
     if (!container || typeof FullCalendar === 'undefined') return;
 
-    // Track date → status mapping for day-cell coloring
     const dateStatusMap = {};
+    const dateUrlMap = {};
 
     const calendar = new FullCalendar.Calendar(container, {
         initialView: 'dayGridMonth',
@@ -18,55 +18,59 @@ function initCalendar(containerId, eventsUrl) {
             center: 'title',
             right: 'dayGridMonth,listMonth'
         },
-        eventSources: [{
-            url: eventsUrl,
-            success: function(events) {
-                // Rebuild the map each time events are fetched
-                Object.keys(dateStatusMap).forEach(k => delete dateStatusMap[k]);
-                events.forEach(function(ev) {
-                    if (ev.start && ev.extendedProps && ev.extendedProps.status) {
-                        dateStatusMap[ev.start] = ev.extendedProps.status;
-                    }
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch(eventsUrl + '?start=' + fetchInfo.startStr + '&end=' + fetchInfo.endStr)
+                .then(r => r.json())
+                .then(events => {
+                    Object.keys(dateStatusMap).forEach(k => delete dateStatusMap[k]);
+                    Object.keys(dateUrlMap).forEach(k => delete dateUrlMap[k]);
+
+                    events.forEach(function(ev) {
+                        if (ev.start && ev.extendedProps && ev.extendedProps.status) {
+                            dateStatusMap[ev.start] = ev.extendedProps.status;
+                            dateUrlMap[ev.start] = ev.url;
+                        }
+                    });
+
+                    successCallback([]);
+                })
+                .catch(err => {
+                    console.error('Calendar fetch failed:', err);
+                    failureCallback(err);
                 });
-            }
-        }],
-        eventContent: function() {
-            // FullCalendar 6: return empty html to suppress ALL event rendering
-            return { html: '' };
-        },
-        eventDidMount: function(info) {
-            // Remove event element from DOM — only day-cell background coloring should be visible
-            info.el.remove();
         },
         dayCellDidMount: function(info) {
-            // Remove "+more" link if FullCalendar creates one
             const moreLink = info.el.querySelector('.fc-daygrid-more-link');
             if (moreLink) moreLink.remove();
 
             const dateStr = info.date.toISOString().slice(0, 10);
             const status = dateStatusMap[dateStr];
-            if (status === 'confirmé' || status === 'terminé') {
-                info.el.style.backgroundColor = 'rgba(6, 214, 160, 0.15)';
-                info.el.style.borderLeft = '3px solid #06d6a0';
-            } else if (status === 'en attente') {
-                info.el.style.backgroundColor = 'rgba(255, 209, 102, 0.15)';
-                info.el.style.borderLeft = '3px solid #ffd166';
-            } else if (status === 'changé de date') {
-                info.el.style.backgroundColor = 'rgba(17, 138, 178, 0.12)';
-                info.el.style.borderLeft = '3px solid #118ab2';
-            } else if (status === 'annulé') {
-                info.el.style.backgroundColor = 'rgba(255, 100, 100, 0.08)';
-                info.el.style.borderLeft = '3px solid #ef476f';
-            }
-        },
-        eventClick: function(info) {
-            info.jsEvent.preventDefault();
-            if (info.event.url) {
-                window.location.href = info.event.url;
+
+            if (status) {
+                info.el.style.cursor = 'pointer';
+
+                if (status === 'confirmé' || status === 'terminé') {
+                    info.el.style.backgroundColor = '#ef476f';
+                    info.el.style.color = '#ffffff';
+                } else if (status === 'en attente') {
+                    info.el.style.backgroundColor = '#ffd166';
+                    info.el.style.color = '#333333';
+                } else if (status === 'changé de date') {
+                    info.el.style.backgroundColor = '#118ab2';
+                    info.el.style.color = '#ffffff';
+                }
+
+                const dayNumber = info.el.querySelector('.fc-daygrid-day-number');
+                if (dayNumber) dayNumber.style.color = info.el.style.color;
             }
         },
         dateClick: function(info) {
-            window.location.href = '/evenement/nouveau?date=' + info.dateStr;
+            const url = dateUrlMap[info.dateStr];
+            if (url) {
+                window.location.href = url;
+            } else {
+                window.location.href = '/evenement/nouveau?date=' + info.dateStr;
+            }
         },
         height: 'auto',
         dayMaxEvents: false,

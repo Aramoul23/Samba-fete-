@@ -36,10 +36,13 @@
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
-                    <span class="badge me-2" style="background:#06d6a0">&nbsp;</span> Confirmé
+                    <span class="badge me-2" style="background:#ef476f">&nbsp;</span> Confirmé
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge me-2" style="background:#ffd166">&nbsp;</span> En attente
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="badge me-2" style="background:#ffd166">&nbsp;</span> En attente
+                    <span class="badge me-2" style="background:#118ab2">&nbsp;</span> Changé de date
                 </div>
             </div>
         </div>
@@ -54,24 +57,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <style>
-/* Hide ALL event rendering in day grid — keep only colored backgrounds */
-.fc-daygrid-day { cursor: pointer; }
-.fc-daygrid-day:hover { background: rgba(102, 126, 234, 0.08); }
+/* Day cell base styling */
+.fc-daygrid-day { cursor: default; }
+.fc-daygrid-day:hover { filter: brightness(1.08); }
+
+/* Safety net: hide any residual event elements */
 .fc-daygrid-day-events,
 .fc-daygrid-event-harness,
 .fc-daygrid-event,
 .fc-h-event,
 .fc-event,
-.fc-daygrid-more-link,
-.fc-event-main,
-.fc-event-main-frame {
+.fc-daygrid-more-link {
     display: none !important;
-    visibility: hidden !important;
     height: 0 !important;
     min-height: 0 !important;
-    padding: 0 !important;
     margin: 0 !important;
-    overflow: hidden !important;
+    padding: 0 !important;
 }
 </style>
 {% endblock %}
