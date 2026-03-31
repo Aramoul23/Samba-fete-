@@ -22,7 +22,8 @@ function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
                 cell.style.setProperty('color', '#ffffff', 'important');
                 const dayNum = cell.querySelector('.fc-daygrid-day-number');
                 if (dayNum && !dayNum.dataset.locked) {
-                    dayNum.textContent = '🔒 ' + dayNum.textContent;
+                    const num = dayNum.textContent.replace(/\D/g, '');
+                    dayNum.textContent = '🔒 ' + num;
                     dayNum.dataset.locked = '1';
                     dayNum.style.color = '#fff';
                 }
