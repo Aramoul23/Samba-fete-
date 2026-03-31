@@ -7,6 +7,9 @@ function initCalendar(containerId, eventsUrl) {
     const container = document.getElementById(containerId);
     if (!container || typeof FullCalendar === 'undefined') return;
 
+    // Track date → status mapping for day-cell coloring
+    const dateStatusMap = {};
+
     const calendar = new FullCalendar.Calendar(container, {
         initialView: 'dayGridMonth',
         locale: 'fr',
@@ -16,6 +19,35 @@ function initCalendar(containerId, eventsUrl) {
             right: 'dayGridMonth,listMonth'
         },
         events: eventsUrl,
+        eventSources: [{
+            url: eventsUrl,
+            success: function(events) {
+                // Rebuild the map each time events are fetched
+                Object.keys(dateStatusMap).forEach(k => delete dateStatusMap[k]);
+                events.forEach(function(ev) {
+                    if (ev.start && ev.extendedProps && ev.extendedProps.status) {
+                        dateStatusMap[ev.start] = ev.extendedProps.status;
+                    }
+                });
+            }
+        }],
+        dayCellDidMount: function(info) {
+            const dateStr = info.date.toISOString().slice(0, 10);
+            const status = dateStatusMap[dateStr];
+            if (status === 'confirmé' || status === 'terminé') {
+                info.el.style.backgroundColor = 'rgba(6, 214, 160, 0.15)';
+                info.el.style.borderLeft = '3px solid #06d6a0';
+            } else if (status === 'en attente') {
+                info.el.style.backgroundColor = 'rgba(255, 209, 102, 0.15)';
+                info.el.style.borderLeft = '3px solid #ffd166';
+            } else if (status === 'changé de date') {
+                info.el.style.backgroundColor = 'rgba(17, 138, 178, 0.12)';
+                info.el.style.borderLeft = '3px solid #118ab2';
+            } else if (status === 'annulé') {
+                info.el.style.backgroundColor = 'rgba(255, 100, 100, 0.08)';
+                info.el.style.borderLeft = '3px solid #ef476f';
+            }
+        },
         eventClick: function(info) {
             info.jsEvent.preventDefault();
             if (info.event.url) {
