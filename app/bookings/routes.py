@@ -179,6 +179,11 @@ def calendar_view():
             date_status_map[d] = ev.status
             date_url_map[d] = url_for("bookings.event_detail", event_id=ev.id)
 
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+
     return render_template(
         "bookings/calendar.html",
         year=year, month=month, month_name=MONTH_NAMES_FR[month],
@@ -190,6 +195,10 @@ def calendar_view():
         pending_needs_attention=check_pending_events(),
         date_status_map=json.dumps(date_status_map),
         date_url_map=json.dumps(date_url_map),
+        date_status_map_dict=date_status_map,
+        date_url_map_dict=date_url_map,
+        prev_month=prev_month, prev_year=prev_year,
+        next_month=next_month, next_year=next_year,
     )
 
 

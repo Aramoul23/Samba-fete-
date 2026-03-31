@@ -7,7 +7,57 @@
     <div class="col-md-8">
         <div class="card shadow-sm">
             <div class="card-body">
-                <div id="fullcalendar"></div>
+                <!-- Month navigation -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <a href="{{ url_for('bookings.calendar_view', year=prev_year, month=prev_month, venue=venue_filter) }}" class="btn btn-outline-primary btn-sm">&#9664;</a>
+                    <h4 style="margin:0;color:var(--text-primary);font-weight:700;">{{ month_name }} {{ year }}</h4>
+                    <a href="{{ url_for('bookings.calendar_view', year=next_year, month=next_month, venue=venue_filter) }}" class="btn btn-outline-primary btn-sm">&#9654;</a>
+                </div>
+
+                <!-- Calendar table -->
+                <table style="width:100%;border-collapse:collapse;text-align:center;">
+                    <tr>
+                        {% for d in ['Lu','Ma','Me','Je','Ve','Sa','Di'] %}
+                        <th style="padding:10px 4px;font-size:0.8rem;color:var(--text-muted);font-weight:600;">{{ d }}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for week in weeks %}
+                    <tr>
+                        {% for day in week %}
+                        {% if day == 0 %}
+                        <td></td>
+                        {% else %}
+                        {% set date_str = '%04d-%02d-%02d'|format(year, month, day) %}
+                        {% set status = date_status_map_dict.get(date_str) %}
+                        {% set url = date_url_map_dict.get(date_str) %}
+                        {% if status == 'confirmé' or status == 'terminé' %}
+                        <td style="padding:8px 4px;">
+                            <a href="{{ url or '#' }}" class="cal-day cal-booked" style="pointer-events:none;">🔒 {{ day }}</a>
+                        </td>
+                        {% elif status == 'en attente' %}
+                        <td style="padding:8px 4px;">
+                            <a href="{{ url or '#' }}" class="cal-day cal-pending">{{ day }}</a>
+                        </td>
+                        {% elif status == 'changé de date' %}
+                        <td style="padding:8px 4px;">
+                            <a href="{{ url or '#' }}" class="cal-day cal-changed">{{ day }}</a>
+                        </td>
+                        {% else %}
+                        {% if date_str == today_str %}
+                        <td style="padding:8px 4px;">
+                            <a href="/evenement/nouveau?date={{ date_str }}" class="cal-day cal-today">{{ day }}</a>
+                        </td>
+                        {% else %}
+                        <td style="padding:8px 4px;">
+                            <a href="/evenement/nouveau?date={{ date_str }}" class="cal-day cal-free">{{ day }}</a>
+                        </td>
+                        {% endif %}
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
     </div>
@@ -48,19 +98,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const dateStatusMap = {{ date_status_map | safe }};
-    const dateUrlMap = {{ date_url_map | safe }};
-    initCalendar('fullcalendar', '/api/calendar-events', dateStatusMap, dateUrlMap);
-});
-</script>
-<style>
-.fc-daygrid-day { cursor: default; }
-.fc-daygrid-day:hover { filter: brightness(1.08); }
-.fc-daygrid-day { background-color: transparent; }
-</style>
 {% endblock %}
