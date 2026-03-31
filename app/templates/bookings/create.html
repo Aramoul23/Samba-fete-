@@ -309,9 +309,20 @@ function renderMiniCalendar() {
                 }
             },
             dateClick: function(info) {
+                const dateStr = info.dateStr;
+                // Block selecting taken dates
+                const status = dateStatusMap[dateStr];
+                if (status === 'confirmé' || status === 'terminé') {
+                    showToast('❌ Cette date est déjà réservée et confirmée.', 'danger');
+                    return;
+                }
+                if (status === 'en attente') {
+                    showToast('⏳ Cette date est déjà en attente de confirmation.', 'warning');
+                    return;
+                }
                 const input = document.getElementById('event_date');
                 if (input) {
-                    input.value = info.dateStr;
+                    input.value = dateStr;
                     input.style.borderColor = '';
                     // Highlight selected cell
                     document.querySelectorAll('#mini-calendar .fc-daygrid-day').forEach(el => {
