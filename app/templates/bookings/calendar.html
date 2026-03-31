@@ -55,27 +55,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const dateStatusMap = {{ date_status_map | safe }};
     const dateUrlMap = {{ date_url_map | safe }};
-    console.log('Calendar dateStatusMap:', dateStatusMap);
     initCalendar('fullcalendar', '/api/calendar-events', dateStatusMap, dateUrlMap);
 });
 </script>
 <style>
-/* Day cell base styling */
 .fc-daygrid-day { cursor: default; }
 .fc-daygrid-day:hover { filter: brightness(1.08); }
-
-/* Hide FullCalendar event elements — we only color cells */
-.fc-daygrid-day-events,
-.fc-daygrid-event-harness,
-.fc-daygrid-event,
-.fc-h-event,
-.fc-event,
-.fc-daygrid-more-link {
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
+.fc-daygrid-day { background-color: transparent; }
 </style>
 {% endblock %}

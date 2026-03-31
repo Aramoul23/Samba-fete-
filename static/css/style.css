@@ -321,6 +321,7 @@ body {
 .badge-amount { color: var(--primary); font-weight: 700; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 
 /* ─── Calendar ─────────────────────────────────────── */
+.fc-daygrid-day { background-color: transparent; }
 .status-booked {
     background-color: #ef476f !important;
     color: #ffffff !important;

@@ -7,48 +7,50 @@ function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
     const container = document.getElementById(containerId);
     if (!container || typeof FullCalendar === 'undefined') return;
 
-    console.log('initCalendar dateStatusMap:', dateStatusMap);
-    console.log('initCalendar dateUrlMap:', dateUrlMap);
-
-    const cal = new FullCalendar.Calendar(container, {
+    new FullCalendar.Calendar(container, {
         initialView: 'dayGridMonth',
         locale: 'fr',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
         events: eventsUrl,
         eventDisplay: 'block',
-        dayCellDidMount: function(info) {
-            const dateStr = info.dateStr;
-            const status = dateStatusMap[dateStr];
-            if (!status) return;
-
-            const cell = info.el;
-            const dayNum = cell.querySelector('.fc-daygrid-day-number');
-
+        eventDidMount: function(info) {
+            const cell = info.el.closest('.fc-daygrid-day');
+            if (!cell) return;
+            const status = info.event.extendedProps.status;
             if (status === 'confirmé' || status === 'terminé') {
-                cell.classList.add('status-booked');
-                if (dayNum) dayNum.textContent = '🔒 ' + dayNum.textContent;
+                cell.style.setProperty('background-color', '#ef476f', 'important');
+                cell.style.setProperty('color', '#ffffff', 'important');
+                const dayNum = cell.querySelector('.fc-daygrid-day-number');
+                if (dayNum && !dayNum.dataset.locked) {
+                    dayNum.textContent = '🔒 ' + dayNum.textContent;
+                    dayNum.dataset.locked = '1';
+                    dayNum.style.color = '#fff';
+                }
             } else if (status === 'en attente') {
-                cell.classList.add('status-pending');
+                cell.style.setProperty('background-color', '#ffd166', 'important');
+                cell.style.setProperty('color', '#333333', 'important');
             } else if (status === 'changé de date') {
-                cell.classList.add('status-changed');
+                cell.style.setProperty('background-color', '#118ab2', 'important');
+                cell.style.setProperty('color', '#ffffff', 'important');
             }
+            info.el.style.display = 'none';
         },
         dateClick: function(info) {
-            const status = dateStatusMap[info.dateStr];
-            if (status === 'confirmé' || status === 'terminé') {
-                alert('Cette date est déjà réservée.');
-                return;
+            if (dateStatusMap && dateStatusMap[info.dateStr]) {
+                const status = dateStatusMap[info.dateStr];
+                if (status === 'confirmé' || status === 'terminé') {
+                    alert('Cette date est déjà réservée.');
+                    return;
+                }
             }
-            if (dateUrlMap[info.dateStr]) {
+            if (dateUrlMap && dateUrlMap[info.dateStr]) {
                 window.location.href = dateUrlMap[info.dateStr];
             } else {
                 window.location.href = '/evenement/nouveau?date=' + info.dateStr;
             }
         },
         height: 'auto',
-    });
-    cal.render();
-    return cal;
+    }).render();
 }
 
 // ── Live Search ─────────────────────────────────────────────────────
