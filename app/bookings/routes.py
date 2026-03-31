@@ -294,9 +294,10 @@ def event_form(event_id=None):
     range_start_dt = (dt(_now.year, _now.month, 1) - timedelta(days=62)).replace(day=1)
     range_end_month = (_now.month + 3) % 12 or 12
     range_end_year = _now.year + (1 if _now.month + 3 > 12 else 0)
+    range_start_str = range_start_dt.strftime("%Y-%m-%d")
     range_end_str = f"{range_end_year}-{range_end_month:02d}-01"
     cal_events = Event.query.filter(
-        Event.event_date >= range_start_dt, Event.event_date < range_end_str,
+        Event.event_date >= range_start_str, Event.event_date < range_end_str,
         Event.status != "annulé",
     ).all()
     mini_date_status_map = {}
