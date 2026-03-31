@@ -3,49 +3,60 @@
 {% block page_title %}{{ event.title }}{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-start mb-4">
-    <div>
-        <h4 class="mb-1">{{ event.title }}</h4>
-        <div class="text-muted">
-            <i class="fas fa-user me-1"></i> {{ event.client.name }}
-            <span class="mx-2">·</span>
-            <i class="fas fa-calendar me-1"></i> {{ event.event_date }}
-            <span class="mx-2">·</span>
-            <i class="fas fa-map-marker-alt me-1"></i> {{ event.venue.name }}
+<!-- ═══ Event Header Banner ═══ -->
+<div class="event-header-bar mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                <h4 class="event-title mb-0">{{ event.title }}</h4>
+                <span class="badge-status status-{{ event.status | replace(' ', '-') }}">
+                    {{ event.status }}
+                </span>
+            </div>
+            <div class="event-meta">
+                <span><i class="fas fa-user"></i>{{ event.client.name }}</span>
+                <span><i class="fas fa-calendar"></i>{{ event.event_date }}</span>
+                <span><i class="fas fa-map-marker-alt"></i>{{ event.venue.name }}</span>
+            </div>
         </div>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary" onclick="previewPDF('{{ url_for("bookings.generate_contract", event_id=event.id) }}', 'Contrat — {{ event.title }}')">
-            <i class="fas fa-file-pdf me-1"></i> Contrat
-        </button>
-        {% if payments | length > 0 %}
-        <button class="btn btn-outline-success" onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=payments[0].id) }}', 'Reçu — {{ event.client.name }}')">
-            <i class="fas fa-receipt me-1"></i> Reçu
-        </button>
-        {% endif %}
-        <a href="{{ url_for('bookings.event_form', event_id=event.id) }}" class="btn btn-outline-gold">
-            <i class="fas fa-edit me-1"></i> Modifier
-        </a>
+        <div class="d-flex gap-2 flex-wrap event-actions">
+            <button class="btn btn-outline-primary btn-sm"
+                    onclick="previewPDF('{{ url_for("bookings.generate_contract", event_id=event.id) }}', 'Contrat — {{ event.title }}')">
+                <i class="fas fa-file-pdf"></i> Contrat
+            </button>
+            {% if payments | length > 0 %}
+            <button class="btn btn-outline-success btn-sm"
+                    onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=payments[0].id) }}', 'Reçu — {{ event.client.name }}')">
+                <i class="fas fa-receipt"></i> Reçu
+            </button>
+            {% endif %}
+            <a href="{{ url_for('bookings.event_form', event_id=event.id) }}" class="btn btn-outline-gold btn-sm">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Status & Actions -->
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="mb-0">Statut</h6>
-                    <span class="badge bg-{{ {'confirmé':'success','en attente':'warning','annulé':'danger','changé de date':'info','terminé':'secondary'}.get(event.status, 'secondary') }} fs-6">
+<!-- ═══ Status + Payment Summary Row ═══ -->
+<div class="row g-3 mb-4">
+    <!-- Status Card -->
+    <div class="col-lg-8">
+        <div class="card-custom no-hover">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-exchange-alt"></i> Statut de l'événement</h5>
+            </div>
+            <div class="card-body-custom">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="badge-status status-{{ event.status | replace(' ', '-') }} fs-6">
                         {{ event.status }}
                     </span>
                 </div>
                 {% if statuses %}
-                <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" class="d-flex gap-2 align-items-end">
+                <form method="POST" action="{{ url_for('bookings.update_event_status', event_id=event.id) }}" class="d-flex gap-2 align-items-end flex-wrap">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="flex-grow-1">
-                        <select name="status" class="form-select form-select-sm">
+                    <div class="flex-grow-1" style="min-width: 160px;">
+                        <label class="form-label-elegant">Nouveau statut</label>
+                        <select name="status" class="form-input-elegant" style="padding: 9px 14px; font-size: 0.875rem;">
                             {% for s in statuses %}
                             {% if s != event.status %}
                             <option value="{{ s }}">{{ s }}</option>
@@ -53,65 +64,109 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="new-date-field" style="display:none">
-                        <input type="date" name="new_date" class="form-control form-control-sm" placeholder="Nouvelle date">
+                    <div class="new-date-field" style="display:none; min-width: 160px;">
+                        <label class="form-label-elegant">Nouvelle date</label>
+                        <input type="date" name="new_date" class="form-input-elegant" style="padding: 9px 14px; font-size: 0.875rem;">
                     </div>
-                    <button type="submit" class="btn btn-sm btn-primary">Changer</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="min-height: 42px;">
+                        <i class="fas fa-check"></i> Changer
+                    </button>
                 </form>
                 {% endif %}
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-muted small">Montant total</div>
-                <div class="h4 mb-2">{{ event.total_amount | format_da }}</div>
-                <div class="progress mb-2" style="height:8px;">
-                    {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
-                    <div class="progress-bar {% if pct >= 100 %}bg-success{% else %}bg-warning{% endif %}"
-                         style="width:{{ pct }}%"></div>
+
+    <!-- Payment Summary Card -->
+    <div class="col-lg-4">
+        <div class="card-custom no-hover h-100">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-wallet"></i> Résumé financier</h5>
+            </div>
+            <div class="card-body-custom text-center">
+                {% set pct = (total_paid / event.total_amount * 100) if event.total_amount > 0 else 0 %}
+                <div class="detail-label mb-1">Montant total</div>
+                <div class="h3 mb-3" style="color: var(--primary); font-weight: 700;">{{ event.total_amount | format_da }}</div>
+
+                <div class="payment-progress mb-2">
+                    <div class="bg-gold" style="width: {{ pct }}%; height: 100%; transition: width 0.5s var(--ease-out);"></div>
                 </div>
-                <small class="text-muted">Payé: {{ total_paid | format_da }} / Reste: {{ event.remaining | format_da }}</small>
+                <div class="progress-label mb-3">
+                    <span>{{ pct | int }}% payé</span>
+                    <span>{{ event.remaining | format_da }} reste</span>
+                </div>
+
+                <div class="d-flex gap-2 text-center">
+                    <div class="flex-fill p-2" style="background: var(--success-soft); border-radius: var(--radius-sm);">
+                        <div class="small fw-bold" style="color: var(--success);">{{ total_paid | format_da }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">Payé</div>
+                    </div>
+                    <div class="flex-fill p-2" style="background: var(--warning-soft); border-radius: var(--radius-sm);">
+                        <div class="small fw-bold" style="color: var(--warning);">{{ event.remaining | format_da }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">Reste</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Payments & Details row -->
-<div class="row">
-    <div class="col-md-6">
-        <!-- Payments -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header d-flex justify-content-between">
-                <h6 class="mb-0">Paiements</h6>
+<!-- ═══ Payments & Services Row ═══ -->
+<div class="row g-3">
+    <!-- Payments -->
+    <div class="col-lg-6">
+        <div class="card-custom no-hover">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-credit-card"></i> Paiements</h5>
                 {% if event.status != 'annulé' and event.remaining > 0 %}
-                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#paymentModal">
                     <i class="fas fa-plus"></i> Encaisser
                 </button>
                 {% endif %}
             </div>
-            <div class="card-body p-0">
+            <div class="card-body-custom p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead><tr><th>Date</th><th>Montant</th><th>Type</th><th></th></tr></thead>
+                    <table class="table-elegant">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar-day me-1"></i> Date</th>
+                                <th><i class="fas fa-coins me-1"></i> Montant</th>
+                                <th class="hide-mobile"><i class="fas fa-tag me-1"></i> Type</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {% for p in payments %}
                             <tr class="{{ 'table-warning' if p.is_refunded }}">
                                 <td>{{ p.payment_date | date_only }}</td>
-                                <td>{{ p.amount | format_da }}{% if p.is_refunded %} <small class="text-danger">remboursé</small>{% endif %}</td>
-                                <td>{{ p.payment_type }}</td>
                                 <td>
+                                    <span class="badge-amount">{{ p.amount | format_da }}</span>
+                                    {% if p.is_refunded %}
+                                    <span class="badge-status status-annulé ms-1" style="font-size: 0.65rem; padding: 2px 8px;">remboursé</span>
+                                    {% endif %}
+                                </td>
+                                <td class="hide-mobile">
+                                    <span class="badge-slot">{{ p.payment_type }}</span>
+                                </td>
+                                <td class="text-end">
                                     {% if not p.is_refunded %}
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=p.id) }}', 'Reçu #{{ p.id }}')">
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="previewPDF('{{ url_for("bookings.generate_receipt", event_id=event.id, payment_id=p.id) }}', 'Reçu #{{ p.id }}')"
+                                            title="Voir le reçu">
                                         <i class="fas fa-receipt"></i>
                                     </button>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted">Aucun paiement</td></tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="empty-state small py-4">
+                                        <i class="fas fa-coins"></i>
+                                        <p class="mb-0">Aucun paiement enregistré</p>
+                                    </div>
+                                </td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -120,24 +175,37 @@
         </div>
     </div>
 
-    <div class="col-md-6">
-        <!-- Service Lines -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header"><h6 class="mb-0">Prestations</h6></div>
-            <div class="card-body p-0">
+    <!-- Service Lines -->
+    <div class="col-lg-6">
+        <div class="card-custom no-hover">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-list-check"></i> Prestations</h5>
+            </div>
+            <div class="card-body-custom p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead><tr><th>Description</th><th class="text-end">Montant</th></tr></thead>
+                    <table class="table-elegant">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-file-alt me-1"></i> Description</th>
+                                <th class="text-end"><i class="fas fa-coins me-1"></i> Montant</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {% for line in event_lines %}
                             <tr>
                                 <td>{{ line.description }}</td>
-                                <td class="text-end">{{ line.amount | format_da }}</td>
+                                <td class="text-end">
+                                    <span class="badge-amount">{{ line.amount | format_da }}</span>
+                                </td>
                             </tr>
                             {% endfor %}
-                            <tr class="table-light fw-bold">
-                                <td>Total</td>
-                                <td class="text-end">{{ event.total_amount | format_da }}</td>
+                            <tr style="background: var(--bg-subtle);">
+                                <td class="fw-bold" style="color: var(--primary);">
+                                    <i class="fas fa-sigma me-1"></i> Total
+                                </td>
+                                <td class="text-end fw-bold" style="color: var(--primary); font-size: 1rem;">
+                                    {{ event.total_amount | format_da }}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -147,50 +215,53 @@
     </div>
 </div>
 
-<!-- Payment Modal -->
+<!-- ═══ Payment Modal ═══ -->
 {% if event.status != 'annulé' and event.remaining > 0 %}
 <div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('bookings.add_payment', event_id=event.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
-                    <h5 class="modal-title">Encaisser un paiement</h5>
+                    <h5 class="modal-title"><i class="fas fa-hand-holding-dollar me-2"></i>Encaisser un paiement</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
                         Reste à payer: <strong>{{ event.remaining | format_da }}</strong>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Montant (DA)</label>
-                        <input type="number" name="amount" class="form-control" min="1" max="{{ event.remaining }}" required>
+                        <label class="form-label-elegant">Montant (DA)</label>
+                        <input type="number" name="amount" class="form-input-elegant" min="1" max="{{ event.remaining }}" required placeholder="0.00">
                     </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label class="form-label">Méthode</label>
-                            <select name="method" class="form-select">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label-elegant">Méthode</label>
+                            <select name="method" class="form-input-elegant">
                                 <option value="espèces">Espèces</option>
                                 <option value="chèque">Chèque</option>
                                 <option value="virement">Virement</option>
                             </select>
                         </div>
-                        <div class="col">
-                            <label class="form-label">Type</label>
-                            <select name="payment_type" class="form-select">
+                        <div class="col-6">
+                            <label class="form-label-elegant">Type</label>
+                            <select name="payment_type" class="form-input-elegant">
                                 <option value="acompte">Acompte</option>
                                 <option value="solde">Solde</option>
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    <div class="mb-0">
+                        <label class="form-label-elegant">Notes</label>
+                        <textarea name="notes" class="form-input-elegant" rows="2" placeholder="Remarques facultatives..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Enregistrer
+                    </button>
                 </div>
             </form>
         </div>
@@ -201,7 +272,6 @@
 
 {% block scripts %}
 <script>
-// Show/hide date input when "changé de date" is selected
 document.querySelector('select[name="status"]')?.addEventListener('change', function() {
     const dateField = document.querySelector('.new-date-field');
     if (dateField) dateField.style.display = this.value === 'changé de date' ? 'block' : 'none';

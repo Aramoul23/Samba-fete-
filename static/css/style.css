@@ -1469,3 +1469,65 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     margin-bottom: 16px;
     box-shadow: var(--shadow-md);
 }
+
+/* ═══════════════════════════════════════════════════════
+   Event Detail Page — Polish
+   ═══════════════════════════════════════════════════════ */
+
+/* Generic hide-on-mobile for table columns */
+.hide-mobile { }
+
+@media (max-width: 767.98px) {
+    .hide-mobile { display: none !important; }
+
+    /* Event header */
+    .event-header-bar { padding: 20px; }
+    .event-title { font-size: 1.15rem; }
+    .event-meta { flex-direction: column; gap: 6px !important; }
+    .event-actions { width: 100%; }
+    .event-actions .btn { flex: 1 1 0; min-height: 40px; font-size: 0.8rem; }
+
+    /* Cards stack */
+    .card-header-custom { padding: 16px 18px; flex-wrap: wrap; gap: 8px; }
+    .card-header-custom h5 { font-size: 0.85rem; }
+    .card-body-custom { padding: 18px; }
+
+    /* Tables — compact on mobile */
+    .table-elegant { min-width: 500px; }
+    .table-elegant thead th { padding: 10px 12px; font-size: 0.625rem; }
+    .table-elegant tbody td { padding: 10px 12px; font-size: 0.8rem; }
+
+    /* Payment summary */
+    .payment-progress { height: 10px; }
+}
+
+@media (max-width: 575.98px) {
+    .event-header-bar { padding: 16px; border-radius: var(--radius-md); }
+    .event-title { font-size: 1rem; }
+    .event-meta { font-size: 0.8rem; }
+    .event-meta i { font-size: 0.75rem; }
+    .badge-status { font-size: 0.7rem; padding: 4px 10px; }
+    .card-body-custom { padding: 14px; }
+    .card-header-custom { padding: 14px 16px; }
+    .card-header-custom h5 { font-size: 0.8rem; }
+
+    /* Full-width buttons on small mobile */
+    .event-actions { gap: 6px; }
+    .event-actions .btn { flex: 1 1 calc(50% - 6px); font-size: 0.75rem; padding: 8px 6px; }
+
+    /* Status form stacks */
+    .card-body-custom form { flex-direction: column; }
+    .card-body-custom form > div { width: 100%; }
+    .card-body-custom form .btn { width: 100%; }
+
+    /* Tables */
+    .table-elegant { min-width: 400px; }
+    .table-elegant thead th { padding: 8px 10px; font-size: 0.6rem; }
+    .table-elegant tbody td { padding: 8px 10px; font-size: 0.75rem; }
+    .badge-amount { font-size: 0.8rem; }
+    .badge-slot { font-size: 0.65rem; padding: 3px 8px; }
+
+    /* Payment summary compact */
+    .h3 { font-size: 1.25rem; }
+    .progress-label { font-size: 0.75rem; }
+}
