@@ -252,6 +252,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block scripts %}
 <script>
+// --- Toast notification ---
+function showToast(message, type = 'info') {
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;padding:12px 20px;border-radius:12px;color:#fff;font-size:0.9rem;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s;max-width:90vw;';
+    if (type === 'danger') container.style.background = '#ef476f';
+    else if (type === 'warning') container.style.background = '#f4a261';
+    else container.style.background = '#264653';
+    container.textContent = message;
+    document.body.appendChild(container);
+    setTimeout(() => { container.style.opacity = '0'; setTimeout(() => container.remove(), 300); }, 3000);
+}
+
 // --- Calendar modal open/close ---
 function openCalendarPicker() {
     document.getElementById('calendar-modal').style.display = 'block';
