@@ -284,6 +284,45 @@ class TestCalendar:
         resp = admin_client.get("/calendrier?venue=1")
         assert resp.status_code == 200
 
+    def test_calendar_api_returns_events(self, admin_client, sample_booking):
+        """API /api/calendar-events should return valid JSON with event colors."""
+        if not sample_booking:
+            pytest.skip("No booking")
+
+        # Get the event date from the sample booking
+        from app.models import Event
+        event = Event.query.get(sample_booking["id"])
+        if not event or not event.event_date:
+            pytest.skip("No event date")
+
+        date_str = str(event.event_date)[:10]
+        year, month = date_str[:4], date_str[5:7]
+
+        resp = admin_client.get(f"/api/calendar-events?year={year}&month={month}")
+        assert resp.status_code == 200
+        data = resp.json
+        assert isinstance(data, list)
+        assert len(data) > 0
+
+        # Verify the event structure
+        ev = data[0]
+        assert "start" in ev
+        assert "backgroundColor" in ev
+        assert "borderColor" in ev
+        assert "extendedProps" in ev
+        assert "status" in ev["extendedProps"]
+
+        # Verify date is a valid string (not an object)
+        assert isinstance(ev["start"], str)
+        assert len(ev["start"]) == 10  # YYYY-MM-DD
+
+        # Verify colors are set based on status
+        status = ev["extendedProps"]["status"]
+        if status == "confirmé":
+            assert ev["backgroundColor"] == "#06d6a0"
+        elif status == "en attente":
+            assert ev["backgroundColor"] == "#ffd166"
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Event List

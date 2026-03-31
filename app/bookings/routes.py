@@ -613,7 +613,7 @@ def api_calendar_events():
     }
     return jsonify([{
         "id": e.id, "title": f"{e.title} — {e.time_slot or ''}",
-        "start": e.event_date.isoformat() if e.event_date else None,
+        "start": str(e.event_date)[:10] if e.event_date else None,
         "url": url_for("bookings.event_detail", event_id=e.id),
         "backgroundColor": colors.get(e.status, "#6C63FF"),
         "borderColor": colors.get(e.status, "#6C63FF"),
