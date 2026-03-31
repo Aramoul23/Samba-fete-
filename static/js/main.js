@@ -32,14 +32,14 @@ function initCalendar(containerId, eventsUrl) {
             }
         }],
         eventContent: function() {
-            // Hide event pills entirely — day cell coloring is the visual
-            return { html: '' };
-        },
-        eventDidMount: function(info) {
-            // Hide the event element so only the day cell color shows
-            info.el.style.display = 'none';
+            // Return false to fully suppress event rendering on the grid
+            return false;
         },
         dayCellDidMount: function(info) {
+            // Remove "+more" link if FullCalendar creates one
+            const moreLink = info.el.querySelector('.fc-daygrid-more-link');
+            if (moreLink) moreLink.remove();
+
             const dateStr = info.date.toISOString().slice(0, 10);
             const status = dateStatusMap[dateStr];
             if (status === 'confirmé' || status === 'terminé') {
@@ -66,7 +66,7 @@ function initCalendar(containerId, eventsUrl) {
             window.location.href = '/evenement/nouveau?date=' + info.dateStr;
         },
         height: 'auto',
-        dayMaxEvents: 3,
+        dayMaxEvents: false,
         navLinks: true,
         nowIndicator: true,
     });

@@ -56,6 +56,17 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 .fc-daygrid-day { cursor: pointer; }
 .fc-daygrid-day:hover { background: rgba(102, 126, 234, 0.08); }
-.fc-daygrid-day-events { pointer-events: auto; }
+.fc-daygrid-day-events,
+.fc-daygrid-event,
+.fc-h-event,
+.fc-event,
+.fc-daygrid-more-link,
+.fc-event-main,
+.fc-event-main-frame {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
 </style>
 {% endblock %}
