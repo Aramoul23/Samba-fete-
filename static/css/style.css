@@ -1016,6 +1016,32 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     .mobile-nav-item span {
         font-size: 0.6rem;
     }
+
+    /* ── Mini FullCalendar on create/edit forms ── */
+    #mini-calendar {
+        font-size: 0.75rem;
+    }
+    #mini-calendar .fc-toolbar {
+        flex-direction: column;
+        gap: 4px;
+    }
+    #mini-calendar .fc-toolbar-title {
+        font-size: 1rem !important;
+    }
+    #mini-calendar .fc-button {
+        padding: 2px 8px !important;
+        font-size: 0.75rem !important;
+    }
+    #mini-calendar .fc-daygrid-day-number {
+        font-size: 0.7rem;
+        padding: 2px;
+    }
+    #mini-calendar .fc-col-header-cell-cushion {
+        font-size: 0.65rem;
+    }
+    #mini-calendar .fc-daygrid-day {
+        min-height: 32px;
+    }
 }
 
 /* Toast Notifications */
