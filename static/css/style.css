@@ -321,6 +321,30 @@ body {
 .badge-amount { color: var(--primary); font-weight: 700; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 
 /* ─── Calendar ─────────────────────────────────────── */
+.status-booked {
+    background-color: #ef476f !important;
+    color: #ffffff !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+.status-booked .fc-daygrid-day-number {
+    color: #ffffff !important;
+    pointer-events: none !important;
+}
+.status-pending {
+    background-color: #ffd166 !important;
+    color: #333333 !important;
+}
+.status-pending .fc-daygrid-day-number {
+    color: #333333 !important;
+}
+.status-changed {
+    background-color: #118ab2 !important;
+    color: #ffffff !important;
+}
+.status-changed .fc-daygrid-day-number {
+    color: #ffffff !important;
+}
 .fc-day-taken {
     opacity: 0.5;
     cursor: not-allowed !important;

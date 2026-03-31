@@ -21,17 +21,16 @@ function initCalendar(containerId, eventsUrl, dateStatusMap, dateUrlMap) {
             const status = dateStatusMap[dateStr];
             if (!status) return;
 
+            const cell = info.el;
+            const dayNum = cell.querySelector('.fc-daygrid-day-number');
+
             if (status === 'confirmé' || status === 'terminé') {
-                info.el.style.backgroundColor = '#ef476f';
-                info.el.style.color = '#fff';
-                const dayNum = info.el.querySelector('.fc-daygrid-day-number');
-                if (dayNum) { dayNum.textContent = '🔒 ' + dayNum.textContent; dayNum.style.color = '#fff'; }
+                cell.classList.add('status-booked');
+                if (dayNum) dayNum.textContent = '🔒 ' + dayNum.textContent;
             } else if (status === 'en attente') {
-                info.el.style.backgroundColor = '#ffd166';
-                info.el.style.color = '#333';
+                cell.classList.add('status-pending');
             } else if (status === 'changé de date') {
-                info.el.style.backgroundColor = '#118ab2';
-                info.el.style.color = '#fff';
+                cell.classList.add('status-changed');
             }
         },
         dateClick: function(info) {
