@@ -827,14 +827,7 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     .form-input-elegant { padding: 9px 12px; font-size: 0.85rem; }
     .form-label-elegant { font-size: 0.65rem; margin-bottom: 4px; }
 
-    /* Mini calendar on very small screens */
-    #mini-calendar .fc-daygrid-day {
-        min-height: 28px;
-    }
-    #mini-calendar .fc-daygrid-day-number {
-        font-size: 0.6rem;
-        padding: 1px;
-    }
+    /* Calendar modal on very small screens */
     #calendar-modal > div {
         width: 98% !important;
         max-width: 100% !important;
@@ -1095,32 +1088,6 @@ body { background-color: var(--bg) !important; color: var(--text) !important; }
     }
     .mobile-nav-item span {
         font-size: 0.6rem;
-    }
-
-    /* ── Mini FullCalendar on create/edit forms ── */
-    #mini-calendar {
-        font-size: 0.75rem;
-    }
-    #mini-calendar .fc-toolbar {
-        flex-direction: column;
-        gap: 4px;
-    }
-    #mini-calendar .fc-toolbar-title {
-        font-size: 1rem !important;
-    }
-    #mini-calendar .fc-button {
-        padding: 2px 8px !important;
-        font-size: 0.75rem !important;
-    }
-    #mini-calendar .fc-daygrid-day-number {
-        font-size: 0.7rem;
-        padding: 2px;
-    }
-    #mini-calendar .fc-col-header-cell-cushion {
-        font-size: 0.65rem;
-    }
-    #mini-calendar .fc-daygrid-day {
-        min-height: 32px;
     }
 
     /* ── Calendar picker modal ── */

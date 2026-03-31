@@ -261,75 +261,104 @@ function showToast(message, type = 'info') {
     else container.style.background = '#264653';
     container.textContent = message;
     document.body.appendChild(container);
-    setTimeout(() => { container.style.opacity = '0'; setTimeout(() => container.remove(), 300); }, 3000);
+    setTimeout(function() { container.style.opacity = '0'; setTimeout(function() { container.remove(); }, 300); }, 3000);
 }
 
 // --- Calendar modal open/close ---
 function openCalendarPicker() {
     document.getElementById('calendar-modal').style.display = 'block';
     document.body.style.overflow = 'hidden';
-    if (!window._calRendered) {
-        renderMiniCalendar();
-        window._calRendered = true;
-    }
+    renderMiniCalendar();
 }
 function closeCalendarPicker() {
     document.getElementById('calendar-modal').style.display = 'none';
     document.body.style.overflow = '';
 }
 
-// Close on backdrop click
 document.getElementById('calendar-modal').addEventListener('click', function(e) {
     if (e.target === this) closeCalendarPicker();
 });
 
-// --- Mini Calendar ---
-const dateStatusMap = {{ date_status_map | safe }};
-const dateUrlMap = {{ date_url_map | safe }};
+// --- Mini Calendar (pure HTML/CSS/JS, no FullCalendar) ---
+var dateStatusMap = {{ date_status_map | safe }};
+var dateUrlMap = {{ date_url_map | safe }};
 
 function renderMiniCalendar() {
-    const calEl = document.getElementById('mini-calendar');
-    if (!calEl || typeof FullCalendar === 'undefined') return;
+    var container = document.getElementById('mini-calendar');
+    if (!container) return;
+    var now = new Date();
+    var year = window._calYear || now.getFullYear();
+    var month = window._calMonth || now.getMonth();
 
-    const miniEvents = Object.entries(dateStatusMap).map(function(d) {
-        return { start: d[0], extendedProps: { status: d[1] } };
-    });
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function dateKey(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
 
-    const cal = new FullCalendar.Calendar(calEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-        height: 'auto',
-        locale: 'fr',
-        firstDay: 1,
-        dayCellDidMount: function(info) {
-            const status = dateStatusMap[info.dateStr];
-            if (!status) return;
-            const cell = info.el;
-            const dayEl = cell.querySelector('.fc-daygrid-day-number');
-            if (status === 'confirmé' || status === 'terminé') {
-                cell.style.cssText = 'background-color:#ef476f !important;color:#ffffff !important;';
-                if (dayEl) { dayEl.textContent = '🔒 ' + dayEl.textContent.trim(); dayEl.style.cssText = 'color:#ffffff !important;'; }
-            } else if (status === 'en attente') {
-                cell.style.cssText = 'background-color:#ffd166 !important;color:#333333 !important;';
-            } else if (status === 'changé de date') {
-                cell.style.cssText = 'background-color:#118ab2 !important;color:#ffffff !important;';
-            }
-        },
-        dateClick: function(info) {
-            const status = dateStatusMap[info.dateStr];
-            if (status === 'confirmé' || status === 'terminé') {
-                showToast('Cette date est déjà réservée.', 'danger');
-                return;
-            }
-            if (status === 'en attente') {
-                showToast('Cette date est déjà en attente de confirmation.', 'warning');
-                return;
-            }
-            document.getElementById('event_date').value = info.dateStr;
-            closeCalendarPicker();
+    function render() {
+        window._calYear = year;
+        window._calMonth = month;
+
+        var firstDay = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+        var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+        html += '<button onclick="window._prevMonth()" style="background:none;border:1px solid var(--border-color);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--text-primary);font-size:1rem;">&#9664;</button>';
+        html += '<span style="font-weight:600;font-size:1rem;color:var(--text-primary);">' + monthNames[month] + ' ' + year + '</span>';
+        html += '<button onclick="window._nextMonth()" style="background:none;border:1px solid var(--border-color);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--text-primary);font-size:1rem;">&#9654;</button>';
+        html += '</div>';
+
+        html += '<table style="width:100%;border-collapse:collapse;text-align:center;">';
+        html += '<tr>';
+        var dayNames = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
+        for (var i = 0; i < dayNames.length; i++) {
+            html += '<th style="padding:8px 4px;font-size:0.75rem;color:var(--text-muted);font-weight:500;">' + dayNames[i] + '</th>';
         }
-    });
-    cal.render();
+        html += '</tr><tr>';
+
+        var startDay = (firstDay + 6) % 7;
+        for (var i = 0; i < startDay; i++) {
+            html += '<td></td>';
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dk = dateKey(year, month, d);
+            var status = dateStatusMap[dk];
+            var bg = '', fg = '', cursor = 'pointer', locked = '';
+
+            if (status === 'confirmé' || status === 'terminé') {
+                bg = '#ef476f'; fg = '#fff'; cursor = 'not-allowed'; locked = '🔒';
+            } else if (status === 'en attente') {
+                bg = '#ffd166'; fg = '#333';
+            } else if (status === 'changé de date') {
+                bg = '#118ab2'; fg = '#fff';
+            }
+
+            var isTaken = (status === 'confirmé' || status === 'terminé');
+            var clickHandler = isTaken
+                ? "event.stopPropagation();showToast('Cette date est déjà réservée.','danger');"
+                : "window._selectDate('" + dk + "');";
+
+            html += '<td style="padding:6px 2px;cursor:' + cursor + ';">';
+            html += '<div onclick="' + clickHandler + '" style="width:36px;height:36px;line-height:36px;border-radius:10px;font-size:0.85rem;font-weight:500;';
+            if (bg) html += 'background:' + bg + ';color:' + fg + ';';
+            html += '">' + locked + d + '</div>';
+            html += '</td>';
+
+            if ((startDay + d) % 7 === 0) html += '</tr><tr>';
+        }
+        html += '</tr></table>';
+
+        container.innerHTML = html;
+    }
+
+    window._prevMonth = function() { month--; if (month < 0) { month = 11; year--; } render(); };
+    window._nextMonth = function() { month++; if (month > 11) { month = 0; year++; } render(); };
+    window._selectDate = function(dk) {
+        document.getElementById('event_date').value = dk;
+        closeCalendarPicker();
+    };
+
+    render();
 }
 </script>
 {% endblock %}
