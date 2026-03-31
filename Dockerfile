@@ -1,5 +1,6 @@
 FROM python:3.12-slim
 
+# Cache bust - mini calendar for create form - 2026-03-31
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
     libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info libpq5 \
