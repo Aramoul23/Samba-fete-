@@ -18,7 +18,7 @@ class Config:
 
     # Database — SQLAlchemy
     DATABASE_URL = os.environ.get("DATABASE_URL", "")
-    SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "")
+    SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "/data/samba_fete.db")
 
     # SQLAlchemy connection
     # Render provides postgres:// but SQLAlchemy 2.x needs postgresql://

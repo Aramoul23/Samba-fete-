@@ -12,5 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN chmod +x start.sh
 
-ENV PORT=5000
-CMD ["sh", "-c", "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"]
+ENV PORT=$PORT
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+CMD ["gunicorn", "run:app", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
