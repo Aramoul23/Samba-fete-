@@ -6,6 +6,7 @@ Blueprint registration happens here.
 import logging
 import os
 import secrets
+import threading
 from datetime import datetime
 
 from flask import Flask
@@ -138,15 +139,43 @@ def create_app(config_name=None):
     register_error_handlers(app)
     register_health_check(app)
 
-    # ── Database init ────────────────────────────────────────────────
-    with app.app_context():
-        try:
-            sqlalchemy_db.create_all()
-            _seed_default_data()
-        except Exception as e:
-            logger.warning("Database init failed (will retry on first request): %s", e)
+    # ── Database init (lazy, non-blocking) ───────────────────────────
+    # Defer DB initialization to avoid blocking startup on slow DB connections.
+    # The app can respond to health checks immediately while DB init runs in background.
+    _init_db_lazily(app)
 
     return app
+
+
+def _init_db_lazily(app):
+    """Initialize database in background thread with timeout to avoid blocking startup."""
+    result = {"initialized": False, "error": None}
+    app.extensions["db_init_result"] = result
+
+    def _do_init():
+        try:
+            with app.app_context():
+                sqlalchemy_db.create_all()
+                _seed_default_data()
+            result["initialized"] = True
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            result["error"] = str(e)
+            logger.warning("Database init failed (will retry on first request): %s", e)
+
+    def _init_with_timeout():
+        t = threading.Thread(target=_do_init, daemon=True)
+        t.start()
+        t.join(timeout=15)  # Wait max 15s for DB init
+        if t.is_alive():
+            logger.warning("Database init timed out after 15s — continuing startup")
+
+    if app.config.get("FLASK_ENV") == "production":
+        # In production, don't wait at all — init in background
+        threading.Thread(target=_do_init, daemon=True).start()
+    else:
+        # In dev, run synchronously with timeout fallback
+        _init_with_timeout()
 
 
 def _seed_default_data():
