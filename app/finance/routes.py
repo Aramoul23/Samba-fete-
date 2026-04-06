@@ -80,9 +80,21 @@ def dashboard():
         chart_labels.append(MONTH_NAMES_FR[m][:3])
         chart_revenues.append(float(mr)); chart_expenses.append(float(me)); chart_profits.append(float(mr) - float(me))
 
+    # Bug #6 fix: batch-query paid totals for upcoming events
+    upcoming_ids = [ev.id for ev in upcoming]
+    upcoming_paid_map = {}
+    if upcoming_ids:
+        upcoming_paid_rows = db.session.query(
+            Payment.event_id,
+            func.coalesce(func.sum(Payment.amount), 0).label("total_paid")
+        ).filter(
+            Payment.event_id.in_(upcoming_ids), Payment.is_refunded == 0
+        ).group_by(Payment.event_id).all()
+        upcoming_paid_map = {r.event_id: float(r.total_paid) for r in upcoming_paid_rows}
+
     upcoming_with_revenue = []
     for ev in upcoming:
-        ev.paid = ev.total_paid
+        ev.paid = upcoming_paid_map.get(ev.id, 0.0)
         upcoming_with_revenue.append(ev)
 
     today_events = Event.query.join(Client).join(Venue, Event.venue_id == Venue.id).filter(
@@ -181,9 +193,21 @@ def _financials_impl():
         raise
 
     ef_list = []
+    # Bug #6 fix: batch-query paid amounts for all events at once instead of N+1
+    event_ids = [r.id for r in ef_raw]
+    paid_map = {}
+    if event_ids:
+        paid_rows = db.session.query(
+            Payment.event_id,
+            func.coalesce(func.sum(Payment.amount), 0).label("total_paid")
+        ).filter(
+            Payment.event_id.in_(event_ids), Payment.is_refunded == 0
+        ).group_by(Payment.event_id).all()
+        paid_map = {r.event_id: float(r.total_paid) for r in paid_rows}
+
     for r in ef_raw:
         rev, costs = float(r.total_revenue), float(r.total_costs)
-        paid = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(Payment.event_id == r.id, Payment.is_refunded == 0).scalar())
+        paid = paid_map.get(r.id, 0.0)
         ef_list.append({"id": r.id, "title": r.title, "event_date": r.event_date, "event_type": r.event_type,
                         "status": r.status, "total_amount": float(r.total_amount), "client_name": r.client_name,
                         "total_revenue": rev, "total_costs": costs, "total_paid": paid,

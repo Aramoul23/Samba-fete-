@@ -97,10 +97,11 @@
                                 <div class="client-pick-name">{{ c.name }}</div>
                                 <div class="client-pick-phone"><i class="fas fa-phone me-1"></i>{{ c.phone }}</div>
                                 <div class="client-pick-meta">
-                                    <span class="badge-slot">{{ c.event_count }} événement(s)</span>
-                                    {% if c.total_owed > 0 %}
+                                    <span class="badge-slot">{{ c._cached_event_count if c._cached_event_count is defined else c.event_count }} événement(s)</span>
+                                    {% set owed = c._cached_total_owed if c._cached_total_owed is defined else c.total_owed %}
+                                    {% if owed > 0 %}
                                     <span class="badge-amount" style="background: var(--warning-soft); color: #8a6d1b;">
-                                        {{ c.total_owed | format_da }}
+                                        {{ owed | format_da }}
                                     </span>
                                     {% endif %}
                                 </div>
@@ -288,10 +289,14 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label-elegant">Type</label>
-                                <input type="text" class="form-input-elegant form-control-lg" id="paymentTypeDisplay" value="Avance" readonly style="background: var(--bg-subtle); cursor: default;">
-                                <input type="hidden" name="payment_type" id="paymentType" value="avance">
+                                <input type="text" class="form-input-elegant form-control-lg" id="paymentTypeDisplay" value="Acompte" readonly style="background: var(--bg-subtle); cursor: default;">
+                                <input type="hidden" name="payment_type" id="paymentType" value="acompte">
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
+                                <label class="form-label-elegant">Date du paiement</label>
+                                <input type="date" name="payment_date" class="form-input-elegant" value="{{ today_str }}">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label-elegant">Notes</label>
                                 <input type="text" name="notes" class="form-input-elegant" placeholder="Optionnel">
                             </div>
@@ -421,12 +426,12 @@ function updatePaymentType() {
         typeDisplay.value = 'Solde ✓';
         typeDisplay.style.color = 'var(--success)';
     } else if (amount > 0) {
-        typeInput.value = 'avance';
-        typeDisplay.value = 'Avance';
+        typeInput.value = 'acompte';
+        typeDisplay.value = 'Acompte';
         typeDisplay.style.color = 'var(--warning)';
     } else {
-        typeInput.value = 'avance';
-        typeDisplay.value = 'Avance';
+        typeInput.value = 'acompte';
+        typeDisplay.value = 'Acompte';
         typeDisplay.style.color = 'var(--text)';
     }
 }

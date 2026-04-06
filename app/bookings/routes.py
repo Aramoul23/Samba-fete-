@@ -23,6 +23,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import or_, func
 
 from app.models import db, Event, Client, EventLine, Payment, Expense, Venue
+from app.services.booking_service import BookingService
 from app.bookings.helpers import (
     ALL_STATUSES,
     EVENT_STATUSES,
@@ -301,10 +302,6 @@ def event_form(event_id=None):
             db.session.add(event)
             db.session.flush()
             event_id = event.id
-            # Auto deposit (only on create)
-            if deposit_required and deposit_required > 0:
-                db.session.add(Payment(event_id=event_id, amount=deposit_required,
-                                       payment_type="avance", method="espèces", payment_date=now))
 
         # Service lines
         insert_service_lines(event_id, data)
@@ -363,41 +360,43 @@ def event_detail(event_id):
 def add_payment(event_id):
     data = request.form
     try:
-        event = Event.query.get_or_404(event_id)
-        amount = data.get("amount", 0, type=float)
-
-        if amount <= 0:
-            flash("Montant invalide", "danger")
-            return redirect(url_for("bookings.event_detail", event_id=event_id))
-        if event.status == "annulé":
-            flash("Impossible d'encaisser sur un événement annulé", "danger")
+        # Parse and validate amount explicitly
+        raw_amount = data.get("amount", "").strip()
+        try:
+            amount = float(raw_amount)
+        except (ValueError, TypeError):
+            flash("Montant invalide — veuillez entrer un nombre valide", "danger")
             return redirect(url_for("bookings.event_detail", event_id=event_id))
 
-        remaining = event.remaining
-        if remaining <= 0:
-            flash("Cet événement est déjà soldé!", "warning")
-            return redirect(url_for("bookings.event_detail", event_id=event_id))
-        if amount > remaining:
-            flash(f"Le montant ({amount:,.0f} DA) dépasse le reste ({remaining:,.0f} DA).", "danger")
-            return redirect(url_for("bookings.event_detail", event_id=event_id))
+        # Parse optional payment_date (fall back to now)
+        payment_date_str = data.get("payment_date", "").strip()
+        payment_date = None
+        if payment_date_str:
+            try:
+                payment_date = datetime.strptime(payment_date_str, "%Y-%m-%d")
+            except ValueError:
+                payment_date = None  # fall back to default (now)
 
-        payment = Payment(
-            event_id=event_id, amount=amount,
+        payment, error = BookingService.add_payment(
+            event_id=event_id,
+            amount=amount,
             method=data.get("method", "espèces"),
-            payment_type=data.get("payment_type", "dépôt").lower(),
+            payment_type=data.get("payment_type", "acompte").lower(),
             reference=data.get("reference", "").strip(),
             notes=data.get("notes", "").strip(),
+            payment_date=payment_date,
         )
-        db.session.add(payment)
 
-        new_total = float(event.total_paid) + amount
-        if new_total >= float(event.total_amount) and event.status == "en attente":
-            event.status = "confirmé"
-            logger.info("Event %d auto-confirmed (fully paid)", event_id)
-
-        db.session.commit()
-        flash("Paiement enregistré — soldé! ✓" if new_total >= event.total_amount
-              else f"Paiement enregistré! Reste: {event.total_amount - new_total:,.0f} DA", "success")
+        if error:
+            flash(error, "danger")
+        else:
+            # Check remaining after payment
+            event = Event.query.get(event_id)
+            if event and event.remaining <= 0:
+                flash("Paiement enregistré — soldé! ✓", "success")
+            else:
+                remaining = event.remaining if event else 0
+                flash(f"Paiement enregistré! Reste: {remaining:,.0f} DA", "success")
     except Exception:
         db.session.rollback()
         logger.exception("Failed to add payment for event %s", event_id)
@@ -583,10 +582,27 @@ def quick_payment():
     selected_event_id = request.args.get("event_id", type=int)
 
     clients = []
-    if search:
-        clients = Client.query.filter(
+    if search and not selected_client_id:
+        # Bug #8 fix: batch-query client totals instead of N+1 via properties
+        raw_clients = Client.query.filter(
             or_(Client.name.ilike(f"%{search}%"), Client.phone.ilike(f"%{search}%"))
         ).order_by(Client.name).limit(20).all()
+        client_ids = [c.id for c in raw_clients]
+        # Pre-compute event counts and total owed in bulk
+        if client_ids:
+            stats = db.session.query(
+                Event.client_id,
+                func.count(Event.id).label("event_count"),
+                func.coalesce(func.sum(Event.total_amount), 0).label("total_owed"),
+            ).filter(Event.client_id.in_(client_ids)).group_by(Event.client_id).all()
+            stats_map = {r.client_id: {"event_count": r.event_count, "total_owed": float(r.total_owed)} for r in stats}
+        else:
+            stats_map = {}
+        for c in raw_clients:
+            s = stats_map.get(c.id, {"event_count": 0, "total_owed": 0})
+            c._cached_event_count = s["event_count"]
+            c._cached_total_owed = s["total_owed"]
+        clients = raw_clients
 
     selected_client = db.session.get(Client, selected_client_id) if selected_client_id else None
     client_events = []
@@ -601,36 +617,42 @@ def quick_payment():
     event_financials = None
     if selected_event:
         event_payments = Payment.query.filter_by(event_id=selected_event_id).order_by(Payment.payment_date.desc()).all()
-        tp = selected_event.total_paid
+        # Use DB aggregate for reliable paid total
+        paid = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+            Payment.event_id == selected_event_id, Payment.is_refunded == 0).scalar())
+        refunded = float(db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
+            Payment.event_id == selected_event_id, Payment.is_refunded == 1).scalar())
         event_financials = {
             "total": selected_event.total_amount,
-            "paid": tp,
-            "remaining": selected_event.remaining,
-            "refunded": db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
-                Payment.event_id == selected_event_id, Payment.is_refunded == 1).scalar(),
+            "paid": paid,
+            "remaining": round(float(selected_event.total_amount) - paid, 2),
+            "refunded": refunded,
         }
 
-    # ─── Calendar date maps ────────────────────────────────────────
+    # ─── Calendar date maps (Bug #7: only load when no search active) ──
     from datetime import datetime as dt
     cal_year = request.args.get("year", date.today().year, type=int)
     cal_month = request.args.get("month", date.today().month, type=int)
-    center = dt(cal_year, cal_month, 1)
-    range_start = (center - timedelta(days=62)).replace(day=1).strftime("%Y-%m-%d")
-    range_end_month = cal_month + 3 if cal_month <= 9 else (cal_month + 3) % 12 or 12
-    range_end_year = cal_year if cal_month <= 9 else cal_year + 1
-    range_end = f"{range_end_year}-{range_end_month:02d}-01"
-    cal_events = Event.query.filter(
-        Event.event_date >= range_start,
-        Event.event_date < range_end,
-        Event.status != "annulé",
-    ).all()
+
     qp_date_status_map = {}
     qp_date_url_map = {}
-    for ev in cal_events:
-        d = str(ev.event_date)[:10]
-        if ev.event_date and ev.status:
-            qp_date_status_map[d] = ev.status
-            qp_date_url_map[d] = url_for("bookings.quick_payment", client_id=ev.client_id, event_id=ev.id)
+    if not search or selected_client_id:
+        # Only query calendar events when showing the calendar view
+        center = dt(cal_year, cal_month, 1)
+        range_start = (center - timedelta(days=62)).replace(day=1).strftime("%Y-%m-%d")
+        range_end_month = cal_month + 3 if cal_month <= 9 else (cal_month + 3) % 12 or 12
+        range_end_year = cal_year if cal_month <= 9 else cal_year + 1
+        range_end = f"{range_end_year}-{range_end_month:02d}-01"
+        cal_events = Event.query.filter(
+            Event.event_date >= range_start,
+            Event.event_date < range_end,
+            Event.status != "annulé",
+        ).all()
+        for ev in cal_events:
+            d = str(ev.event_date)[:10]
+            if ev.event_date and ev.status:
+                qp_date_status_map[d] = ev.status
+                qp_date_url_map[d] = url_for("bookings.quick_payment", client_id=ev.client_id, event_id=ev.id)
 
     prev_month = cal_month - 1 if cal_month > 1 else 12
     prev_year = cal_year if cal_month > 1 else cal_year - 1

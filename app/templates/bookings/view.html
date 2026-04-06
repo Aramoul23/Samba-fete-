@@ -335,6 +335,7 @@
                                 <option value="espèces">Espèces</option>
                                 <option value="chèque">Chèque</option>
                                 <option value="virement">Virement</option>
+                                <option value="carte">Carte</option>
                             </select>
                         </div>
                         <div class="col-6">
@@ -344,6 +345,10 @@
                                 <option value="solde">Solde</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-elegant">Date du paiement</label>
+                        <input type="date" name="payment_date" class="form-input-elegant" value="{{ today_str }}">
                     </div>
                     <div class="mb-0">
                         <label class="form-label-elegant">Notes</label>

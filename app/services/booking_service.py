@@ -4,6 +4,7 @@ Business logic for event CRUD, payments, status transitions.
 Routes call these functions instead of doing raw DB work.
 """
 import logging
+import math
 from datetime import datetime, date, timedelta
 
 from sqlalchemy import func
@@ -62,7 +63,11 @@ class BookingService:
 
     @staticmethod
     def create_event(data, client_id=None):
-        """Create a new event with optional client creation. Returns (event, errors)."""
+        """Create a new event with optional client creation. Returns (event, errors).
+
+        NOTE: No auto-deposit payment is created. The deposit_required field is
+        stored as a reference amount only. Users must explicitly record payments.
+        """
         errors = []
         title = data.get("title", "").strip()
         if not title:
@@ -112,14 +117,6 @@ class BookingService:
         db.session.add(event)
         db.session.flush()
 
-        # Auto deposit payment
-        deposit = data.get("deposit_required", 0, type=float)
-        if deposit and deposit > 0:
-            db.session.add(Payment(
-                event_id=event.id, amount=deposit,
-                payment_type="avance", method="espèces", payment_date=now,
-            ))
-
         _audit("event.create", entity_type="event", entity_id=event.id,
                details=f"title={title}, amount={event.total_amount}")
         db.session.commit()
@@ -127,35 +124,57 @@ class BookingService:
 
     @staticmethod
     def add_payment(event_id, amount, method="espèces", payment_type="acompte",
-                    reference="", notes=""):
-        """Record a payment. Returns (payment, error_message)."""
-        event = Event.query.get_or_404(event_id)
+                    reference="", notes="", payment_date=None):
+        """Record a payment. Returns (payment, error_message).
 
+        Uses pre-computed remaining to avoid stale-read race condition on
+        auto-confirm: remaining is calculated BEFORE the payment is added
+        to the session, so we can reliably check if this payment settles
+        the balance.
+        """
+        # ── Validate amount ──────────────────────────────────────────
+        if not isinstance(amount, (int, float)) or math.isnan(amount) or math.isinf(amount):
+            return None, "Montant invalide — veuillez entrer un nombre valide"
         if amount <= 0:
             return None, "Montant invalide"
+
+        event = Event.query.get_or_404(event_id)
+
         if event.status == "annulé":
             return None, "Impossible d'encaisser sur un événement annulé"
 
-        remaining = event.remaining
+        # Get current paid total via a reliable DB aggregate (not the ORM property)
+        current_paid = float(db.session.query(
+            func.coalesce(func.sum(Payment.amount), 0)
+        ).filter(
+            Payment.event_id == event_id, Payment.is_refunded == 0
+        ).scalar())
+
+        remaining = round(float(event.total_amount) - current_paid, 2)
         if remaining <= 0:
             return None, "Cet événement est déjà soldé"
         if amount > remaining:
             return None, f"Le montant ({amount:,.0f} DA) dépasse le reste ({remaining:,.0f} DA)"
 
+        # Calculate remaining AFTER this payment (before adding to session)
+        remaining_after = round(remaining - amount, 2)
+
         payment = Payment(
             event_id=event_id, amount=amount, method=method,
             payment_type=payment_type, reference=reference, notes=notes,
+            payment_date=payment_date or datetime.now(),
         )
         db.session.add(payment)
 
-        # Auto-confirm when fully paid
-        if event.remaining <= 0 and event.status == "en attente":
+        # Auto-confirm when fully paid (using pre-computed value, not ORM property)
+        if remaining_after <= 0 and event.status == "en attente":
             event.status = "confirmé"
             logger.info("Event %d auto-confirmed (fully paid)", event_id)
 
         _audit("payment.create", entity_type="payment", entity_id=payment.id,
                details=f"event_id={event_id}, amount={amount}, method={method}")
         db.session.commit()
+
         return payment, None
 
     @staticmethod
